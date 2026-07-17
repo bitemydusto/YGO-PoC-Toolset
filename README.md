@@ -13,8 +13,8 @@ Projects:
 * PocTools
 	* This class library contains tools for handling unpacked libraries and decrypting/editing/re-encrypting save files (system.dat)
 * Editor
-	* A .NET MAUI client implementing PoCTools
-	* Allows you to view the all the game's cards (including unused ones) and edit their values (names, descriptions, properties etc.)
+	* A .NET MAUI client for PoCTools
+	* Allows you to view the cards (including unused ones) and edit their values (names, descriptions, properties etc.)
 	* Allows you to view your card collection, and edit how many copies of each card you have (no registry editing needed)
 * PoCModLoader
 	* A simple mod loader that allows you to load custom DLL mods

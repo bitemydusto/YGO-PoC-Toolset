@@ -7,7 +7,7 @@ A collection of tools for modding Yu-Gi-Oh! Power of Chaos - Joey the Passion.
 Projects:
 
 * Unpacker
-	* Allows you to unpack and decompress the games resource files (e.g. data.dat)
+	* Allows you to unpack and decompress the game's resource files (e.g. data.dat)
 	* Having the unpacked library in your game's directory, will make the game load the resources from there, instead of the packed binary
 	* Usage: simply drag the packed binary into Unpacker.exe
 * PocTools
@@ -16,6 +16,8 @@ Projects:
 	* A .NET MAUI client for PoCTools
 	* Allows you to view the cards (including unused ones) and edit their values (names, descriptions, properties etc.)
 	* Allows you to view your card collection, and edit how many copies of each card you have (no registry editing needed)
+   	
+	![Editor](assets/card-editor.PNG)
 * PoCModLoader
 	* A simple mod loader that allows you to load custom DLL mods
 	* Usage: put msacm32.dll into the game's directory, create a folder called "mods" and simply put your custom DLL mods into this folder

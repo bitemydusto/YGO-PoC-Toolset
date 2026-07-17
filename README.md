@@ -17,7 +17,7 @@ Projects:
 	* Allows you to view the cards (including unused ones) and edit their values (names, descriptions, properties etc.)
 	* Allows you to view your card collection, and edit how many copies of each card you have (no registry editing needed)
    	
-	![Editor](assets/card-editor.PNG)
+	![Editor](assets/card_editor.PNG)
 * PoCModLoader
 	* A simple mod loader that allows you to load custom DLL mods
 	* Usage: put msacm32.dll into the game's directory, create a folder called "mods" and simply put your custom DLL mods into this folder

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodel="clr-namespace:Editor.ViewModel"
+             x:DataType="viewmodel:CardViewerVM"
+             x:Class="Editor.View.CardViewer">
+    <Grid>
+        <Grid RowDefinitions="auto,*">
+            <HorizontalStackLayout  Grid.Row="0" Spacing="5">
+                <Button Text="Open Library" Command="{Binding OpenLibraryCommand}" CornerRadius="0" WidthRequest="125"/>
+                <Button Text="Save Library" Command="{Binding SaveLibraryCommand}" CornerRadius="0" WidthRequest="125" IsEnabled="{Binding IsLibraryLoaded}"/>
+            </HorizontalStackLayout>
+            <Grid Grid.Row="1" ColumnDefinitions="auto,*,auto" Margin="10" IsVisible="{Binding IsLibraryLoaded}">
+                <Grid Grid.Column="0" RowDefinitions="auto,*" WidthRequest="300">
+                    <SearchBar Grid.Row="0" Placeholder="Search" Margin="0,0,0,5" Text="{Binding SearchText}"/>
+                    <CollectionView Grid.Row="1" ItemsSource="{Binding Cards}" SelectedItem="{Binding SelectedCard}" SelectionMode="Single">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="viewmodel:CardInfoVM">
+                                <Label Text="{Binding DisplayName}" LineBreakMode="TailTruncation"/>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </Grid>
+                <Image Grid.Column="1" Source="{Binding SelectedCard.ImagePath}" Margin="15"/>
+                <Grid Grid.Column="2" RowDefinitions="auto,*" Margin="10" WidthRequest="500" IsVisible="{Binding IsCardSelected}">
+                    <VerticalStackLayout Grid.Row="0">
+                        <Grid ColumnDefinitions="auto,*" Margin="5">
+                            <Label Grid.Column="0" Text="Name" VerticalOptions="Center" WidthRequest="75"/>
+                            <Entry Grid.Column="1" Text="{Binding SelectedCard.Name}" MaxLength="64"/>
+                        </Grid>
+                        <HorizontalStackLayout Spacing="10" Margin="5">
+                            <Grid Grid.Column="0" ColumnDefinitions="auto,*">
+                                <Label Grid.Column="0" Text="Level" VerticalOptions="Center" WidthRequest="75"/>
+                                <Picker Grid.Column="1" WidthRequest="150" HorizontalOptions="Start" ItemsSource="{Binding LevelList}"
+                                SelectedIndex="{Binding SelectedCard.Level}">
+                                    <Picker.ItemDisplayBinding>
+                                        <Binding Path="." x:DataType="x:String"/>
+                                    </Picker.ItemDisplayBinding>
+                                </Picker>
+                            </Grid>
+                            <Grid Grid.Column="0" ColumnDefinitions="auto,*">
+                                <Label Grid.Column="0" Text="Attribute" VerticalOptions="Center" WidthRequest="75"/>
+                                <Picker Grid.Column="1" WidthRequest="150" HorizontalOptions="Start" ItemsSource="{Binding AttributeList}"
+                                SelectedIndex="{Binding SelectedAttributeIndex}">
+                                    <Picker.ItemDisplayBinding>
+                                        <Binding Path="." x:DataType="x:String"/>
+                                    </Picker.ItemDisplayBinding>
+                                </Picker>
+                            </Grid>
+                        </HorizontalStackLayout>
+                        <HorizontalStackLayout Spacing="10" Margin="5">
+                            <Grid Grid.Column="0" ColumnDefinitions="auto,*">
+                                <Label Grid.Column="0" Text="Race" VerticalOptions="Center" WidthRequest="75"/>
+                                <Picker Grid.Column="1" WidthRequest="150" HorizontalOptions="Start" ItemsSource="{Binding TypeList}"
+                                SelectedIndex="{Binding SelectedTypeIndex}">
+                                    <Picker.ItemDisplayBinding>
+                                        <Binding Path="." x:DataType="x:String"/>
+                                    </Picker.ItemDisplayBinding>
+                                </Picker>
+                            </Grid>
+                            <Grid Grid.Column="0" ColumnDefinitions="auto,*">
+                                <Label Grid.Column="0" Text="Card type" VerticalOptions="Center" WidthRequest="75"/>
+                                <Picker Grid.Column="1" WidthRequest="150" HorizontalOptions="Start" ItemsSource="{Binding SubTypeList}"
+                                SelectedIndex="{Binding SelectedSubTypeIndex}">
+                                    <Picker.ItemDisplayBinding>
+                                        <Binding Path="." x:DataType="x:String"/>
+                                    </Picker.ItemDisplayBinding>
+                                </Picker>
+                            </Grid>
+                        </HorizontalStackLayout>
+                        <Grid Grid.Column="0" ColumnDefinitions="auto,*" Margin="5">
+                            <Label Grid.Column="0" Text="S/T" VerticalOptions="Center" WidthRequest="75"/>
+                            <Picker Grid.Column="1" WidthRequest="150" HorizontalOptions="Start" ItemsSource="{Binding SpellTrapList}"
+                                SelectedIndex="{Binding SelectedSpellTrapTypeIndex}">
+                                <Picker.ItemDisplayBinding>
+                                    <Binding Path="." x:DataType="x:String"/>
+                                </Picker.ItemDisplayBinding>
+                            </Picker>
+                        </Grid>
+                        <HorizontalStackLayout Spacing="10" Margin="5">
+                            <Grid Grid.Column="0" ColumnDefinitions="auto,*">
+                                <Label Grid.Column="0" Text="ATK" VerticalOptions="Center" WidthRequest="75"/>
+                                <Entry Grid.Column="1" Text="{Binding SelectedCard.ATK}" WidthRequest="150"/>
+                            </Grid>
+                            <Grid Grid.Column="1" ColumnDefinitions="auto,*">
+                                <Label Grid.Column="0" Text="DEF" VerticalOptions="Center" WidthRequest="75"/>
+                                <Entry Grid.Column="1" Text="{Binding SelectedCard.DEF}" WidthRequest="150"/>
+                            </Grid>
+                        </HorizontalStackLayout>
+                        <Grid Grid.Column="0" ColumnDefinitions="auto,auto,*" Margin="5">
+                            <Label Grid.Column="0" Text="IMG" VerticalOptions="Center" WidthRequest="75"/>
+                            <Entry Grid.Column="1" Text="{Binding SelectedCard.ImageName}" WidthRequest="150"/>
+                            <Label Grid.Column="2" Text="{Binding SelectedCard.ImageError}" TextColor="Red" VerticalOptions="Center" Margin="10"/>
+                        </Grid>
+                        <Grid Grid.Column="0" ColumnDefinitions="auto,*" Margin="5">
+                            <Label Grid.Column="0" Text="Binary" VerticalOptions="Center" WidthRequest="75"/>
+                            <Label Grid.Column="1" Text="{Binding SelectedCard.PropertyBits}"/>
+                        </Grid>
+                        <Grid Grid.Column="0" ColumnDefinitions="auto,*" Margin="5">
+                            <Label Grid.Column="0" Text="Versions" VerticalOptions="Center" WidthRequest="75"/>
+                            <HorizontalStackLayout Grid.Column="1">
+                                <Grid ColumnDefinitions="auto,auto">
+                                    <Label Grid.Column="0" Text="Yugi" VerticalOptions="Center"/>
+                                    <CheckBox Grid.Column="1" IsChecked="{Binding SelectedCard.VersionYugi}"/>
+                                </Grid>
+                                <Grid ColumnDefinitions="auto,auto">
+                                    <Label Grid.Column="0" Text="Kaiba" VerticalOptions="Center"/>
+                                    <CheckBox Grid.Column="1" IsChecked="{Binding SelectedCard.VersionKaiba}"/>
+                                </Grid>
+                                <Grid ColumnDefinitions="auto,auto">
+                                    <Label Grid.Column="0" Text="Joey" VerticalOptions="Center"/>
+                                    <CheckBox Grid.Column="1" IsChecked="{Binding SelectedCard.VersionJoey}"/>
+                                </Grid>
+                            </HorizontalStackLayout>
+                        </Grid>
+                    </VerticalStackLayout>
+                    <Editor Grid.Row="1" Text="{Binding SelectedCard.Description}" Margin="0,10,0,0"/>
+                </Grid>
+            </Grid>
+        </Grid>
+        <ActivityIndicator IsRunning="{Binding IsLoading}" HeightRequest="50"/>
+    </Grid>
+</ContentPage>

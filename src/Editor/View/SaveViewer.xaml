@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodel="clr-namespace:Editor.ViewModel"
+             x:DataType="viewmodel:SaveViewerVM"
+             x:Class="Editor.View.SaveViewer">
+    <Grid>
+        <Grid RowDefinitions="auto, *">
+            <HorizontalStackLayout Grid.Row="0" Spacing="5">
+                <Button Text="Load" Command="{Binding OpenSaveCommand}" CornerRadius="0" WidthRequest="125"/>
+                <Button Text="Save" Command="{Binding SaveChangesCommand}" CornerRadius="0" IsEnabled="{Binding IsSaveLoaded}" WidthRequest="125"/>
+            </HorizontalStackLayout>
+            <Grid Grid.Row="1" RowDefinitions="auto,*" Margin="10" IsVisible="{Binding IsSaveLoaded}" WidthRequest="500" HorizontalOptions="Start">
+                <Grid Grid.Row="0" ColumnDefinitions="auto,*">
+                    <SearchBar Grid.Column="0" Placeholder="Search" Margin="0,0,0,5" Text="{Binding SearchText}" WidthRequest="300" HorizontalOptions="Start"/>
+                    <Button Grid.Column="1" Text="Edit all" Command="{Binding EditAllCardsCommand}"
+                                WidthRequest="150" HorizontalOptions="Start" CornerRadius="0" Margin="25,0,15,0"/>
+                </Grid>
+                <CollectionView Grid.Row="1" ItemsSource="{Binding SaveInfos}" SelectedItem="{Binding SelectedCard}" Margin="10" ItemSizingStrategy="MeasureFirstItem" SelectionMode="Single">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="viewmodel:SaveInfoVM">
+                            <Grid ColumnDefinitions="300,150" >
+                                <Label Grid.Column="0" Text="{Binding DisplayName}" WidthRequest="300" LineBreakMode="TailTruncation" VerticalOptions="Center"/>
+                                <Label Grid.Column="1" Text="{Binding Amount}" WidthRequest="150" HorizontalOptions="Start" Margin="15,0,15,0" HorizontalTextAlignment="Center"/>
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Grid>
+        </Grid>
+        <ActivityIndicator IsRunning="{Binding IsLoading}" HeightRequest="50"/>
+    </Grid>
+</ContentPage>

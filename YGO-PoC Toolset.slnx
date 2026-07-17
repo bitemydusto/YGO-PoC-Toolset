@@ -1,0 +1,19 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Mods/">
+    <File Path="src/Mods/Utils.h" />
+    <Project Path="src/Mods/GodCards/GodCards.vcxproj" Id="8e7a5a7d-2740-4130-b875-2de787417ee6">
+      <Platform Solution="Release|Any CPU" Project="Win32" />
+    </Project>
+  </Folder>
+  <Project Path="src/Editor/Editor.csproj" />
+  <Project Path="src/PoCModLoader/PoCModLoader.vcxproj" Id="8901e795-fdf3-41cc-8d45-1760b10e7a50">
+    <Platform Solution="Release|Any CPU" Project="Win32" />
+  </Project>
+  <Project Path="src/PoCTools/PoCTools.csproj" />
+  <Project Path="src/Unpacker/Unpacker.csproj" />
+</Solution>

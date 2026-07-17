@@ -6,7 +6,6 @@ void GodCards();
 void Slifer();
 
 Utils::Hook hTribute_1;
-Utils::Hook hTribute_2;
 Utils::Hook hSlifer_1;
 
 __declspec(naked) void SliferChangeATK()
@@ -51,58 +50,6 @@ __declspec(naked) void AddTributeRequirement()
         JMP[hTribute_1.Trampoline]
     }
 }
-__declspec(naked) void PerformTripleTribute()
-{
-    __asm
-    {
-    hook:
-        MOV EAX, 0x004022e0
-            CALL EAX
-            CMP AX, 0x776
-            JL hook_end
-            CMP AX, 0x778
-            JG hook_end
-            MOV EAX, dword ptr[ESP + 0x3c]
-            TEST EAX, EAX
-            JZ LAB_005b1603
-            PUSH 0x0
-            PUSH EDI
-            PUSH - 0x1
-            PUSH ESI
-            MOV EAX, 0x005aecb0
-            CALL EAX
-            MOV word ptr[ESP + 0x48], AX
-            MOV ECX, dword ptr[ESP + 0x48]
-            PUSH 0x0
-            AND ECX, 0xffff
-            PUSH EDI
-            PUSH ECX
-            PUSH ESI
-            MOV EAX, 0x005aecb0
-            CALL EAX
-            MOV word ptr[ESP + 0x48], AX
-            MOV ECX, dword ptr[ESP + 0x48]
-            PUSH 0x0
-            PUSH EDI
-            PUSH ECX
-            PUSH ESI
-            MOV EAX, 0x005aecb0
-            CALL EAX
-            ADD ESP, 0x20
-            CMP AX, 0xffff
-            MOV word ptr[ESP + 0x3a], AX
-            JZ LAB_005b1603
-            MOV EBP, 0x3
-            MOV EAX, 0x005b1514
-            RET
-            LAB_005b1603 :
-        MOV EAX, 0x005b1603
-            JMP EAX
-            hook_end :
-        JMP[hTribute_2.Trampoline]
-    }
-}
-
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
     GodCards();
@@ -135,7 +82,6 @@ void GodCards()
 
     // Add 3 tribute requirement
     hTribute_1 = Utils::InstallHook((void*)0x005aac59, 7, (void*)AddTributeRequirement);
-    hTribute_2 = Utils::InstallHook((void*)0x005b14cd, 6, (void*)PerformTripleTribute);
 
     // Effects
     Slifer();

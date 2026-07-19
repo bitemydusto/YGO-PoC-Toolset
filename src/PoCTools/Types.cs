@@ -25,6 +25,7 @@ namespace PoCTools
         Zombie,
         Fiend,
         Pyro,
+        SeaSerpent,
         Rock,
         Machine,
         Fish,

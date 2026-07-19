@@ -12,6 +12,7 @@ namespace Editor.ViewModel
     {
         private Card _card;
         private string _libraryPath;
+        bool isLoading = true;
 
         public Card Card => _card;
 
@@ -78,6 +79,7 @@ namespace Editor.ViewModel
 
             SetPropertyBits();
 
+            isLoading = false;
         }
         private void SetPropertyBits()
         {
@@ -115,14 +117,14 @@ namespace Editor.ViewModel
         }
         partial void OnLevelChanged(int oldValue, int newValue)
         {
-            if (oldValue == newValue) return;
+            if (oldValue == newValue || isLoading) return;
 
             _card.Level = newValue;
             SetPropertyBits();
         }
         partial void OnATKChanged(string oldValue, string newValue)
         {
-            if (oldValue == newValue) return;
+            if (oldValue == newValue || isLoading) return;
 
             bool isValid = newValue == string.Empty || (newValue.All(char.IsDigit) && int.TryParse(newValue, out int parsedValue) && parsedValue >= 0 && parsedValue < 5120);
             if (!isValid)
@@ -137,7 +139,7 @@ namespace Editor.ViewModel
         }
         partial void OnDEFChanged(string oldValue, string newValue)
         {
-            if (oldValue == newValue) return;
+            if (oldValue == newValue || isLoading) return;
 
             bool isValid = newValue == string.Empty || (newValue.All(char.IsDigit) && int.TryParse(newValue, out int parsedValue) && parsedValue >= 0 && parsedValue < 5120);
             if (!isValid)
@@ -152,47 +154,47 @@ namespace Editor.ViewModel
         }
         partial void OnAttributeChanged(CardAttribute oldValue, CardAttribute newValue)
         {
-            if (oldValue == newValue) return;
+            if (oldValue == newValue || isLoading) return;
 
             _card.Attribute = newValue;
             SetPropertyBits();
         }
         partial void OnTypeChanged(CardType oldValue, CardType newValue)
         {
-            if (oldValue == newValue) return;
+            if (oldValue == newValue || isLoading) return;
 
             _card.Type = newValue;
             SetPropertyBits();
         }
         partial void OnSubTypeChanged(CardSubType oldValue, CardSubType newValue)
         {
-            if (oldValue == newValue) return;
+            if (oldValue == newValue || isLoading) return;
 
             _card.SubType = newValue;
             SetPropertyBits();
         }
         partial void OnSpellTrapTypeChanged(SpellTrapType oldValue, SpellTrapType newValue)
         {
-            if (oldValue == newValue) return;
+            if (oldValue == newValue || isLoading) return;
 
             _card.SpellTrapType = newValue;
             SetPropertyBits();
         }
         partial void OnVersionYugiChanged(bool oldValue, bool newValue)
         {
-            if (oldValue == newValue) return;
+            if (oldValue == newValue || isLoading) return;
 
             _card.VersionYugi = newValue;
         }
         partial void OnVersionKaibaChanged(bool oldValue, bool newValue)
         {
-            if (oldValue == newValue) return;
+            if (oldValue == newValue || isLoading) return;
 
             _card.VersionKaiba = newValue;
         }
         partial void OnVersionJoeyChanged(bool oldValue, bool newValue)
         {
-            if (oldValue == newValue) return;
+            if (oldValue == newValue || isLoading) return;
 
             _card.VersionJoey = newValue;
         }

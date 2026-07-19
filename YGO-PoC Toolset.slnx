@@ -5,7 +5,9 @@
     <Platform Name="x86" />
   </Configurations>
   <Folder Name="/Mods/">
+    <File Path="src/Mods/Cards.h" />
     <File Path="src/Mods/Utils.h" />
+    <Project Path="src/Mods/FusionRequirements/FusionRequirements.vcxproj" Id="6186b4bf-7bd0-4881-a035-10c21c87e0d0" />
     <Project Path="src/Mods/GodCards/GodCards.vcxproj" Id="8e7a5a7d-2740-4130-b875-2de787417ee6">
       <Platform Solution="Release|Any CPU" Project="Win32" />
     </Project>

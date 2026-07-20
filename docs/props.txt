@@ -1,0 +1,56 @@
+Binary: 000 0000 00000 00 000000000 000000000
+In order: Attribute(3), level(4), type(5), sub-type(2), atk(9), def(9)
+
+S/T type uses sub-type + the top bit of atk (3 bits it total)
+atk/def are multiplied by 10  
+
+Types:
+0x01 [00001]: Dragon
+0x02 [00010]: Zombie
+0x03 [00011]: Fiend
+0x04 [00100]: Pyro
+0x05 [00101]: Sea-Serpent
+0x06 [00110]: Rock
+0x07 [00111]: Machine
+0x08 [01000]: Fish
+0x09 [01001]: Dinosaur
+0x0A [01010]: Insect
+0x0B [01011]: Beast
+0x0C [01100]: Beast-Warrior
+0x0D [01101]: Plant
+0x0E [01110]: Aqua
+0x0F [01111]: Warrior
+0x10 [10000]: Winged-Beast
+0x11 [10001]: Fairy
+0x12 [10010]: Spellcaster
+0x13 [10011]: Thunder
+0x14 [10100]: Reptile
+0x15 [10101]: Trap
+0x16 [10110]: Spell
+0x18 [11000]: Divine-Beast (not implemented, don't use it)
+
+Monster attributes:
+0x00 [000]: Divine
+0x01 [001]: Light
+0x02 [010]: Dark
+0x03 [011]: Water
+0x04 [100]: Fire
+0x05 [101]: Earth
+0x06 [110]: Wind
+0x00 [000]: Spell (8)
+0x01 [001]: Trap  (9)
+
+Sub-types:
+0x00 [00]: Normal
+0x01 [01]: Effect
+0x02 [10]: Fusion
+0x03 [11]: Ritual
+
+S/T types:
+0x00 [000]: Normal
+0x01 [001]: Counter
+0x02 [010]: Field
+0x03 [011]: Equip
+0x04 [100]: Continuous
+0x05 [101]: Quickplay
+0x06 [110]: Ritual

@@ -39,6 +39,16 @@ namespace Utils
         VirtualProtect(address, sizeof(value), old, &old);
         FlushInstructionCache(GetCurrentProcess(), address, sizeof(value));
     }
+    static void WriteUint32(void* address, uint32_t value)
+    {
+        DWORD old;
+        VirtualProtect(address, sizeof(value), PAGE_EXECUTE_READWRITE, &old);
+
+        memcpy(address, &value, sizeof(value));
+
+        VirtualProtect(address, sizeof(value), old, &old);
+        FlushInstructionCache(GetCurrentProcess(), address, sizeof(value));
+    }
     static void WriteJump(void* address, size_t size, void* dst)
     {
         if (size < 5) return;

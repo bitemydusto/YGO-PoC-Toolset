@@ -20,6 +20,6 @@ Projects:
 	![Editor](assets/card_editor.PNG)
 * PoCModLoader
 	* A simple mod loader that allows you to load custom DLL mods
-	* Usage: put msacm32.dll into the game's directory, create a folder called "mods" and simply put your custom DLL mods into this folder
+	* Usage: copy the contents of "ModLoader" into the game's directory, then put your custom DLL mods into the "mods" folder, and your script JSON files into the "scripts" folder
 * Mods
 	* Here you can find DLL mods, which you can use as an example, with some utility functions

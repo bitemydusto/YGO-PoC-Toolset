@@ -4,9 +4,11 @@
 
 void GodCards();
 void Slifer();
+void Obelisk();
 
 Utils::Hook hTribute_1;
 Utils::Hook hSlifer_1;
+Utils::Hook hObelisk_1;
 
 __declspec(naked) void SliferChangeATK()
 {
@@ -26,6 +28,19 @@ __declspec(naked) void SliferChangeATK()
             JMP EAX
             hook_end :
         JMP[hSlifer_1.Trampoline]
+    }
+}
+__declspec(naked) void GiveObeliskIgnition()
+{
+    __asm
+    {
+    hook:
+        CMP EAX, 0x776
+        JNE hook_end
+        MOV EAX, 0x0056813b
+        JMP EAX
+    hook_end:
+        JMP [hObelisk_1.Trampoline]
     }
 }
 __declspec(naked) void AddTributeRequirement()
@@ -85,10 +100,13 @@ void GodCards()
 
     // Effects
     Slifer();
+	Obelisk();
 }
 void Slifer()
 {
-
     hSlifer_1 = Utils::InstallHook((void*)0x0056e065, 5, (void*)SliferChangeATK);
-
+}
+void Obelisk()
+{
+	hObelisk_1 = Utils::InstallHook((void*)0x00568042, 5, (void*)GiveObeliskIgnition);
 }

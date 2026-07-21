@@ -49,6 +49,12 @@ namespace Utils
         VirtualProtect(address, sizeof(value), old, &old);
         FlushInstructionCache(GetCurrentProcess(), address, sizeof(value));
     }
+	static uint32_t ReadUint32(void* address)
+	{
+		uint32_t value;
+		memcpy(&value, address, sizeof(value));
+		return value;
+	}
     static void WriteJump(void* address, size_t size, void* dst)
     {
         if (size < 5) return;

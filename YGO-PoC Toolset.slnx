@@ -12,6 +12,7 @@
     <Project Path="src/Mods/GodCards/GodCards.vcxproj" Id="8e7a5a7d-2740-4130-b875-2de787417ee6">
       <Platform Solution="Release|Any CPU" Project="Win32" />
     </Project>
+    <Project Path="src/Mods/ScriptLoader/ScriptLoader.vcxproj" Id="ee89654c-08da-4f1e-8b3e-ea9a514ffb8e" />
   </Folder>
   <Project Path="src/Editor/Editor.csproj" />
   <Project Path="src/PoCModLoader/PoCModLoader.vcxproj" Id="8901e795-fdf3-41cc-8d45-1760b10e7a50">

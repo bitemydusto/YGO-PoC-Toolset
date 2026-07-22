@@ -8,8 +8,14 @@ void Obelisk();
 void Ra();
 
 Utils::Hook hTribute_1;
+
 Utils::Hook hSlifer_1;
+Utils::Hook hSlifer_2;
+Utils::Hook hSlifer_3;
+Utils::Hook hSlifer_4;
+
 Utils::Hook hObelisk_1;
+
 Utils::Hook hRa_1;
 
 __declspec(naked) void SliferChangeATK()
@@ -32,12 +38,75 @@ __declspec(naked) void SliferChangeATK()
         JMP[hSlifer_1.Trampoline]
     }
 }
-__declspec(naked) void GiveObeliskAndRaIgnition()
+__declspec(naked) void PatchTrapHoleEffect()
+{
+    __asm
+    {
+    hook:
+		CMP EAX, 0x777
+		JNE hook_end
+        PUSH ESI
+        PUSH EDI
+        MOV EAX, 0x0056f5e0
+        CALL EAX
+        ADD ESP, 0x8
+        XOR EDX, EDX
+        CMP EAX, 0x7D0
+        SETL DL
+        MOV EAX, 0x0058d452
+        JMP EAX
+    hook_end:
+		JMP[hSlifer_2.Trampoline]
+    }
+}
+__declspec(naked) void PatchTrapHoleCondition()
+{
+    __asm
+    {
+    hook:
+        CMP EAX, 0x777
+        JNE hook_end
+        PUSH EDI
+        PUSH ESI
+        MOV EAX, 0x0056f5e0
+        CAll EAX
+        ADD ESP, 0x8
+        XOR EDX, EDX
+        CMP EAX, 0x7D0
+        SETL DL
+        POP EDI
+        POP ESI
+        MOV EAX, EDX
+        POP EBX
+        PUSH 0x00580538
+        RET
+    hook_end:
+		JMP[hSlifer_3.Trampoline]
+    }
+
+}
+__declspec(naked) void PatchSpellSPeed()
+{
+	__asm
+	{
+	hook:
+		CMP EAX, 0x777
+		JNE hook_end
+        MOV EAX, 0x0057e0a2
+        JMP EAX
+	hook_end :
+		JMP[hSlifer_4.Trampoline]
+	}
+}
+
+__declspec(naked) void GiveGodsActivatableEffect()
 {
     __asm
     {
     hook:
         CMP EAX, 0x776
+        JE hook_end
+        CMP EAX, 0x777
         JE hook_end
         CMP EAX, 0x778
         JE hook_end
@@ -47,7 +116,7 @@ __declspec(naked) void GiveObeliskAndRaIgnition()
         JMP EAX
     }
 }
-__declspec(naked) void AddRaToLP_PayingFunction()
+__declspec(naked) void AddRaToLPCostPayingFunction()
 {
     __asm
     {
@@ -123,12 +192,15 @@ void GodCards()
 void Slifer()
 {
     hSlifer_1 = Utils::InstallHook((void*)0x0056e065, 5, (void*)SliferChangeATK);
+	hSlifer_2 = Utils::InstallHook((void*)0x0058d3ff, 5, (void*)PatchTrapHoleEffect);
+	hSlifer_3 = Utils::InstallHook((void*)0x00580508, 5, (void*)PatchTrapHoleCondition);
+	hSlifer_4 = Utils::InstallHook((void*)0x0057e06f, 5, (void*)PatchSpellSPeed);
 }
 void Obelisk()
 {
-	hObelisk_1 = Utils::InstallHook((void*)0x00568042, 5, (void*)GiveObeliskAndRaIgnition);
+	hObelisk_1 = Utils::InstallHook((void*)0x00568042, 5, (void*)GiveGodsActivatableEffect);
 }
 void Ra()
 {
-	hRa_1 = Utils::InstallHook((void*)0x0057c3d5, 5, (void*)AddRaToLP_PayingFunction);
+	hRa_1 = Utils::InstallHook((void*)0x0057c3d5, 5, (void*)AddRaToLPCostPayingFunction);
 }

@@ -5,10 +5,12 @@
 void GodCards();
 void Slifer();
 void Obelisk();
+void Ra();
 
 Utils::Hook hTribute_1;
 Utils::Hook hSlifer_1;
 Utils::Hook hObelisk_1;
+Utils::Hook hRa_1;
 
 __declspec(naked) void SliferChangeATK()
 {
@@ -16,31 +18,46 @@ __declspec(naked) void SliferChangeATK()
     {
     hook:
         CMP EAX, 0x777
-            JNE hook_end
-            MOV AL, byte ptr[ESI + 0xa55d68]
-            AND EAX, 0xff
-            LEA EAX, [EAX + EAX * 0x4]
-            LEA EBP, [EAX + EAX * 0x4]
-            LEA EBP, [EBP + EBP * 0x4]
-            SHL EBP, 0x3
-            MOV dword ptr[ESP + 0x18], EBP
-            MOV EAX, 0x0056df89
-            JMP EAX
-            hook_end :
+        JNE hook_end
+        MOV AL, byte ptr[ESI + 0xa55d68]
+        AND EAX, 0xff
+        LEA EAX, [EAX + EAX * 0x4]
+        LEA EBP, [EAX + EAX * 0x4]
+        LEA EBP, [EBP + EBP * 0x4]
+        SHL EBP, 0x3
+        MOV dword ptr[ESP + 0x18], EBP
+        MOV EAX, 0x0056df89
+        JMP EAX
+    hook_end :
         JMP[hSlifer_1.Trampoline]
     }
 }
-__declspec(naked) void GiveObeliskIgnition()
+__declspec(naked) void GiveObeliskAndRaIgnition()
 {
     __asm
     {
     hook:
         CMP EAX, 0x776
-        JNE hook_end
+        JE hook_end
+        CMP EAX, 0x778
+        JE hook_end
+        JMP [hObelisk_1.Trampoline]
+    hook_end:
         MOV EAX, 0x0056813b
         JMP EAX
-    hook_end:
-        JMP [hObelisk_1.Trampoline]
+    }
+}
+__declspec(naked) void AddRaToLP_PayingFunction()
+{
+    __asm
+    {
+    hook:
+        CMP EAX, 0x778
+        JNE hook_end
+        MOV EAX, 0x0057c44b
+        JMP EAX
+    hook_end :
+        JMP[hRa_1.Trampoline]
     }
 }
 __declspec(naked) void AddTributeRequirement()
@@ -101,6 +118,7 @@ void GodCards()
     // Effects
     Slifer();
 	Obelisk();
+    Ra();
 }
 void Slifer()
 {
@@ -108,5 +126,9 @@ void Slifer()
 }
 void Obelisk()
 {
-	hObelisk_1 = Utils::InstallHook((void*)0x00568042, 5, (void*)GiveObeliskIgnition);
+	hObelisk_1 = Utils::InstallHook((void*)0x00568042, 5, (void*)GiveObeliskAndRaIgnition);
+}
+void Ra()
+{
+	hRa_1 = Utils::InstallHook((void*)0x0057c3d5, 5, (void*)AddRaToLP_PayingFunction);
 }

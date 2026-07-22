@@ -101,4 +101,14 @@ namespace Utils
 
         return hook;
     }
+    void PatchCall(uintptr_t callSite, void* target)
+    {
+        BYTE patch[5];
+        patch[0] = 0xE8;
+
+        *(int32_t*)&patch[1] =
+            (int32_t)((uintptr_t)target - (callSite + 5));
+
+        Utils::WriteBytes((void*)callSite, patch, sizeof(patch));
+    }
 }

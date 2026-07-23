@@ -9,6 +9,7 @@ void Ra();
 
 Utils::Hook hTribute_1;
 Utils::Hook hTribute_2;
+Utils::Hook hTribute_3;
 
 Utils::Hook hSlifer_1;
 Utils::Hook hSlifer_2;
@@ -30,9 +31,9 @@ int tributeDEF_1;
 int tributeDEF_2;
 int tributeDEF_3;
 
-uint16_t monsterIntID;
+uint16_t monsterID;
 
-__declspec(naked) void ATKBuff()
+__declspec(naked) void StatBuff()
 {
     __asm
     {
@@ -194,6 +195,16 @@ __declspec(naked) void ResetRaStatsOnSpecialSummon()
         JMP[hRa_3.Trampoline]
     }
 }
+__declspec(naked) void SaveMonsterID()
+{
+    __asm
+    {
+    hook:
+        MOV monsterID, AX
+    hook_end:
+		JMP[hTribute_3.Trampoline]
+    }
+}
 __declspec(naked) void ModifiedIsMonsterTributable()
 {
     __asm
@@ -297,6 +308,14 @@ __declspec(naked) void AdditionalTributeState()
     __asm
     {
     hook:
+        PUSH EAX
+        MOV AX, monsterID
+        CMP AX, 0x776
+        JL hook_end
+        CMP AX, 0x778
+        JG hook_end
+        POP EAX
+
         TEST DWORD PTR DS : [0x00a54e54] , 0x102
         JZ LAB_1
         MOV EAX, 0x00486c30
@@ -438,6 +457,10 @@ __declspec(naked) void AdditionalTributeState()
 
         PUSH 0x0059e5a5
         RET
+
+    hook_end:
+        POP EAX
+		JMP[hTribute_2.Trampoline]
     }
 }
 DWORD WINAPI MainThread(LPVOID lpParam)
@@ -473,6 +496,7 @@ void GodCards()
     // Add 3 tribute requirement
     hTribute_1 = Utils::InstallHook((void*)0x005aac59, 7, (void*)AddTributeRequirement);
 	hTribute_2 = Utils::InstallHook((void*)0x0059e5a6, 6, (void*)AdditionalTributeState);
+	hTribute_3 = Utils::InstallHook((void*)0x0059df39, 5, (void*)SaveMonsterID);
 
     // Effects
     Slifer();
@@ -481,7 +505,7 @@ void GodCards()
 }
 void Slifer()
 {
-    hSlifer_1 = Utils::InstallHook((void*)0x0056e065, 5, (void*)ATKBuff);
+    hSlifer_1 = Utils::InstallHook((void*)0x0056e065, 5, (void*)StatBuff);
 	hSlifer_2 = Utils::InstallHook((void*)0x0058d3ff, 5, (void*)PatchTrapHoleEffect);
 	hSlifer_3 = Utils::InstallHook((void*)0x00580508, 5, (void*)PatchTrapHoleCondition);
 	hSlifer_4 = Utils::InstallHook((void*)0x0057e06f, 5, (void*)PatchSpellSPeed);

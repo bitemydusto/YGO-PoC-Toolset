@@ -8,6 +8,7 @@ void Obelisk();
 void Ra();
 
 Utils::Hook hTribute_1;
+Utils::Hook hTribute_2;
 
 Utils::Hook hSlifer_1;
 Utils::Hook hSlifer_2;
@@ -23,8 +24,12 @@ int combinedRaATK;
 int combinedRaDEF;
 int tributeATK_1;
 int tributeATK_2;
+int tributeATK_3;
 int tributeDEF_1;
 int tributeDEF_2;
+int tributeDEF_3;
+
+uint16_t monsterIntID;
 
 __declspec(naked) void ATKBuff()
 {
@@ -156,13 +161,19 @@ __declspec(naked) void CombineStatsForRa()
         JNE hook_end
         MOV combinedRaATK, 0x0
         MOV combinedRaDEF, 0x0
+
         MOV EAX, tributeATK_1
         ADD combinedRaATK, EAX
         MOV EAX, tributeATK_2
         ADD combinedRaATK, EAX
+        MOV EAX, tributeATK_3
+        ADD combinedRaATK, EAX
+
         MOV EAX, tributeDEF_1
         ADD combinedRaDEF, EAX
         MOV EAX, tributeDEF_2
+        ADD combinedRaDEF, EAX
+        MOV EAX, tributeDEF_3
         ADD combinedRaDEF, EAX
     hook_end :
         JMP[hRa_2.Trampoline]
@@ -191,8 +202,10 @@ __declspec(naked) void ModifiedIsMonsterTributable()
         AND EAX, 0xFFF
         PUSH EAX
         MOV AL, BYTE PTR DS : [0x00a57809] // Check state
-        CMP AL, 0x3
-        JNE hook_second
+        CMP AL, 0x4
+        JE hook_second
+        CMP AL, 0x5
+        JE hook_third
     hook_first:
         MOV EAX, 0x004027b0
         CALL EAX
@@ -208,6 +221,14 @@ __declspec(naked) void ModifiedIsMonsterTributable()
         MOV EAX, 0x00402800
         CALL EAX
         MOV tributeDEF_2, EAX // Store def of second tribute
+        JMP hook_rest
+    hook_third:
+        MOV EAX, 0x004027b0
+        CALL EAX
+        MOV tributeATK_3, EAX // Store atk of third tribute
+        MOV EAX, 0x00402800
+        CALL EAX
+        MOV tributeDEF_3, EAX // Store def of third tribute
     hook_rest:
         MOV EAX, 0x004022e0
         CALL EAX
@@ -256,6 +277,154 @@ __declspec(naked) void AddTributeRequirement()
         JMP[hTribute_1.Trampoline]
     }
 }
+__declspec(naked) void AdditionalTributeState()
+{
+    __asm
+    {
+    hook:
+        TEST DWORD PTR DS : [0x00a54e54] , 0x102
+        JZ LAB_1
+        MOV EAX, 0x00486c30
+        CALL EAX
+        MOV DL, BYTE PTR DS : [0x00a57808]
+        POP EDI
+        AND EDX, 0xFF
+        POP ESI
+        OR DH, 0x1
+        POP EBP
+        MOV WORD PTR DS : [0x00a57808] , DX
+        XOR EAX, EAX
+        POP EBX
+        ADD ESP, 0x234
+        RET
+    LAB_1 :
+        PUSH 0xF000F0
+        MOV EAX, 0x005aa410
+        CALL EAX
+        ADD ESP, 0x4
+        TEST EAX, EAX
+        JNZ LAB_2
+        MOV EAX, 0x0059eb13
+        JMP EAX
+    LAB_2 :
+        MOV DX, WORD PTR DS : [0x00a5780a]
+        MOV EAX, DWORD PTR DS : [0x00a5504c]
+        MOV ECX, DWORD PTR DS : [0x00a55044]
+        PUSH EAX
+        SHR EDX, 0x8
+        AND EDX, 0x1
+        PUSH ECX
+        PUSH EDX
+        MOV EAX, OFFSET ModifiedIsMonsterTributable
+        CALL EAX
+        ADD ESP, 0xC
+        TEST EAX, EAX
+        JNZ LAB_3
+        MOV EAX, DWORD PTR SS : [ESP + 0x24c]
+        TEST EAX, EAX
+        JNZ LAB_4
+        MOV EAX, 0x0059eb13
+        JMP EAX
+    LAB_4 :
+        MOV DX, WORD PTR DS : [0x00a5780a]
+        MOV EAX, DWORD PTR DS : [0x00a5504c]
+        MOV ECX, DWORD PTR DS : [0x00a55044]
+        PUSH EAX
+        SHR EDX, 0x8
+        AND EDX, 0x1
+        PUSH ECX
+        PUSH EDX
+        MOV EAX, 0x0056a140
+        CALL EAX
+        ADD ESP, 0xC
+        TEST EAX, EAX
+        JNZ LAB_3
+        MOV EAX, 0x0059eb13
+        JMP EAX
+    LAB_3 :
+        MOV AX, WORD PTR DS : [0x00a5780a]
+        SHR EAX, 0x8
+        AND EAX, 0x1
+        PUSH EAX
+        MOV EAX, 0x0056a000
+        CALL EAX
+        ADD ESP, 0x4
+        TEST EAX, EAX
+        JNZ LAB_5
+        MOV CX, WORD PTR DS : [0x00a5780a]
+        MOV EAX, DWORD PTR DS : [0x00a55044]
+        SHR ECX, 0x8
+        AND ECX, 0x1
+        CMP EAX, ECX
+        JZ LAB_6
+        MOV EAX, 0x0059eb13
+        JMP EAX
+    LAB_6 :
+        MOV EDX, DWORD PTR DS : [0x00a5504c]
+        PUSH EDX
+        PUSH EAX
+        MOV EAX, 0x00569e10
+        CALL EAX
+        ADD ESP, 0x8
+        TEST EAX, EAX
+        JNZ LAB_5
+        MOV EAX, 0x0059eb13
+        JMP EAX
+    LAB_5 :
+        MOV EAX, 0x005aa450
+        CALL EAX
+        TEST EAX, EAX
+        JNZ LAB_7
+        MOV EAX, 0x0059eb13
+        JMP EAX
+    LAB_7 :
+        PUSH 0x1
+        MOV EAX, 0x0044f250
+        CALL EAX
+        MOV EAX, DWORD PTR DS : [0x00a55048]
+        MOV ECX, DWORD PTR DS : [0x00a5504c]
+        MOV EDX, DWORD PTR DS : [0x00a55044]
+        ADD EAX, ECX
+        PUSH EAX
+        PUSH EDX
+        MOV EAX, 0x00486bb0
+        CALL EAX
+        MOV EAX, DWORD PTR DS : [0x00a55044]
+        MOV ECX, DWORD PTR DS : [0x00a5504c]
+        MOV EDX, DWORD PTR DS : [0x00a55080]
+
+        AND EAX, 0x1
+        SHL EAX, 0x1E
+
+        AND ECX, 0x7
+        SHL ECX, 0x16
+
+        OR  ECX, EAX
+        OR  ECX, 0x08000000
+
+        AND EDX, 0xB63FFFFF
+        ADD ESP, 0xC
+        OR  ECX, EDX
+
+        MOV DWORD PTR DS : [0x00a55080] , ECX
+        MOV EAX, DWORD PTR DS : [0x00a57808]
+        MOV CL, BYTE PTR DS : [0x00a57808]
+        AND EAX, 0xFF00
+        AND ECX, 0xFF
+        ADD EAX, 0x100
+        POP EDI
+        XOR EAX, ECX
+        POP ESI
+        MOV WORD PTR DS : [0x00a57808] , AX
+        POP EBP
+        XOR EAX, EAX
+        POP EBX
+        ADD ESP, 0x234
+
+        PUSH 0x0059e5a5
+        RET
+    }
+}
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
     GodCards();
@@ -288,6 +457,7 @@ void GodCards()
 
     // Add 3 tribute requirement
     hTribute_1 = Utils::InstallHook((void*)0x005aac59, 7, (void*)AddTributeRequirement);
+	hTribute_2 = Utils::InstallHook((void*)0x0059e5a6, 6, (void*)AdditionalTributeState);
 
     // Effects
     Slifer();

@@ -19,6 +19,7 @@ Utils::Hook hObelisk_1;
 
 Utils::Hook hRa_1;
 Utils::Hook hRa_2;
+Utils::Hook hRa_3;
 
 int combinedRaATK;
 int combinedRaDEF;
@@ -177,6 +178,20 @@ __declspec(naked) void CombineStatsForRa()
         ADD combinedRaDEF, EAX
     hook_end :
         JMP[hRa_2.Trampoline]
+    }
+}
+__declspec(naked) void ResetRaStatsOnSpecialSummon()
+{
+    __asm
+    {
+    hook:
+        AND ECX, 0x0FFF
+        CMP ECX, 0x456
+        JNE hook_end
+        MOV combinedRaATK, 0x0
+        MOV combinedRaDEF, 0x0
+    hook_end:
+        JMP[hRa_3.Trampoline]
     }
 }
 __declspec(naked) void ModifiedIsMonsterTributable()
@@ -479,6 +494,7 @@ void Ra()
 {
 	hRa_1 = Utils::InstallHook((void*)0x0057c3d5, 5, (void*)AddRaToLPCostPayingFunction);
 	hRa_2 = Utils::InstallHook((void*)0x005ad86d, 8, (void*)CombineStatsForRa);
+	hRa_3 = Utils::InstallHook((void*)0x005AD890, 6, (void*)ResetRaStatsOnSpecialSummon);
 
     Utils::PatchCall(0x0059E485, ModifiedIsMonsterTributable);
     Utils::PatchCall(0x0059E644, ModifiedIsMonsterTributable);

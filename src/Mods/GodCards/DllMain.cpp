@@ -10,6 +10,7 @@ void Ra();
 Utils::Hook hTribute_1;
 Utils::Hook hTribute_2;
 Utils::Hook hTribute_3;
+Utils::Hook hTribute_4;
 
 Utils::Hook hSlifer_1;
 Utils::Hook hSlifer_2;
@@ -337,6 +338,22 @@ __declspec(naked) void AdditionalTributeState()
         CALL EAX
         ADD ESP, 0x4
         TEST EAX, EAX
+        JNZ LAB_8
+        MOV EAX, 0x0059eb13
+        JMP EAX 
+    LAB_8:
+        // Check against state 3
+        MOV EAX, DWORD PTR DS : [0x00a55080]
+        MOV ECX, DWORD PTR DS : [0x00a55044]
+        MOV EDX, EAX
+        SHR EDX, 0x1C
+        AND EDX, 0x1
+        CMP ECX, EDX
+        MOV EDX, DWORD PTR DS : [0x00a5504c]
+        JNZ LAB_2
+        SHR EAX, 0x10
+        AND EAX, 0x7
+        CMP EDX, EAX
         JNZ LAB_2
         MOV EAX, 0x0059eb13
         JMP EAX
@@ -463,6 +480,30 @@ __declspec(naked) void AdditionalTributeState()
 		JMP[hTribute_2.Trampoline]
     }
 }
+__declspec(naked) void State5CheckAgainstState4()
+{
+    __asm
+    {
+    hook:
+        MOV EAX, DWORD PTR DS: [0x00a55080]
+        MOV ECX, DWORD PTR DS: [0x00a55044]
+        MOV EDX, EAX
+        SHR EDX, 0x1e
+        AND EDX, 0x1
+        CMP ECX, EDX
+        MOV EDX, DWORD PTR DS: [0x00a5504c]
+        JNZ hook_end
+        MOV ECX, EAX
+        SHR ECX, 0x16
+        AND ECX, 0x7
+        CMP EDX, ECX
+        JNZ hook_end
+        MOV EAX, 0x0059eb13
+        JMP EAX
+    hook_end:
+		JMP[hTribute_4.Trampoline]
+    }
+}
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
     GodCards();
@@ -497,6 +538,7 @@ void GodCards()
     hTribute_1 = Utils::InstallHook((void*)0x005aac59, 7, (void*)AddTributeRequirement);
 	hTribute_2 = Utils::InstallHook((void*)0x0059e5a6, 6, (void*)AdditionalTributeState);
 	hTribute_3 = Utils::InstallHook((void*)0x0059df39, 5, (void*)SaveMonsterID);
+	hTribute_4 = Utils::InstallHook((void*)0x0059e635, 6, (void*)State5CheckAgainstState4);
 
     // Effects
     Slifer();

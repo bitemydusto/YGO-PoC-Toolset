@@ -205,8 +205,22 @@ __declspec(naked) void SaveMonsterID()
     {
     hook:
         MOV monsterID, AX
+        CMP AX, 0x776
+        JL hook_2
+        CMP AX, 0x778
+        JG hook_2
+        PUSH ECX
+        MOV ECX, DWORD PTR DS : [0x005f24c0]
+        MOV BYTE PTR DS : [ECX + 0x76], 0x33
+        POP ECX
+        JMP hook_end
+    hook_2:
+        PUSH ECX
+        MOV ECX, DWORD PTR DS : [0x005f24c0]
+        MOV BYTE PTR DS : [ECX + 0x76], 0x32
+        POP ECX
     hook_end:
-		JMP[hTribute_3.Trampoline]
+        JMP[hTribute_3.Trampoline]
     }
 }
 // Save the stats of the tributes when you hover over them

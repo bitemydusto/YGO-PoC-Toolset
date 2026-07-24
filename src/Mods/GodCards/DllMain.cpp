@@ -199,6 +199,7 @@ __declspec(naked) void ResetRaStatsOnSpecialSummon()
     }
 }
 // Save the the ID of the monster about to be tribute summoned (lvl 7 or higher)
+// Modify tribute summon dialog text based on the amount of tribute needed 
 __declspec(naked) void SaveMonsterID()
 {
     __asm
@@ -279,9 +280,9 @@ __declspec(naked) void ModifiedIsMonsterTributable()
         CALL EAX
         AND EAX, 0xffff
         ADD ESP, 0x4
-        CMP EAX, 781
+        CMP EAX, 0x781
         JL hook_end
-        CMP EAX, 782
+        CMP EAX, 0x782
         JG hook_end
         POP EDI
         XOR EAX, EAX

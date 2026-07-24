@@ -151,6 +151,11 @@
   <ItemGroup>
     <ClInclude Include="..\Utils.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="scripts\obelisk.json" />
+    <None Include="scripts\ra.json" />
+    <None Include="scripts\slifer.json" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

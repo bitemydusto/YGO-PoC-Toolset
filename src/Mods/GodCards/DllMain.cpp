@@ -4,7 +4,6 @@
 
 void GodCards();
 void Slifer();
-void Obelisk();
 void Ra();
 
 Utils::Hook hTribute_1;
@@ -17,7 +16,7 @@ Utils::Hook hSlifer_2;
 Utils::Hook hSlifer_3;
 Utils::Hook hSlifer_4;
 
-Utils::Hook hObelisk_1;
+Utils::Hook hActEffects_1;
 
 Utils::Hook hRa_1;
 Utils::Hook hRa_2;
@@ -136,13 +135,13 @@ __declspec(naked) void GiveGodsActivatableEffect()
         JE hook_end
         CMP EAX, 0x778
         JE hook_end
-        JMP [hObelisk_1.Trampoline]
+        JMP [hActEffects_1.Trampoline]
     hook_end:
         MOV EAX, 0x0056813b
         JMP EAX
     }
 }
-__declspec(naked) void AddRaToLPCostPayingFunction()
+__declspec(naked) void PatchLPCostPayingFunction()
 {
     __asm
     {
@@ -155,12 +154,13 @@ __declspec(naked) void AddRaToLPCostPayingFunction()
         JMP[hRa_1.Trampoline]
     }
 }
+// On normal summon
 __declspec(naked) void CombineStatsForRa()
 {
     __asm
     {
     hook:
-        CMP ECX, 0x456
+        CMP ECX, 0x456 // IntID
         JNE hook_end
         MOV combinedRaATK, 0x0
         MOV combinedRaDEF, 0x0
@@ -188,7 +188,9 @@ __declspec(naked) void ResetRaStatsOnSpecialSummon()
     {
     hook:
         AND ECX, 0x0FFF
-        CMP ECX, 0x456
+        CMP ECX, 0x456 // IntID
+        JNE hook_end
+        CMP BYTE PTR  DS : [0x00a5508c] , 0x24 // Check if the summon type is special summon
         JNE hook_end
         MOV combinedRaATK, 0x0
         MOV combinedRaDEF, 0x0
@@ -196,6 +198,7 @@ __declspec(naked) void ResetRaStatsOnSpecialSummon()
         JMP[hRa_3.Trampoline]
     }
 }
+// Save the the ID of the monster about to be tribute summoned (lvl 7 or higher)
 __declspec(naked) void SaveMonsterID()
 {
     __asm
@@ -206,6 +209,7 @@ __declspec(naked) void SaveMonsterID()
 		JMP[hTribute_3.Trampoline]
     }
 }
+// Save the stats of the tributes when you hover over them
 __declspec(naked) void ModifiedIsMonsterTributable()
 {
     __asm
@@ -233,7 +237,7 @@ __declspec(naked) void ModifiedIsMonsterTributable()
         JE hook_second
         CMP AL, 0x5
         JE hook_third
-    hook_first:
+    hook_first: // State 0x3
         MOV EAX, 0x004027b0
         CALL EAX
         MOV tributeATK_1, EAX // Store atk of first tribute
@@ -241,7 +245,7 @@ __declspec(naked) void ModifiedIsMonsterTributable()
         CALL EAX
         MOV tributeDEF_1, EAX // Store def of first tribute
         JMP hook_rest
-    hook_second:
+    hook_second: // State 0x4
         MOV EAX, 0x004027b0
         CALL EAX
         MOV tributeATK_2, EAX // Store atk of second tribute
@@ -249,7 +253,7 @@ __declspec(naked) void ModifiedIsMonsterTributable()
         CALL EAX
         MOV tributeDEF_2, EAX // Store def of second tribute
         JMP hook_rest
-    hook_third:
+    hook_third: // State 0x5
         MOV EAX, 0x004027b0
         CALL EAX
         MOV tributeATK_3, EAX // Store atk of third tribute
@@ -304,6 +308,7 @@ __declspec(naked) void AddTributeRequirement()
         JMP[hTribute_1.Trampoline]
     }
 }
+// Modfies unused state 4 so it works like state 3 for god cards
 __declspec(naked) void AdditionalTributeState()
 {
     __asm
@@ -443,7 +448,7 @@ __declspec(naked) void AdditionalTributeState()
         MOV EAX, DWORD PTR DS : [0x00a55044]
         MOV ECX, DWORD PTR DS : [0x00a5504c]
         MOV EDX, DWORD PTR DS : [0x00a55080]
-
+        // Bit packing for summon paramaters, using the unused descriptor (0x8000000)
         AND EAX, 0x1
         SHL EAX, 0x1E
 
@@ -480,6 +485,7 @@ __declspec(naked) void AdditionalTributeState()
 		JMP[hTribute_2.Trampoline]
     }
 }
+// Extra check for state 5
 __declspec(naked) void State5CheckAgainstState4()
 {
     __asm
@@ -534,15 +540,19 @@ void GodCards()
     Utils::WriteBytes((void*)0x00402758, "\x90\x90", 2);
     Utils::WriteBytes((void*)0x0040275a, "\xEB\x0D", 2);
 
-    // Add 3 tribute requirement
+	// Implement triple tribute summoning
     hTribute_1 = Utils::InstallHook((void*)0x005aac59, 7, (void*)AddTributeRequirement);
 	hTribute_2 = Utils::InstallHook((void*)0x0059e5a6, 6, (void*)AdditionalTributeState);
 	hTribute_3 = Utils::InstallHook((void*)0x0059df39, 5, (void*)SaveMonsterID);
 	hTribute_4 = Utils::InstallHook((void*)0x0059e635, 6, (void*)State5CheckAgainstState4);
 
+    Utils::PatchCall(0x0059E485, ModifiedIsMonsterTributable);
+    Utils::PatchCall(0x0059E644, ModifiedIsMonsterTributable);
+
     // Effects
+    hActEffects_1 = Utils::InstallHook((void*)0x00568042, 5, (void*)GiveGodsActivatableEffect);
+
     Slifer();
-	Obelisk();
     Ra();
 }
 void Slifer()
@@ -552,16 +562,9 @@ void Slifer()
 	hSlifer_3 = Utils::InstallHook((void*)0x00580508, 5, (void*)PatchTrapHoleCondition);
 	hSlifer_4 = Utils::InstallHook((void*)0x0057e06f, 5, (void*)PatchSpellSPeed);
 }
-void Obelisk()
-{
-	hObelisk_1 = Utils::InstallHook((void*)0x00568042, 5, (void*)GiveGodsActivatableEffect);
-}
 void Ra()
 {
-	hRa_1 = Utils::InstallHook((void*)0x0057c3d5, 5, (void*)AddRaToLPCostPayingFunction);
+	hRa_1 = Utils::InstallHook((void*)0x0057c3d5, 5, (void*)PatchLPCostPayingFunction);
 	hRa_2 = Utils::InstallHook((void*)0x005ad86d, 8, (void*)CombineStatsForRa);
 	hRa_3 = Utils::InstallHook((void*)0x005AD890, 6, (void*)ResetRaStatsOnSpecialSummon);
-
-    Utils::PatchCall(0x0059E485, ModifiedIsMonsterTributable);
-    Utils::PatchCall(0x0059E644, ModifiedIsMonsterTributable);
 }

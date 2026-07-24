@@ -24,4 +24,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="scripts\obelisk.json" />
+    <None Include="scripts\ra.json" />
+    <None Include="scripts\slifer.json" />
+  </ItemGroup>
 </Project>

@@ -55,6 +55,12 @@ namespace Utils
 		memcpy(&value, address, sizeof(value));
 		return value;
 	}
+	static uint16_t ReadUint16(void* address)
+	{
+		uint16_t value;
+		memcpy(&value, address, sizeof(value));
+		return value;
+	}
     static void WriteJump(void* address, size_t size, void* dst)
     {
         if (size < 5) return;

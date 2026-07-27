@@ -1,0 +1,44 @@
+{
+  "EffectScripts": [
+    {
+      "Index": 0,
+      "CardID": "0xf",
+      "Effect": "0x00583560",
+      "AppliesTo": "0x00000000",
+      "Condition": "0x0057F1B0",
+      "Cost": "0x00000000",
+      "Target": "0x00000000"
+    },
+    {
+      "Index": 0,
+      "CardID": "0xf",
+      "Effect": "0x00583560",
+      "AppliesTo": "0x00000000",
+      "Condition": "0x0057F1B0",
+      "Cost": "0x00000000",
+      "Target": "0x00000000"
+    }
+  ],
+  "Fusion2Recipes": [
+    {
+      "Index": 0,
+      "Result": "0xE",
+      "Materials": ["0x8D", "0x124"]
+    }
+  ],
+  "Fusion3Recipes": [
+    {
+      "Index": 0,
+      "Result": "0x17B",
+      "Materials": ["0x0", "0x0", "0x0"]
+    }
+  ],
+  "ActivatableCards": [ "0xF" ],
+  "FlipMonsters": [ "0x1E9", "0x1F4" ],
+  "SpellSpeeds": [
+    {
+      "CardID": "0x76D",
+      "Speed": 2
+    }
+  ]
+}

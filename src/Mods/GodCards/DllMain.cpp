@@ -110,7 +110,7 @@ __declspec(naked) void PatchTrapHoleCondition()
     }
 
 }
-__declspec(naked) void PatchSpellSPeed()
+__declspec(naked) void PatchSpellSpeed()
 {
 	__asm
 	{
@@ -565,7 +565,7 @@ void GodCards()
     Utils::PatchCall(0x0059E644, ModifiedIsMonsterTributable);
 
     // Effects
-    hActEffects_1 = Utils::InstallHook((void*)0x00568042, 5, (void*)GiveGodsActivatableEffect);
+    //hActEffects_1 = Utils::InstallHook((void*)0x00568042, 5, (void*)GiveGodsActivatableEffect);
 
     Slifer();
     Ra();
@@ -575,7 +575,7 @@ void Slifer()
     hSlifer_1 = Utils::InstallHook((void*)0x0056e065, 5, (void*)StatBuff);
 	hSlifer_2 = Utils::InstallHook((void*)0x0058d3ff, 5, (void*)PatchTrapHoleEffect);
 	hSlifer_3 = Utils::InstallHook((void*)0x00580508, 5, (void*)PatchTrapHoleCondition);
-	hSlifer_4 = Utils::InstallHook((void*)0x0057e06f, 5, (void*)PatchSpellSPeed);
+	//hSlifer_4 = Utils::InstallHook((void*)0x0057e06f, 5, (void*)PatchSpellSpeed);
 }
 void Ra()
 {

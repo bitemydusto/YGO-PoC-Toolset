@@ -1,3 +1,8 @@
+# Ignore all files inside any subfolder of Mods
+src/Mods/*/** linguist-detectable=false
+
+# Specific rule for direct files in the Mods folder
+src/Mods/* linguist-detectable=true
+
 src/Mods/Cards.h linguist-detectable=false
-src/Mods/CardEffects/DllMain.cpp linguist-detectable=false
 include/nlohmann/** linguist-vendored

@@ -2,18 +2,10 @@
 
 #include <Windows.h>
 #include "Utils.h"
+#include "FUN.h"
 
 namespace GameData
 {
-    using GetMonsterType_t = uint32_t(__cdecl*)(uint16_t);
-    inline GetMonsterType_t GetMonsterType = reinterpret_cast<GetMonsterType_t>(0x004025D0);
-
-    using GetMonsterAttribute_t = uint32_t(__cdecl*)(uint16_t);
-    inline GetMonsterAttribute_t GetMonsterAttribute = reinterpret_cast<GetMonsterAttribute_t>(0x00402650);
-
-    using ShowDialogue_t = void(__cdecl*)(const char*);
-    inline ShowDialogue_t ShowDialogue = reinterpret_cast<ShowDialogue_t>(0x005bf860);
-
 
     const uint32_t BASE_PLAYER_ADDRESS = 0x00A55D64;
     const uint32_t PLAYER_OFFSET = 0xd44;
@@ -28,11 +20,11 @@ namespace GameData
 
         uint32_t GetAttribute()
         {
-            return GetMonsterAttribute(intID);
+            return FUN::GetMonsterAttribute(intID);
         }
         uint32_t GetType()
         {
-            return GetMonsterType(intID);
+            return FUN::GetMonsterType(intID);
         }
     };
     struct EffectEntry

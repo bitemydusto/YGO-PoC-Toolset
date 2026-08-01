@@ -11,7 +11,9 @@ Utils::Hook hBreaker;
 void Start();
 
 uint32_t __cdecl Effect(uint32_t paramAddress, int param2, int param3);
-bool __cdecl Condition(uint32_t paramAddress, int param2, int param3);
+uint32_t __cdecl Condition(uint32_t paramAddress, int param2, int param3);
+uint32_t __cdecl Cost(uint32_t paramAddress, int param2, int param3);
+
 void StatBuff();
 int __stdcall CheckFlag(uint32_t playerIdx, uint32_t zoneIdx);
 
@@ -41,7 +43,7 @@ void Start()
     script.Effect = reinterpret_cast<uintptr_t>(&Effect);
     script.AppliesTo = 0x0057B4A0;
     script.Condition = reinterpret_cast<uintptr_t>(&Condition);
-    script.Cost = 0;
+    script.Cost = reinterpret_cast<uintptr_t>(&Cost);
     script.Target = 0x005959D0;
 
     int idx = GameData::GetEffectScriptIndex(0x96);
@@ -53,21 +55,27 @@ uint32_t __cdecl Effect(uint32_t paramAddress, int param2, int param3)
     // Original in-game function
 	uint32_t result = DestroyEffect(paramAddress, param2, param3);
 
-    // Set flag
-    GameData::Player player = GameData::GetDuel().players[1];
-    int zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0xF;
-    Utils::WriteUint16((void*)(0x00a56aa8 + 0x10 + 0x90 * zoneIdx + 0x48), 0x1);
 
 	return result;
 }
-bool __cdecl Condition(uint32_t paramAddress, int param2, int param3)
+uint32_t __cdecl Condition(uint32_t paramAddress, int param2, int param3)
 {
-    GameData::Player player = GameData::GetDuel().players[1];
-    int zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0xF;
+    uint8_t zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0xF;
+    uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) &  0x1;
 
-    if (Utils::ReadUint8((void*)(0x00a56aa8 + 0x10 + 0x90 * zoneIdx + 0x48)) == 0x1) return false;
+    if ((Utils::ReadUint8((void*)(0x00a55d64 + 0xD44 * playerIdx + 0x10 + 0x90 * zoneIdx + 0x48)) & 0x1) == 0x1) return 0;
  
-    return true;
+    return 1;
+}
+uint32_t __cdecl Cost(uint32_t paramAddress, int param2, int param3)
+{
+    // Set flag
+    uint8_t zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0xF;
+    uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) &  0x1;
+
+    Utils::WriteUint16((void*)(0x00a55d64 + 0xD44 * playerIdx + 0x10 + 0x90 * zoneIdx + 0x48), 0x1);
+
+    return 1;
 }
 __declspec(naked) void StatBuff()
 {

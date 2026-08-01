@@ -17,6 +17,7 @@ const std::string patchFolder = ".\\patches";
 Utils::Hook hActEffects;
 Utils::Hook hSpellSpeed;
 Utils::Hook hFlipMonster;
+Utils::Hook hSpecialSummon;
 
 struct EffectScript
 {
@@ -50,6 +51,7 @@ std::vector<SpellSpeed> SpellSpeeds;
 
 std::vector<uint16_t> ActivatableCards;
 std::vector<uint16_t> FlipMonsters;
+std::vector<uint16_t> InherentSpecialSummons;
 
 
 void LoadPatches();
@@ -60,10 +62,13 @@ void Log(const std::string& message, bool clearLog = false);
 int __stdcall HasActivatableEffect(uint16_t cardID);
 int __stdcall GetSpellSpeed(uint16_t cardID);
 int __stdcall IsFlipMonster(uint16_t cardID);
+int __stdcall HasInherentlySpecialSummoned(uint16_t cardID);
 
 void PatchActivatableEffects();
 void PatchSpellSpeed();
 void PatchFlipMonsters();
+void PatchInherentSpecialSummon();
+
 
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
@@ -251,6 +256,18 @@ void LoadPatches()
 							FlipMonsters.push_back(cardID);
 						}
 					}
+					// InherentSpecialSummons
+					if (j.contains("InherentSpecialSummons"))
+					{
+						for (const auto& card : j["InherentSpecialSummons"])
+						{
+							uint16_t cardID;
+							std::string s_cardID = card;
+							if (s_cardID.starts_with("0x") || s_cardID.starts_with("0X")) cardID = std::stoul(s_cardID, nullptr, 16);
+							else cardID = std::stoul(s_cardID, nullptr, 10);
+							InherentSpecialSummons.push_back(cardID);
+						}
+					}
 				}
 				Log("Successfully loaded patch: " + file.path().string());
 			}
@@ -268,6 +285,7 @@ void LoadPatches()
 	hActEffects = Utils::InstallHook((void*)0x00568042, 5, (void*)PatchActivatableEffects);
 	hSpellSpeed = Utils::InstallHook((void*)0x0057e06f, 5, (void*)PatchSpellSpeed);
 	hFlipMonster = Utils::InstallHook((void*)0x00567632, 5, (void*)PatchFlipMonsters);
+	hSpecialSummon = Utils::InstallHook((void*)0x00567a43, 5, (void*)PatchInherentSpecialSummon);
 }
 void LoadInMemoryLists()
 {
@@ -406,6 +424,10 @@ int __stdcall IsFlipMonster(uint16_t cardID)
 {
 	return std::find(FlipMonsters.begin(), FlipMonsters.end(), cardID) != FlipMonsters.end();
 }
+int __stdcall HasInherentlySpecialSummoned(uint16_t cardID)
+{
+	return std::find(InherentSpecialSummons.begin(), InherentSpecialSummons.end(), cardID) != InherentSpecialSummons.end();
+}
 __declspec(naked) void PatchFlipMonsters()
 {
 	__asm
@@ -421,6 +443,23 @@ __declspec(naked) void PatchFlipMonsters()
 		JMP EAX
 	hook_end :
 		JMP[hFlipMonster.Trampoline]
+	}
+}
+__declspec(naked) void PatchInherentSpecialSummon()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH EAX
+		CALL OFFSET HasInherentlySpecialSummoned
+		TEST EAX, EAX
+		POP EAX
+		JZ hook_end
+		MOV EAX, 0x00567ab0
+		JMP EAX
+	hook_end :
+		JMP[hSpecialSummon.Trampoline]
 	}
 }
 __declspec(naked) void PatchActivatableEffects()

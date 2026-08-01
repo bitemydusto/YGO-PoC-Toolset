@@ -55,7 +55,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
 }
 void BLS()
 {
-	hBLS_1 = Utils::InstallHook((void*)0x00567a43, 5, AddInherentSpecialSummon);
+	//hBLS_1 = Utils::InstallHook((void*)0x00567a43, 5, AddInherentSpecialSummon);
 	hBLS_2 = Utils::InstallHook((void*)0x005aaeaf, 5, AddSpecialSummonCondition);
 
 	hBLS_3 = Utils::InstallHook((void*)0x0059df41, 5, ChooseSummonState);
@@ -144,7 +144,7 @@ int CanBeSummoned()
 }
 void ShowDialog()
 {
-	GameData::ShowDialogue("Select @31@0 @2LIGHT@0 and @31@0 @2DARK@0 monster from your Graveyard to banish.");
+	FUN::ShowDialogue("Select @31@0 @2LIGHT@0 and @31@0 @2DARK@0 monster from your Graveyard to banish.");
 }
 void LoadSelectionListLight()
 {

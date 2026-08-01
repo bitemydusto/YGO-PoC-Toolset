@@ -14,6 +14,7 @@ Utils::Hook hBLS_5;
 Utils::Hook hBLS_6;
 Utils::Hook hBLS_7;
 Utils::Hook hBLS_8;
+Utils::Hook hEndPhase;
 
 void BLS();
 
@@ -25,6 +26,7 @@ void PatchBanishNeeded();
 void RepeatSelection();
 void PatchEffectToBanish();
 void PatchEffectToBanish2();
+void EndPhaseHook();
 
 int CanBeSummoned();
 void LoadSelectionListLight();
@@ -32,6 +34,7 @@ void LoadSelectionListDark();
 void ShowDialog();
 bool __cdecl AcitvationCondition(uint32_t paramAddress, int param2, int param3);
 void __stdcall PostEffect(uint32_t paramAddress);
+void __stdcall EndPhase();
 
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
@@ -63,6 +66,8 @@ void BLS()
 	hBLS_7 = Utils::InstallHook((void*)0x005777d0, 8, PatchEffectToBanish);
 	hBLS_8 = Utils::InstallHook((void*)0x00576890, 8, PatchEffectToBanish2);
 
+	hEndPhase = Utils::InstallHook((void*)0x00404970, 5, EndPhaseHook);
+
 
 	GameData::EffectScript script;
 	script.CardID = 0x7B;
@@ -81,10 +86,8 @@ bool __cdecl AcitvationCondition(uint32_t paramAddress, int param2, int param3)
 
 	int zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0xF;
 	
-	if (zoneIdx < 0 || zoneIdx > 4)
-	{
-		return false;
-	}
+	if (zoneIdx < 0 || zoneIdx > 4) return false;
+	if ((player.monsterZones[zoneIdx].effectIDs[31] & 0x1) == 0x1) return false;
 	if (((player.monsterZones[zoneIdx].stateFlags >> 17) & 0x1) == 0x1) // Can it change position
 	{
 		if ((player.alreadyAttackedZones >> zoneIdx & 0x1) == 0x1) // Has it already attacked
@@ -97,14 +100,23 @@ bool __cdecl AcitvationCondition(uint32_t paramAddress, int param2, int param3)
 }
 void __stdcall PostEffect(uint32_t paramAddress)
 {
-	//GameData::Player player = GameData::GetDuel().players[1];
+	GameData::Player player = GameData::GetDuel().players[1];
+	int zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0xF;
+	uint16_t stateFlag = Utils::ReadUint16((void*)(0x00a56aa8 + 0x10 + 0x90 * zoneIdx + 0x8C + 2));
 
-	//int zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0xF;
-	//uint32_t stateFlag = player.monsterZones[zoneIdx].stateFlags;
-
-	//uint16_t mask = 0x40000;
-	//uint16_t newFlag = stateFlag |= mask;
-	//Utils::WriteUint32((void*)(0x00a56aa8 + 0x8C * zoneIdx), newFlag);
+	// Make it unable to attack this turn
+	uint16_t mask = 0x4;
+	uint16_t newFlag = stateFlag | mask;
+	Utils::WriteUint16((void*)(0x00a56aa8 + 0x10 + 0x90 * zoneIdx + 0x8C + 2), newFlag);
+	// Set custom once per turn flag
+	Utils::WriteUint16((void*)(0x00a56aa8 + 0x10 + 0x90 * zoneIdx + 0x4A), 0x1);
+}
+void __stdcall EndPhase()
+{
+	for (size_t i = 0; i < 5; i++)
+	{
+		Utils::WriteUint16((void*)(0x00a56aa8 + 0x10 + 0x90 * i + 0x4A), 0x0);
+	}
 }
 int CanBeSummoned()
 {
@@ -292,6 +304,11 @@ __declspec(naked) void RepeatSelection()
 		JMP hook_end
 	hook_no_repeat:
 		MOV selectionIndex, 0x0
+		PUSH EAX
+		MOV EAX, DWORD PTR DS:[0x00a55080]
+		AND EAX, 0xf1ffffff
+		MOV DWORD PTR DS:[0x00a55080], EAX
+		POP EAX
 	hook_end :
 		JMP[hBLS_6.Trampoline]
 	}
@@ -328,5 +345,15 @@ __declspec(naked) void PatchEffectToBanish2()
 		RET
 	hook_end :
 		JMP[hBLS_8.Trampoline]
+	}
+}
+__declspec(naked) void EndPhaseHook()
+{
+	__asm
+	{
+	hook:
+		CALL OFFSET EndPhase
+	hook_end:
+		JMP[hEndPhase.Trampoline]
 	}
 }

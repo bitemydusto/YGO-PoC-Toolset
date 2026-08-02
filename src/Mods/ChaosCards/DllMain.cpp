@@ -12,29 +12,24 @@ Utils::Hook hBLS_3;
 Utils::Hook hBLS_4;
 Utils::Hook hBLS_5;
 Utils::Hook hBLS_6;
-Utils::Hook hBLS_7;
-Utils::Hook hBLS_8;
 Utils::Hook hEndPhase;
 
 void BLS();
 
-void AddInherentSpecialSummon();
 void AddSpecialSummonCondition();
 void ChooseSummonState();
 void ModifySelectionListPopulation();
 void PatchBanishNeeded();
 void RepeatSelection();
-void PatchEffectToBanish();
-void PatchEffectToBanish2();
 void EndPhaseHook();
 
 int CanBeSummoned();
 void LoadSelectionListLight();
 void LoadSelectionListDark();
 void ShowDialog();
-bool __cdecl AcitvationCondition(uint32_t paramAddress, int param2, int param3);
-void __stdcall PostEffect(uint32_t paramAddress);
-void __stdcall EndPhase();
+uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Condition_BLS(unsigned int* param, int param2, int param3);
+void __stdcall EndPhase(uint32_t phase);
 
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
@@ -55,7 +50,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
 }
 void BLS()
 {
-	//hBLS_1 = Utils::InstallHook((void*)0x00567a43, 5, AddInherentSpecialSummon);
 	hBLS_2 = Utils::InstallHook((void*)0x005aaeaf, 5, AddSpecialSummonCondition);
 
 	hBLS_3 = Utils::InstallHook((void*)0x0059df41, 5, ChooseSummonState);
@@ -63,59 +57,81 @@ void BLS()
 	hBLS_5 = Utils::InstallHook((void*)0x0059dea2, 5, PatchBanishNeeded);
 	hBLS_6 = Utils::InstallHook((void*)0x0059faf6, 5, RepeatSelection);
 
-	hBLS_7 = Utils::InstallHook((void*)0x005777d0, 8, PatchEffectToBanish);
-	hBLS_8 = Utils::InstallHook((void*)0x00576890, 8, PatchEffectToBanish2);
-
 	hEndPhase = Utils::InstallHook((void*)0x00404970, 5, EndPhaseHook);
 
 
 	GameData::EffectScript script;
 	script.CardID = 0x7B;
-	script.Effect = 0x00585C10;
+	script.Effect = reinterpret_cast<uintptr_t>(&Effect_BLS);
 	script.AppliesTo = 0x0057A880;
-	script.Condition = reinterpret_cast<uintptr_t>(&AcitvationCondition);
+	script.Condition = reinterpret_cast<uintptr_t>(&Condition_BLS);
 	script.Cost = 0x0;
 	script.Target = 0x00596570;
 
 	int idx = GameData::GetEffectScriptIndex(0x7B);
 	GameData::SetEffectScript(idx, script);
 }
-bool __cdecl AcitvationCondition(uint32_t paramAddress, int param2, int param3)
+uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3)
 {
-	GameData::Player player = GameData::GetDuel().players[1];
+	uint8_t* block = (uint8_t*)param;
 
-	int zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0xF;
-	
-	if (zoneIdx < 0 || zoneIdx > 4) return false;
-	if ((player.monsterZones[zoneIdx].effectIDs[31] & 0x1) == 0x1) return false;
-	if (((player.monsterZones[zoneIdx].stateFlags >> 17) & 0x1) == 0x1) // Can it change position
-	{
-		if ((player.alreadyAttackedZones >> zoneIdx & 0x1) == 0x1) // Has it already attacked
-		{
-			return false;
-		}
-	}
+	// Has effect finished resolving?
+	if (block[4] & 4) return 0;
 
-	return true;
-}
-void __stdcall PostEffect(uint32_t paramAddress)
-{
-	GameData::Player player = GameData::GetDuel().players[1];
-	int zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0xF;
-	uint16_t stateFlag = Utils::ReadUint16((void*)(0x00a56aa8 + 0x10 + 0x90 * zoneIdx + 0x8C + 2));
+	// Get target parameters
+	uint32_t target = 0;
+	if (!FUN::SetTargetParams((uint32_t)block, 0, &target)) return 0;
+
+	uint32_t side = target & 0xff;          // as in original (player in low bits)
+	uint32_t zone = (target >> 8) & 0xff;
+
+	uint32_t* zoneCard = (uint32_t*)(0x00a55d74 + (side & 1) * 0xD44 + zone * 0x90);
+	if ((*zoneCard & 0xfff) == 0) return 0;
+
+	// Banish: dest 0xF, flags 0 (like FUN_005778a0)
+	uint32_t mask = 1u << ((((int)(char)side) << 4) + (char)zone & 0x1f);
+	FUN::SendCardFromField(block, mask, 0xf, 0);
+
+	uint8_t playerIdx = *(param + 2) & 0x1;
+	uint8_t zoneIdx = (*(param + 2) >> 1) & 0x1;
+	GameData::Player player = GameData::GetDuel().players[playerIdx];
 
 	// Make it unable to attack this turn
-	uint16_t mask = 0x4;
-	uint16_t newFlag = stateFlag | mask;
-	Utils::WriteUint16((void*)(0x00a56aa8 + 0x10 + 0x90 * zoneIdx + 0x8C + 2), newFlag);
+	uint16_t stateFlag = player.monsterZones[zoneIdx].stateFlags | 0x4;
+	Utils::WriteUint16((void*)(0x00a55d64 + playerIdx * 0xD44 + 0x10 + 0x90 * zoneIdx + 0x8C + 2), stateFlag);
 	// Set custom once per turn flag
-	Utils::WriteUint16((void*)(0x00a56aa8 + 0x10 + 0x90 * zoneIdx + 0x4A), 0x1);
+	Utils::WriteUint16((void*)(0x00a55d64 + playerIdx * 0xD44 + 0x10 + 0x90 * zoneIdx + 0x4A), 0x1);
+
+	return 0 & 0xffff0000;
 }
-void __stdcall EndPhase()
+uint32_t __cdecl Condition_BLS(unsigned int* param, int param2, int param3)
 {
-	for (size_t i = 0; i < 5; i++)
+	uint8_t playerIdx = *(param + 2) & 0x1;
+	uint8_t zoneIdx = (*(param + 2) >> 1) & 0x1;
+	GameData::Player player = GameData::GetDuel().players[playerIdx];
+
+	
+	if (zoneIdx < 0 || zoneIdx > 4) return 0;
+	// Used its effect this turn
+	if ((player.monsterZones[zoneIdx].effectIDs[31] & 0x1) == 0x1) return 0;
+	// Can't change position
+	if ((player.monsterZones[zoneIdx].stateFlags & 0x20000) != 0)
 	{
-		Utils::WriteUint16((void*)(0x00a56aa8 + 0x10 + 0x90 * i + 0x4A), 0x0);
+		// Attacked this turn
+		if (((player.alreadyAttackedZones >> zoneIdx) & 0x1) == 0x1) return 0;
+	}
+
+	return 1;
+}
+void __stdcall EndPhase(uint32_t phase)
+{
+	if (phase != 5) return;
+	for (size_t i = 0; i < 2; i++)
+	{
+		for (size_t j = 0; j < 5; j++)
+		{
+			Utils::WriteUint16((void*)(0x00a55d64 + i * 0xD44 + 0x10 + j* 0x90 + 0x4A), 0x0);
+		}
 	}
 }
 int CanBeSummoned()
@@ -183,19 +199,6 @@ void LoadSelectionListDark()
 	}
 
 	GameData::ChangeSelectionList(darkCards);
-}
-__declspec(naked) void AddInherentSpecialSummon()
-{
-    __asm
-    {
-    hook:
-        CMP EAX, 0x7B
-        JNE hook_end
-        MOV EAX, 0x00567ab0
-        JMP EAX
-    hook_end :
-        JMP[hBLS_1.Trampoline]
-    }
 }
 __declspec(naked) void AddSpecialSummonCondition()
 {
@@ -313,45 +316,12 @@ __declspec(naked) void RepeatSelection()
 		JMP[hBLS_6.Trampoline]
 	}
 }
-__declspec(naked) void PatchEffectToBanish()
-{
-	__asm
-	{
-	hook:
-		CMP EAX, 0x7B
-		JNE hook_end
-		MOV isBLS, 0x1
-		PUSH EAX
-		PUSH EBX
-		CALL OFFSET PostEffect
-		POP EAX
-	hook_end :
-		JMP[hBLS_7.Trampoline]
-	}
-}
-__declspec(naked) void PatchEffectToBanish2()
-{
-	__asm
-	{
-	hook:
-		CMP isBLS, 0x1
-		JNE hook_end
-		MOV isBLS, 0x0
-		MOV EAX, DWORD PTR DS:[ESP + 0x8]
-		MOV ECX, DWORD PTR DS:[ESP + 0x4]
-		PUSH 0x0 // No destroy sfx
-		PUSH 0xf // Banish
-		PUSH 0x0057689c
-		RET
-	hook_end :
-		JMP[hBLS_8.Trampoline]
-	}
-}
 __declspec(naked) void EndPhaseHook()
 {
 	__asm
 	{
 	hook:
+        PUSH DWORD PTR DS:[ESP+4]
 		CALL OFFSET EndPhase
 	hook_end:
 		JMP[hEndPhase.Trampoline]

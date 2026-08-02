@@ -8,6 +8,7 @@
     <File Path="src/Mods/Cards.h" />
     <File Path="src/Mods/FUN.h" />
     <File Path="src/Mods/GameData.h" />
+    <File Path="src/Mods/HookAPI.h" />
     <File Path="src/Mods/Utils.h" />
     <Project Path="src/Mods/Breaker/Breaker.vcxproj" Id="7862ba4a-6ef1-4cb3-a956-e3a0e783f9bc" />
     <Project Path="src/Mods/CardEffects/CardEffects.vcxproj" Id="14f06872-7743-4608-b311-b637ca2fc6a5" />

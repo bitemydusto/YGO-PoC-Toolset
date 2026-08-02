@@ -2,6 +2,7 @@
 
 #include "Utils.h"
 #include "GameData.h"
+#include "HookAPI.h"
 
 int isBLS = 0;
 int selectionIndex = 0;
@@ -16,19 +17,21 @@ Utils::Hook hEndPhase;
 
 void BLS();
 
-void AddSpecialSummonCondition();
 void ChooseSummonState();
 void ModifySelectionListPopulation();
 void PatchBanishNeeded();
 void RepeatSelection();
 void EndPhaseHook();
 
-int CanBeSummoned();
+bool CanBeSummoned();
 void LoadSelectionListLight();
 void LoadSelectionListDark();
 void ShowDialog();
+
 uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3);
-uint32_t __cdecl Condition_BLS(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Condition_BLS(uint32_t paramAddress, int param2, int param3);
+uint32_t __cdecl Cost_BLS(uint32_t paramAddress, int param2, int param3);
+
 void __stdcall EndPhase(uint32_t phase);
 
 DWORD WINAPI MainThread(LPVOID lpParam)
@@ -50,7 +53,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
 }
 void BLS()
 {
-	hBLS_2 = Utils::InstallHook((void*)0x005aaeaf, 5, AddSpecialSummonCondition);
+	Register_SpecialSummonCondition(0x7B, CanBeSummoned);
 
 	hBLS_3 = Utils::InstallHook((void*)0x0059df41, 5, ChooseSummonState);
 	hBLS_4 = Utils::InstallHook((void*)0x00599da4, 5, ModifySelectionListPopulation);
@@ -65,7 +68,7 @@ void BLS()
 	script.Effect = reinterpret_cast<uintptr_t>(&Effect_BLS);
 	script.AppliesTo = 0x0057A880;
 	script.Condition = reinterpret_cast<uintptr_t>(&Condition_BLS);
-	script.Cost = 0x0;
+	script.Cost = reinterpret_cast<uintptr_t>(&Cost_BLS);
 	script.Target = 0x00596570;
 
 	int idx = GameData::GetEffectScriptIndex(0x7B);
@@ -92,22 +95,14 @@ uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3)
 	uint32_t mask = 1u << ((((int)(char)side) << 4) + (char)zone & 0x1f);
 	FUN::SendCardFromField(block, mask, 0xf, 0);
 
-	uint8_t playerIdx = *(param + 2) & 0x1;
-	uint8_t zoneIdx = (*(param + 2) >> 1) & 0x1;
-	GameData::Player player = GameData::GetDuel().players[playerIdx];
-
-	// Make it unable to attack this turn
-	uint16_t stateFlag = player.monsterZones[zoneIdx].stateFlags | 0x4;
-	Utils::WriteUint16((void*)(0x00a55d64 + playerIdx * 0xD44 + 0x10 + 0x90 * zoneIdx + 0x8C + 2), stateFlag);
-	// Set custom once per turn flag
-	Utils::WriteUint16((void*)(0x00a55d64 + playerIdx * 0xD44 + 0x10 + 0x90 * zoneIdx + 0x4A), 0x1);
-
-	return 0 & 0xffff0000;
+	return 0;
 }
-uint32_t __cdecl Condition_BLS(unsigned int* param, int param2, int param3)
+uint32_t __cdecl Condition_BLS(uint32_t paramAddress, int param2, int param3)
 {
-	uint8_t playerIdx = *(param + 2) & 0x1;
-	uint8_t zoneIdx = (*(param + 2) >> 1) & 0x1;
+	//uint8_t playerIdx = *(param + 2) & 0x1;
+	//uint8_t zoneIdx = (*(param + 2) >> 1) & 0x1;
+	uint8_t zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0x1;
+	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
 	GameData::Player player = GameData::GetDuel().players[playerIdx];
 
 	
@@ -123,6 +118,23 @@ uint32_t __cdecl Condition_BLS(unsigned int* param, int param2, int param3)
 
 	return 1;
 }
+uint32_t __cdecl Cost_BLS(uint32_t paramAddress, int param2, int param3)
+{
+	//uint8_t playerIdx = *(param + 2) & 0x1;
+	//uint8_t zoneIdx = (*(param + 2) >> 1) & 0x1;
+	uint8_t zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0x1;
+	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
+
+	GameData::Player player = GameData::GetDuel().players[playerIdx];
+
+	// Make it unable to attack this turn
+	uint16_t stateFlag = player.monsterZones[zoneIdx].stateFlags | 0x4;
+	Utils::WriteUint16((void*)(0x00a55d64 + playerIdx * 0xD44 + 0x10 + 0x90 * zoneIdx + 0x8C + 2), stateFlag);
+	// Set custom once per turn flag
+	Utils::WriteUint16((void*)(0x00a55d64 + playerIdx * 0xD44 + 0x10 + 0x90 * zoneIdx + 0x4A), 0x1);
+
+	return 1;
+}
 void __stdcall EndPhase(uint32_t phase)
 {
 	if (phase != 5) return;
@@ -134,7 +146,7 @@ void __stdcall EndPhase(uint32_t phase)
 		}
 	}
 }
-int CanBeSummoned()
+bool CanBeSummoned()
 {
 	GameData::Player player = GameData::GetDuel().players[1];
 
@@ -156,7 +168,7 @@ int CanBeSummoned()
 		}
 	}
 
-	return (numOfLight > 0 && numOfDark > 0) ? 1 : 0;
+	return (numOfLight > 0 && numOfDark > 0) ? true : false;
 }
 void ShowDialog()
 {
@@ -199,26 +211,6 @@ void LoadSelectionListDark()
 	}
 
 	GameData::ChangeSelectionList(darkCards);
-}
-__declspec(naked) void AddSpecialSummonCondition()
-{
-	__asm
-	{
-	hook:
-		CMP EAX, 0x7B
-		JNE hook_end
-
-		PUSH EAX
-		CALL OFFSET CanBeSummoned
-		TEST EAX, EAX
-		POP EAX
-		JZ hook_end
-
-        PUSH 0x005ab148
-        RET
-	hook_end :
-		JMP[hBLS_2.Trampoline]
-	}
 }
 __declspec(naked) void ChooseSummonState()
 {

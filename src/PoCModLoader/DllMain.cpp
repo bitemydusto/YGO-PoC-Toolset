@@ -1,6 +1,7 @@
 #include <Windows.h>
 
 #include "ModLoader.h"
+#include "HookManager.h"
 
 #pragma comment(linker, "/export:acmFormatSuggest=C:\\Windows\\System32\\msacm32.acmFormatSuggest")
 #pragma comment(linker, "/export:acmStreamClose=C:\\Windows\\System32\\msacm32.acmStreamClose")
@@ -13,9 +14,10 @@
 
 DWORD WINAPI LoaderThread(LPVOID lpParam)
 {
-    //LoadLibraryA("psapi.dll");
     ModLoader loader;
     loader.LoadMods();
+	HookManager::InstallHooks();
+
     return S_OK;
 }
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID)

@@ -18,7 +18,7 @@ namespace Utils
         SIZE_T Length;
     };
 
-    Hook InstallHook(void* target, size_t length, void* detour);
+    inline Hook InstallHook(void* target, size_t length, void* detour);
 
     static void WriteBytes(void* address, const void* data, size_t size)
     {
@@ -103,7 +103,7 @@ namespace Utils
         VirtualProtect(address, size, old, &old);
         FlushInstructionCache(GetCurrentProcess(), address, size);
     }
-    Hook InstallHook(void* target, size_t length, void* detour)
+    inline Hook InstallHook(void* target, size_t length, void* detour)
     {
         Hook hook{};
 
@@ -124,7 +124,7 @@ namespace Utils
 
         return hook;
     }
-    void PatchCall(uintptr_t callSite, void* target)
+    inline void PatchCall(uintptr_t callSite, void* target)
     {
         BYTE patch[5];
         patch[0] = 0xE8;

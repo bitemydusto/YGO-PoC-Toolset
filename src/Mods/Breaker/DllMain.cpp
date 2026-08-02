@@ -81,8 +81,11 @@ uint32_t __cdecl Cost_Breaker(uint32_t paramAddress, int param2, int param3)
 }
 void __stdcall ChangeStat(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx)
 {
+	// Check Breaker's unique flag to see if the stat change should be applied
     if (Utils::ReadUint8((void*)(0x00a55d64 + 0xD44 * playerIdx + 0x10 + 0x90 * zoneIdx + 0x48)) == 0x1)
     {
+        // Modify stats
+		// 0x20 = ATK, 0x24 = DEF
         Utils::WriteInt32((void*)(statAddress + 0x20), -300);
     }
 }

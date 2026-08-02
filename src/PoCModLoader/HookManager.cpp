@@ -4,6 +4,7 @@ namespace
 {
 	void* gSpecialSummonTrampoline = nullptr;
 	void* gPhaseTrampoline = nullptr;
+	void* gStateChangeTrampoline = nullptr;
 }
 
 void HookManager::InstallHooks()
@@ -13,6 +14,9 @@ void HookManager::InstallHooks()
 
 	hPhase = Utils::InstallHook((void*)0x00404970, 5, PatchPhase);
 	gPhaseTrampoline = hPhase.Trampoline;
+
+	hStateChange = Utils::InstallHook((void*)0x0056dde9, 5, PatchStateChange);
+	gStateChangeTrampoline = hStateChange.Trampoline;
 }
 void HookManager::Register_SpecialSummonCondition(uint16_t id, Condition condition)
 {
@@ -75,6 +79,48 @@ __declspec(naked) void PatchPhase()
 		CALL HookManager::Dispatch_Phase
 	hook_end :
 		JMP[gPhaseTrampoline]
+	}
+}
+void HookManager::Register_StateChange(uint16_t id, StateChange stateChange)
+{
+	// Check if the card ID is already registered
+	for (const auto& hook : stateChangeHooks)
+	{
+		if (hook.cardID == id) return;
+	}
+	stateChangeHooks.push_back({ id, stateChange });
+}
+bool __stdcall HookManager::Dispatch_StateChange(uint16_t id, uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx)
+{
+	for (const auto& hook : stateChangeHooks)
+	{
+		if (hook.cardID == id)
+		{
+			hook.stateChange(statAddress, playerIdx, zoneIdx);
+			return true;
+		}
+	}
+	return false;
+}
+__declspec(naked) void PatchStateChange()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH EDI
+		PUSH DWORD PTR DS : [ESP + 68]
+		PUSH ESP
+		PUSH EAX
+		CALL HookManager::Dispatch_StateChange
+		TEST AL, AL
+		POP EAX
+		JZ hook_end
+
+		MOV EAX, 0x0056df89
+		JMP EAX
+	hook_end :
+		JMP[gStateChangeTrampoline]
 	}
 }
 

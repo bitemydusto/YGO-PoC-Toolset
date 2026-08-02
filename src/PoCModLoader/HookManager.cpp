@@ -3,12 +3,16 @@
 namespace
 {
 	void* gSpecialSummonTrampoline = nullptr;
+	void* gPhaseTrampoline = nullptr;
 }
 
 void HookManager::InstallHooks()
 {
 	hSpecialSummonCondition = Utils::InstallHook((void*)0x005aaeaf, 5, PatchSpecialSummonCondition);
 	gSpecialSummonTrampoline = hSpecialSummonCondition.Trampoline;
+
+	hPhase = Utils::InstallHook((void*)0x00404970, 5, PatchPhase);
+	gPhaseTrampoline = hPhase.Trampoline;
 }
 void HookManager::Register_SpecialSummonCondition(uint16_t id, Condition condition)
 {
@@ -48,3 +52,29 @@ __declspec(naked) void PatchSpecialSummonCondition()
 		JMP[gSpecialSummonTrampoline]
 	}
 }
+void HookManager::Register_Phase(uint32_t phase, Event event)
+{
+	phaseHooks.push_back({ phase, event });
+}
+void __stdcall HookManager::Dispatch_Phase(uint32_t phase)
+{
+	for (const auto& hook : phaseHooks)
+	{
+		if (hook.phase == phase)
+		{
+			hook.event();
+		}
+	}
+}
+__declspec(naked) void PatchPhase()
+{
+	__asm
+	{
+	hook:
+		PUSH DWORD PTR DS : [ESP + 4]
+		CALL HookManager::Dispatch_Phase
+	hook_end :
+		JMP[gPhaseTrampoline]
+	}
+}
+

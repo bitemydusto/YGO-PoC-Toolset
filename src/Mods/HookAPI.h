@@ -14,4 +14,5 @@ using Condition = bool(*)();
 extern "C"
 {
     MOD_API void Register_SpecialSummonCondition(uint16_t id, Condition condition);
+    MOD_API void Register_Phase(uint32_t phase, void(__stdcall* event)());
 }

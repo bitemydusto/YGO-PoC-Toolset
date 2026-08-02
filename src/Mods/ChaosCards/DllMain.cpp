@@ -21,7 +21,6 @@ void ChooseSummonState();
 void ModifySelectionListPopulation();
 void PatchBanishNeeded();
 void RepeatSelection();
-void EndPhaseHook();
 
 bool CanBeSummoned();
 void LoadSelectionListLight();
@@ -32,7 +31,7 @@ uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Condition_BLS(uint32_t paramAddress, int param2, int param3);
 uint32_t __cdecl Cost_BLS(uint32_t paramAddress, int param2, int param3);
 
-void __stdcall EndPhase(uint32_t phase);
+void __stdcall EndPhase();
 
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
@@ -54,13 +53,12 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
 void BLS()
 {
 	Register_SpecialSummonCondition(0x7B, CanBeSummoned);
+	Register_Phase(5, EndPhase);
 
 	hBLS_3 = Utils::InstallHook((void*)0x0059df41, 5, ChooseSummonState);
 	hBLS_4 = Utils::InstallHook((void*)0x00599da4, 5, ModifySelectionListPopulation);
 	hBLS_5 = Utils::InstallHook((void*)0x0059dea2, 5, PatchBanishNeeded);
 	hBLS_6 = Utils::InstallHook((void*)0x0059faf6, 5, RepeatSelection);
-
-	hEndPhase = Utils::InstallHook((void*)0x00404970, 5, EndPhaseHook);
 
 
 	GameData::EffectScript script;
@@ -135,9 +133,8 @@ uint32_t __cdecl Cost_BLS(uint32_t paramAddress, int param2, int param3)
 
 	return 1;
 }
-void __stdcall EndPhase(uint32_t phase)
+void __stdcall EndPhase()
 {
-	if (phase != 5) return;
 	for (size_t i = 0; i < 2; i++)
 	{
 		for (size_t j = 0; j < 5; j++)
@@ -306,16 +303,5 @@ __declspec(naked) void RepeatSelection()
 		POP EAX
 	hook_end :
 		JMP[hBLS_6.Trampoline]
-	}
-}
-__declspec(naked) void EndPhaseHook()
-{
-	__asm
-	{
-	hook:
-        PUSH DWORD PTR DS:[ESP+4]
-		CALL OFFSET EndPhase
-	hook_end:
-		JMP[hEndPhase.Trampoline]
 	}
 }

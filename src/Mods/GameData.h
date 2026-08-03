@@ -59,6 +59,7 @@ namespace GameData
 
         MonsterZone monsterZones[5];
         SpellTrapZone spellTrapZones[5];
+		Card fieldSpell;
 
         Card hand[80];
         Card deck[80];
@@ -131,6 +132,10 @@ namespace GameData
 
                 address += 0x90;
             }
+            Card fieldSpell;
+            fieldSpell.intID = Utils::ReadUint32((void*)(address)) & 0xFFF;
+            fieldSpell.fullValue = Utils::ReadUint32((void*)(address));
+            player.fieldSpell = fieldSpell;
 
             address = BASE_PLAYER_ADDRESS + (i * PLAYER_OFFSET) + 0x6d0;
             for (size_t j = 0; j < 80; j++)

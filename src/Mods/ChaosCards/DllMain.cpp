@@ -6,6 +6,7 @@
 
 int isBLS = 0;
 int selectionIndex = 0;
+unsigned int cedDamage;
 
 Utils::Hook hBLS_1;
 Utils::Hook hBLS_2;
@@ -31,6 +32,11 @@ uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Condition_BLS(uint32_t paramAddress, int param2, int param3);
 uint32_t __cdecl Cost_BLS(uint32_t paramAddress, int param2, int param3);
 
+uint32_t __cdecl Effect_CED(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Condition_CED(uint32_t paramAddress, int param2, int param3);
+uint32_t __cdecl Cost_CED(uint32_t paramAddress, int param2, int param3);
+
+
 void __stdcall EndPhase();
 
 DWORD WINAPI MainThread(LPVOID lpParam)
@@ -53,6 +59,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
 void BLS()
 {
 	Register_SpecialSummonCondition(0x7B, CanBeSummoned);
+	Register_SpecialSummonCondition(0x1BD, CanBeSummoned);
 	Register_Phase(5, EndPhase);
 
 	hBLS_3 = Utils::InstallHook((void*)0x0059df41, 5, ChooseSummonState);
@@ -61,16 +68,28 @@ void BLS()
 	hBLS_6 = Utils::InstallHook((void*)0x0059faf6, 5, RepeatSelection);
 
 
-	GameData::EffectScript script;
-	script.CardID = 0x7B;
-	script.Effect = reinterpret_cast<uintptr_t>(&Effect_BLS);
-	script.AppliesTo = 0x0057A880;
-	script.Condition = reinterpret_cast<uintptr_t>(&Condition_BLS);
-	script.Cost = reinterpret_cast<uintptr_t>(&Cost_BLS);
-	script.Target = 0x00596570;
+	GameData::EffectScript scriptBLS;
+	scriptBLS.CardID = 0x7B;
+	scriptBLS.Effect = reinterpret_cast<uintptr_t>(&Effect_BLS);
+	scriptBLS.AppliesTo = 0x0057A880;
+	scriptBLS.Condition = reinterpret_cast<uintptr_t>(&Condition_BLS);
+	scriptBLS.Cost = reinterpret_cast<uintptr_t>(&Cost_BLS);
+	scriptBLS.Target = 0x00596570;
 
 	int idx = GameData::GetEffectScriptIndex(0x7B);
-	GameData::SetEffectScript(idx, script);
+	GameData::SetEffectScript(idx, scriptBLS);
+
+
+	GameData::EffectScript scriptCED;
+	scriptCED.CardID = 0x1BD;
+	scriptCED.Effect = reinterpret_cast<uintptr_t>(&Effect_CED);
+	scriptCED.AppliesTo = 0;
+	scriptCED.Condition = reinterpret_cast<uintptr_t>(&Condition_CED);
+	scriptCED.Cost = reinterpret_cast<uintptr_t>(&Cost_CED);
+	scriptCED.Target = 0x00593CB0;
+
+	idx = GameData::GetEffectScriptIndex(0x1BD);
+	GameData::SetEffectScript(idx, scriptCED);
 }
 uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3)
 {
@@ -95,6 +114,62 @@ uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3)
 
 	return 0;
 }
+uint32_t __cdecl Effect_CED(unsigned int* param, int param2, int param3)
+{
+	uint8_t* block = (uint8_t*)param;
+
+	// Has effect finished resolving?
+	if (block[4] & 4) return 0;
+
+	uint8_t state = Utils::ReadUint8((void*)(0x00a55c88 + 2));
+	uint8_t playerIdx = block[2] & 0x1;
+	uint8_t opp = playerIdx ^ 0x1;
+	GameData::Duel duel = GameData::GetDuel();
+
+
+	switch (state)
+	{
+		case 0x80:
+		{
+			if (duel.players[1].cardsInHand != 0)
+			{
+				FUN::DiscardFromHand(1, 0, 1);
+				return 0x80;
+			}
+			unsigned int cardsOnOppField = 0;
+			for (size_t i = 0; i < 5; i++)
+			{
+				if (duel.players[opp].monsterZones[i].card.intID != 0) cardsOnOppField++;
+				if (duel.players[opp].spellTrapZones[i].card.intID != 0) cardsOnOppField++;
+			}
+			if (duel.players[opp].fieldSpell.intID != 0) cardsOnOppField++;
+			cedDamage = (duel.players[opp].cardsInHand + cardsOnOppField) * 300;
+
+		}break;
+		case 0x7f:
+		{
+			if (duel.players[0].cardsInHand != 0)
+			{
+				FUN::DiscardFromHand(0, 0, 1);
+				return 0x7f;
+			}
+			return 0x7d;
+		}break;
+		case 0x7d:
+		{
+			FUN::SendCardFromField(block, 0x07ff07ff, 0xe, 0);
+			return 0x7e;
+		}break;
+		case 0x7e:
+		{
+			FUN::DealEffectDamage(!playerIdx, cedDamage);
+			return 0;
+		}break;
+	}
+
+
+	return 0x7f;
+}
 uint32_t __cdecl Condition_BLS(uint32_t paramAddress, int param2, int param3)
 {
 	//uint8_t playerIdx = *(param + 2) & 0x1;
@@ -116,6 +191,15 @@ uint32_t __cdecl Condition_BLS(uint32_t paramAddress, int param2, int param3)
 
 	return 1;
 }
+uint32_t __cdecl Condition_CED(uint32_t paramAddress, int param2, int param3)
+{
+	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
+	GameData::Player player = GameData::GetDuel().players[playerIdx];
+
+	if (player.lifePoints <= 1000) return 0;
+
+	return 1;
+}
 uint32_t __cdecl Cost_BLS(uint32_t paramAddress, int param2, int param3)
 {
 	//uint8_t playerIdx = *(param + 2) & 0x1;
@@ -131,6 +215,13 @@ uint32_t __cdecl Cost_BLS(uint32_t paramAddress, int param2, int param3)
 	// Set custom once per turn flag
 	Utils::WriteUint16((void*)(0x00a55d64 + playerIdx * 0xD44 + 0x10 + 0x90 * zoneIdx + 0x4A), 0x1);
 
+	return 1;
+}
+uint32_t __cdecl Cost_CED(uint32_t paramAddress, int param2, int param3)
+{
+	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
+	GameData::Player player = GameData::GetDuel().players[playerIdx];
+	FUN::PayLifePoints(playerIdx, 1000);
 	return 1;
 }
 void __stdcall EndPhase()
@@ -215,8 +306,12 @@ __declspec(naked) void ChooseSummonState()
 	{
 	hook:
 		CMP EAX, 0x7B
-		JNE hook_end
+		JE hook_1
+		CMP EAX, 0x1BD
+		JE hook_1
+		JMP hook_end
 
+	hook_1:
 		CALL OFFSET ShowDialog
 
 		MOV CL, BYTE PTR DS:[0x00a57808]
@@ -239,7 +334,12 @@ __declspec(naked) void ModifySelectionListPopulation()
 	{
 	hook:
 		CMP BX, 0x7B
-		JNE hook_end
+		JE hook_end
+		CMP BX, 0x1BD
+		JE hook_1
+		JMP hook_end
+
+	hook_1:
 		MOV ESI, 0x4	
 		MOV DWORD PTR DS:[ESP + 0x10], 0x1
 		CMP selectionIndex, 0x0
@@ -267,7 +367,12 @@ __declspec(naked) void PatchBanishNeeded()
 	{
 	hook:
 		CMP EAX, 0x7B
-		JNE hook_end
+		JE hook_1
+		CMP EAX, 0x1BD
+		JE hook_1
+		JMP hook_end
+
+	hook_1:
 		PUSH 0x0059debf
 		RET
 	hook_end :
@@ -281,8 +386,12 @@ __declspec(naked) void RepeatSelection()
 	hook:
 
 		CMP WORD PTR DS:[0x00a57802], 0x5 // Check intID of card used
-		JNE hook_end
+		JE hook_1
+		CMP WORD PTR DS:[0x00a57802], 0x9
+		JE hook_1
+		JMP hook_end
 
+	hook_1:
 		CMP selectionIndex, 0x0
 		JNE hook_no_repeat
 

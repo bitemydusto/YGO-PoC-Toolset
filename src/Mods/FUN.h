@@ -56,4 +56,10 @@ namespace FUN
 	using SendCardFromField_t = unsigned int(__cdecl*)(uint8_t* block, unsigned int zoneBitField, unsigned int destCode, unsigned int fxCode);
 	inline SendCardFromField_t SendCardFromField = reinterpret_cast<SendCardFromField_t>(0x005768b0);
 
+	using DiscardFromHand_t = unsigned int(__cdecl*)(unsigned int player, unsigned int handIdx, unsigned int flag);
+	inline DiscardFromHand_t DiscardFromHand = reinterpret_cast<DiscardFromHand_t>(0x005758c0);
+
+	using DealEffectDamage_t = void(__cdecl*)(unsigned int playerIdx, unsigned int amount);
+	inline DealEffectDamage_t DealEffectDamage = reinterpret_cast<DealEffectDamage_t>(0x00578430);
+
 }

@@ -172,8 +172,6 @@ uint32_t __cdecl Effect_CED(unsigned int* param, int param2, int param3)
 }
 uint32_t __cdecl Condition_BLS(uint32_t paramAddress, int param2, int param3)
 {
-	//uint8_t playerIdx = *(param + 2) & 0x1;
-	//uint8_t zoneIdx = (*(param + 2) >> 1) & 0x1;
 	uint8_t zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0x1;
 	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
 	GameData::Player player = GameData::GetDuel().players[playerIdx];
@@ -202,8 +200,6 @@ uint32_t __cdecl Condition_CED(uint32_t paramAddress, int param2, int param3)
 }
 uint32_t __cdecl Cost_BLS(uint32_t paramAddress, int param2, int param3)
 {
-	//uint8_t playerIdx = *(param + 2) & 0x1;
-	//uint8_t zoneIdx = (*(param + 2) >> 1) & 0x1;
 	uint8_t zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0x1;
 	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
 
@@ -334,7 +330,7 @@ __declspec(naked) void ModifySelectionListPopulation()
 	{
 	hook:
 		CMP BX, 0x7B
-		JE hook_end
+		JE hook_1
 		CMP BX, 0x1BD
 		JE hook_1
 		JMP hook_end

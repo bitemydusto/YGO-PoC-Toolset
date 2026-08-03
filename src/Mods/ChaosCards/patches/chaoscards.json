@@ -1,0 +1,23 @@
+{
+  "EffectScripts": [
+    {
+      "Index": 363,
+      "CardID": "0x7B",
+      "Effect": "0x00585C10",
+      "AppliesTo": "0x0057A880",
+      "Condition": "0x00582DB0",
+      "Cost": "0x00000000",
+      "Target": "0x00596570"
+    },
+	{
+      "Index": 358,
+      "CardID": "0x1BD",
+      "Effect": "0x00000000",
+      "AppliesTo": "0x00000000",
+      "Condition": "0x00000000",
+      "Cost": "0x00000000",
+      "Target": "0x00000000"
+    }],
+  "ActivatableCards": [ "0x7B", "0x1BD" ],
+  "InherentSpecialSummons": [ "0x7B", "0x1BD" ]
+}

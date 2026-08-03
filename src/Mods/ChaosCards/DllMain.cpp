@@ -86,7 +86,7 @@ void BLS()
 	scriptCED.AppliesTo = 0;
 	scriptCED.Condition = reinterpret_cast<uintptr_t>(&Condition_CED);
 	scriptCED.Cost = reinterpret_cast<uintptr_t>(&Cost_CED);
-	scriptCED.Target = 0x00593CB0;
+	scriptCED.Target = 0;
 
 	idx = GameData::GetEffectScriptIndex(0x1BD);
 	GameData::SetEffectScript(idx, scriptCED);
@@ -131,36 +131,44 @@ uint32_t __cdecl Effect_CED(unsigned int* param, int param2, int param3)
 	{
 		case 0x80:
 		{
-			if (duel.players[1].cardsInHand != 0)
-			{
-				FUN::DiscardFromHand(1, 0, 1);
-				return 0x80;
-			}
+			unsigned int cardsOnPlayerField = 0;
 			unsigned int cardsOnOppField = 0;
 			for (size_t i = 0; i < 5; i++)
 			{
 				if (duel.players[opp].monsterZones[i].card.intID != 0) cardsOnOppField++;
 				if (duel.players[opp].spellTrapZones[i].card.intID != 0) cardsOnOppField++;
+				if (duel.players[playerIdx].monsterZones[i].card.intID != 0) cardsOnPlayerField++;
+				if (duel.players[playerIdx].spellTrapZones[i].card.intID != 0) cardsOnPlayerField++;
 			}
 			if (duel.players[opp].fieldSpell.intID != 0) cardsOnOppField++;
-			cedDamage = (duel.players[opp].cardsInHand + cardsOnOppField) * 300;
+			if (duel.players[playerIdx].fieldSpell.intID != 0) cardsOnPlayerField++;
+			cedDamage = (duel.players[opp].cardsInHand + cardsOnOppField + duel.players[playerIdx].cardsInHand + cardsOnPlayerField) * 300;
 
 		}break;
 		case 0x7f:
 		{
+			if (duel.players[1].cardsInHand != 0)
+			{
+				FUN::DiscardFromHand(1, 0, 1);
+				return 0x7f;
+			}
+			return 0x7e;
+		}break;
+		case 0x7e:
+		{
 			if (duel.players[0].cardsInHand != 0)
 			{
 				FUN::DiscardFromHand(0, 0, 1);
-				return 0x7f;
+				return 0x7e;
 			}
 			return 0x7d;
 		}break;
 		case 0x7d:
 		{
 			FUN::SendCardFromField(block, 0x07ff07ff, 0xe, 0);
-			return 0x7e;
+			return 0x7c;
 		}break;
-		case 0x7e:
+		case 0x7c:
 		{
 			FUN::DealEffectDamage(!playerIdx, cedDamage);
 			return 0;

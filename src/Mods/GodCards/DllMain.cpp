@@ -225,7 +225,7 @@ __declspec(naked) void SaveMonsterID()
     }
 }
 // Save the stats of the tributes when you hover over them
-__declspec(naked) void ModifiedIsMonsterTributable()
+__declspec(naked) void ModifiedIsMonsterTributable(unsigned int sideIndex, unsigned int playerIdx, unsigned int zoneIdx)
 {
     __asm
     {

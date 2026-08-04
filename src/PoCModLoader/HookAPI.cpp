@@ -16,3 +16,8 @@ void Register_StateChange(uint16_t id, StateChange stateChange)
 {
 	HookManager::Register_StateChange(id, stateChange);
 }
+extern "C"
+void Register_AfterDamageCalculation(Event event)
+{
+	HookManager::Register_AfterDamageCalculation(event);
+}

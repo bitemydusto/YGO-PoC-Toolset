@@ -38,6 +38,7 @@ uint32_t __cdecl Cost_CED(uint32_t paramAddress, int param2, int param3);
 
 
 void __stdcall EndPhase();
+void __stdcall BLS_DoubleAttack();
 
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
@@ -61,6 +62,7 @@ void BLS()
 	Register_SpecialSummonCondition(0x7B, CanBeSummoned);
 	Register_SpecialSummonCondition(0x1BD, CanBeSummoned);
 	Register_Phase(5, EndPhase);
+	Register_AfterDamageCalculation(BLS_DoubleAttack);
 
 	hBLS_3 = Utils::InstallHook((void*)0x0059df41, 5, ChooseSummonState);
 	hBLS_4 = Utils::InstallHook((void*)0x00599da4, 5, ModifySelectionListPopulation);
@@ -235,6 +237,25 @@ void __stdcall EndPhase()
 		for (size_t j = 0; j < 5; j++)
 		{
 			Utils::WriteUint16((void*)(0x00a55d64 + i * 0xD44 + 0x10 + j* 0x90 + 0x4A), 0x0);
+		}
+	}
+}
+void __stdcall BLS_DoubleAttack()
+{
+	GameData::BattleResult battleResult = GameData::GetBattleResult();
+	uint8_t attackerIdx = battleResult.StateFlags & 0x1;
+	if (battleResult.sides[attackerIdx].IntID == 0x05 && (battleResult.sides[attackerIdx ^ 0x1].ResultFlags & 0x10) != 0)
+	{
+		GameData::Player attacker = GameData::GetDuel().players[attackerIdx];
+		uint8_t zoneIdx = (battleResult.StateFlags >> 8) & 7;
+		if ((attacker.monsterZones[zoneIdx].effectIDs[31] & 0x1) == 0)
+		{
+			// Reset attacked flag
+			uint16_t attackedFlag = attacker.alreadyAttackedZones & ~(1 << zoneIdx);
+			Utils::WriteUint16((void*)(0x00a55d64 + attackerIdx * 0xD44 + 0xc), attackedFlag);
+			// Set custom once per turn flag
+			Utils::WriteUint16((void*)(0x00a55d64 + attackerIdx * 0xD44 + 0x10 + 0x90 * zoneIdx + 0x4A), 0x1);
+
 		}
 	}
 }

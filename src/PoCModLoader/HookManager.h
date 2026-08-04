@@ -25,6 +25,7 @@ struct StateChangeHook
 void PatchSpecialSummonCondition();
 void PatchPhase();
 void PatchStateChange();
+void PatchAfterDamageCalculation();
 
 class HookManager
 {
@@ -40,12 +41,17 @@ public:
 	static void Register_StateChange(uint16_t id, StateChange stateChange);
 	static bool __stdcall Dispatch_StateChange(uint16_t id, uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 
+	static void Register_AfterDamageCalculation(Event event);
+	static void __stdcall Dispatch_AfterDamageCalculation();
+
 private:
 	static inline std::vector<SpecialSummonHook> specialSummonHooks;
 	static inline std::vector<PhaseHook> phaseHooks;
 	static inline std::vector<StateChangeHook> stateChangeHooks;
+	static inline std::vector<Event> afterDamageCalculationHooks;
 
 	static inline Utils::Hook hSpecialSummonCondition;
 	static inline Utils::Hook hPhase;
 	static inline Utils::Hook hStateChange;
+	static inline Utils::Hook hAfterDamageCalculation;
 };

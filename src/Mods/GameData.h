@@ -245,4 +245,32 @@ namespace GameData
 		Utils::WriteUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(EffectScript)) + 16), script.Cost);
 		Utils::WriteUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(EffectScript)) + 20), script.Target);
 	}
+    struct BattleResultSide
+    {
+        uint16_t ResultFlags;
+        uint16_t IntID;
+        uint32_t ATK;
+		uint32_t DEF;
+        uint32_t DamageTaken;
+    };
+	struct BattleResult
+	{
+        uint32_t StateFlags;
+		BattleResultSide sides[2];
+	};
+
+	BattleResult GetBattleResult()
+	{
+		BattleResult result;
+		result.StateFlags = Utils::ReadUint32((void*)(0x00a57840));
+		for (size_t i = 0; i < 2; i++)
+		{
+			result.sides[i].ResultFlags = Utils::ReadUint16((void*)(0x00a57844 + (i * 0x10)));
+			result.sides[i].IntID = Utils::ReadUint16((void*)(0x00a57846 + (i * 0x10)));
+			result.sides[i].ATK = Utils::ReadUint32((void*)(0x00a57848 + (i * 0x10)));
+			result.sides[i].DEF = Utils::ReadUint32((void*)(0x00a5784c + (i * 0x10)));
+			result.sides[i].DamageTaken = Utils::ReadUint32((void*)(0x00a57850 + (i * 0x10)));
+		}
+		return result;
+	}
 }

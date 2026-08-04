@@ -5,6 +5,7 @@ namespace
 	void* gSpecialSummonTrampoline = nullptr;
 	void* gPhaseTrampoline = nullptr;
 	void* gStateChangeTrampoline = nullptr;
+	void* gAfterDamageCalculationTrampoline = nullptr;
 }
 
 void HookManager::InstallHooks()
@@ -17,6 +18,9 @@ void HookManager::InstallHooks()
 
 	hStateChange = Utils::InstallHook((void*)0x0056dde9, 5, PatchStateChange);
 	gStateChangeTrampoline = hStateChange.Trampoline;
+
+	hAfterDamageCalculation = Utils::InstallHook((void*)0x00407aae, 5, PatchAfterDamageCalculation);
+	gAfterDamageCalculationTrampoline = hAfterDamageCalculation.Trampoline;
 }
 void HookManager::Register_SpecialSummonCondition(uint16_t id, Condition condition)
 {
@@ -123,4 +127,24 @@ __declspec(naked) void PatchStateChange()
 		JMP[gStateChangeTrampoline]
 	}
 }
-
+void HookManager::Register_AfterDamageCalculation(Event event)
+{
+	afterDamageCalculationHooks.push_back(event);
+}
+void HookManager::Dispatch_AfterDamageCalculation()
+{
+	for (const auto& hook : afterDamageCalculationHooks)
+	{
+		hook();
+	}
+}
+__declspec(naked) void PatchAfterDamageCalculation()
+{
+	__asm
+	{
+	hook:
+		CALL HookManager::Dispatch_AfterDamageCalculation
+	hook_end :
+		JMP[gAfterDamageCalculationTrampoline]
+	}
+}

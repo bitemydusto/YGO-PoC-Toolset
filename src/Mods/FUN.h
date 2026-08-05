@@ -37,8 +37,11 @@ namespace FUN
 	using GetSpellSpeed_t = uint32_t(__cdecl*)(uint16_t intID);
 	inline GetSpellSpeed_t GetSpellSpeed = reinterpret_cast<GetSpellSpeed_t>(0x0057e030);
 
-    using ShowDialogue_t = void(__cdecl*)(const char*);
-    inline ShowDialogue_t ShowDialogue = reinterpret_cast<ShowDialogue_t>(0x005bf860);
+    using ShowDialog_t = void(__cdecl*)(const char*);
+    inline ShowDialog_t ShowDialog = reinterpret_cast<ShowDialog_t>(0x005bf860);
+
+	using ShowDialogOptions_t = void(__cdecl*)(unsigned int, unsigned int);
+	inline ShowDialogOptions_t ShowDialogOptions = reinterpret_cast<ShowDialogOptions_t>(0x005bfa00);
 
 	using PayLifePoints_t = void(__cdecl*)(unsigned int playerIdx, unsigned int amount);
     inline PayLifePoints_t PayLifePoints = reinterpret_cast<PayLifePoints_t>(0x005783b0);
@@ -62,4 +65,30 @@ namespace FUN
 	using DealEffectDamage_t = void(__cdecl*)(unsigned int playerIdx, unsigned int amount);
 	inline DealEffectDamage_t DealEffectDamage = reinterpret_cast<DealEffectDamage_t>(0x00578430);
 
+	using GetCardPtrFromGrave_t = uint32_t*(__cdecl*)(unsigned int playerIdx, unsigned int destCode, unsigned int graveIdx);
+	inline GetCardPtrFromGrave_t GetCardPtrFromGrave = reinterpret_cast<GetCardPtrFromGrave_t>(0x00570040);
+
+	using BanishFromGrave_t = void(__cdecl*)(unsigned int playerIdx, unsigned int* cardPtr, unsigned int flag);
+	inline BanishFromGrave_t BanishFromGrave = reinterpret_cast<BanishFromGrave_t>(0x00575f30);
+
+	using InitiateSelectionList_t = void(__cdecl*)(unsigned int playerIdx, unsigned int param2, unsigned int cardID, unsigned int param4);
+	inline InitiateSelectionList_t InitiateSelectionList = reinterpret_cast<InitiateSelectionList_t>(0x0040c990);
+
+	using GetSelectionListCount_t = uint32_t(__cdecl*)();
+	inline GetSelectionListCount_t GetSelectionListCount = reinterpret_cast<GetSelectionListCount_t>(0x0040cb30);
+
+	using SelectionConfirmed_t = uint32_t(__cdecl*)();
+	inline SelectionConfirmed_t SelectionConfirmed = reinterpret_cast<SelectionConfirmed_t>(0x0040cac0);
+
+	using GetSelectedItem_t = uint32_t(__cdecl*)();
+	inline GetSelectedItem_t GetSelectedItem = reinterpret_cast<GetSelectedItem_t>(0x0040cb00);
+
+	using FUN_00592a40_t = void(__cdecl*)(int block, uint16_t value);
+	inline FUN_00592a40_t FUN_00592a40 = reinterpret_cast<FUN_00592a40_t>(0x00592a40);
+
+	using HighLightCard_t = void(__cdecl*)(uint32_t param1, uint32_t param2, uint32_t param3, uint32_t param4);
+	inline HighLightCard_t HighLightCard = reinterpret_cast<HighLightCard_t>(0x005b91e0);
+
+	using AddTargetedCardToHand_t = void(__cdecl*)(uint8_t* block, unsigned int playerIdx, unsigned int* param3);
+	inline AddTargetedCardToHand_t AddTargetedCardToHand = reinterpret_cast<AddTargetedCardToHand_t>(0x00575ca0);
 }

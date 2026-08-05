@@ -21,3 +21,23 @@ void Register_AfterDamageCalculation(Event event)
 {
 	HookManager::Register_AfterDamageCalculation(event);
 }
+extern "C"
+void Register_NormalSummonTrigger(uint16_t id)
+{
+	HookManager::Register_NormalSummonTrigger(id);
+}
+extern "C"
+void Register_SpecialSummonTrigger(uint16_t id)
+{
+	HookManager::Register_SpecialSummonTrigger(id);
+}
+extern "C"
+void Register_OnSentToGraveTrigger(uint16_t id, Event1 event)
+{
+	HookManager::Register_OnSentToGraveTrigger(id, event);
+}
+extern "C"
+void Register_BanishOnLeavingField(uint16_t id)
+{
+	HookManager::Register_BanishOnLeavingField(id);
+}

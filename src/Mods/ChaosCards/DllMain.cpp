@@ -4,19 +4,25 @@
 #include "GameData.h"
 #include "HookAPI.h"
 
+using Original_t = uint32_t(__cdecl*)(unsigned int* param, unsigned int param2, unsigned int param3);
+inline Original_t Original = reinterpret_cast<Original_t>(0x00584200);
+using OriginalTarget_t = uint32_t(__cdecl*)(unsigned int* param, int param2, int param3);
+inline OriginalTarget_t OriginalTarget = reinterpret_cast<OriginalTarget_t>(0x00593520);
+
 int isBLS = 0;
 int selectionIndex = 0;
 unsigned int cedDamage;
 
-Utils::Hook hBLS_1;
-Utils::Hook hBLS_2;
 Utils::Hook hBLS_3;
 Utils::Hook hBLS_4;
 Utils::Hook hBLS_5;
 Utils::Hook hBLS_6;
-Utils::Hook hEndPhase;
 
-void BLS();
+Utils::Hook hDMOC_1;
+
+
+
+void Chaos();
 
 void ChooseSummonState();
 void ModifySelectionListPopulation();
@@ -36,14 +42,19 @@ uint32_t __cdecl Effect_CED(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Condition_CED(uint32_t paramAddress, int param2, int param3);
 uint32_t __cdecl Cost_CED(uint32_t paramAddress, int param2, int param3);
 
+uint32_t __cdecl Effect_DMOC(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Target_DMOC(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Condition_DMOC(uint32_t paramAddress, int param2, int param3);
+
 
 void __stdcall EndPhase();
 void __stdcall BLS_DoubleAttack();
+void __stdcall DMOC_BanishOnKill();
 
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
 	Sleep(500);
-    BLS();
+    Chaos();
 
     return 0;
 }
@@ -57,12 +68,16 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
 
     return TRUE;
 }
-void BLS()
+void Chaos()
 {
 	Register_SpecialSummonCondition(0x7B, CanBeSummoned);
 	Register_SpecialSummonCondition(0x1BD, CanBeSummoned);
 	Register_Phase(5, EndPhase);
 	Register_AfterDamageCalculation(BLS_DoubleAttack);
+	Register_AfterDamageCalculation(DMOC_BanishOnKill);
+	Register_NormalSummonTrigger(0x10A);
+	Register_SpecialSummonTrigger(0x10A);
+	Register_BanishOnLeavingField(0x10A);
 
 	hBLS_3 = Utils::InstallHook((void*)0x0059df41, 5, ChooseSummonState);
 	hBLS_4 = Utils::InstallHook((void*)0x00599da4, 5, ModifySelectionListPopulation);
@@ -92,6 +107,17 @@ void BLS()
 
 	idx = GameData::GetEffectScriptIndex(0x1BD);
 	GameData::SetEffectScript(idx, scriptCED);
+
+	GameData::EffectScript scriptDMOC;
+	scriptDMOC.CardID = 0x10A;
+	scriptDMOC.Effect = reinterpret_cast<uintptr_t>(&Effect_DMOC);
+	scriptDMOC.AppliesTo = 0;
+	scriptDMOC.Condition = reinterpret_cast<uintptr_t>(&Condition_DMOC);
+	scriptDMOC.Cost = 0;
+	scriptDMOC.Target = reinterpret_cast<uintptr_t>(&Target_DMOC);
+
+	idx = GameData::GetEffectScriptIndex(0x10A);
+	GameData::SetEffectScript(idx, scriptDMOC);
 }
 uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3)
 {
@@ -115,6 +141,172 @@ uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3)
 	FUN::SendCardFromField(block, mask, 0xf, 0);
 
 	return 0;
+}
+uint32_t __cdecl Condition_BLS(uint32_t paramAddress, int param2, int param3)
+{
+	uint8_t zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0x1;
+	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
+	GameData::Player player = GameData::GetDuel().players[playerIdx];
+
+
+	if (zoneIdx < 0 || zoneIdx > 4) return 0;
+	// Used its effect this turn
+	if ((player.monsterZones[zoneIdx].effectIDs[31] & 0x1) == 0x1) return 0;
+	// Can't change position
+	if ((player.monsterZones[zoneIdx].stateFlags & 0x20000) != 0)
+	{
+		// Attacked this turn
+		if (((player.alreadyAttackedZones >> zoneIdx) & 0x1) == 0x1) return 0;
+	}
+
+	return 1;
+}
+uint32_t __cdecl Cost_BLS(uint32_t paramAddress, int param2, int param3)
+{
+	uint8_t zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0x1;
+	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
+
+	GameData::Player player = GameData::GetDuel().players[playerIdx];
+
+	// Make it unable to attack this turn
+	uint16_t stateFlag = player.monsterZones[zoneIdx].stateFlags | 0x4;
+	Utils::WriteUint16((void*)(0x00a55d64 + playerIdx * 0xD44 + 0x10 + 0x90 * zoneIdx + 0x8C + 2), stateFlag);
+	// Set custom once per turn flag
+	Utils::WriteUint16((void*)(0x00a55d64 + playerIdx * 0xD44 + 0x10 + 0x90 * zoneIdx + 0x4A), 0x1);
+
+	return 1;
+}
+uint32_t __cdecl Effect_DMOC(unsigned int* param, int param2, int param3)
+{
+	uint8_t* block = (uint8_t*)param;
+	// Has effect finished resolving?
+	if (block[4] & 4) return 0;
+
+	uint16_t loc = (block[2] >> 1) & 0x1F;
+	uint8_t playerIdx = block[2] & 0x1;
+	GameData::Player player = GameData::GetDuel().players[playerIdx];
+
+
+	if (loc == 0xE)
+	{
+
+	}
+	else
+	{
+		uint16_t lo = *(uint16_t*)(block + 6);
+		uint16_t hi = *(uint16_t*)(block + 8);
+		uint32_t cardDword = lo | ((uint32_t)hi << 16);
+
+		uint16_t intId = cardDword & 0xFFF;
+		uint8_t  owner = (cardDword >> 12) & 1;
+		uint32_t inst = owner + ((cardDword >> 24) & 0x7F) * 2;
+
+		if (intId == 0)
+			return 0;
+
+		FUN::AddTargetedCardToHand(block, playerIdx, &cardDword);
+
+		return 0;
+	}
+
+
+	return 0;
+}
+uint32_t __cdecl Condition_DMOC(uint32_t paramAddress, int param2, int param3)
+{
+	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
+	GameData::Player player = GameData::GetDuel().players[playerIdx];
+	int spells = 0;
+	for (size_t i = 0; i < player.cardsInGrave; i++)
+	{
+		if (player.grave[i].GetType() == 0x16) spells++;
+	}
+	return spells > 0 ? 1 : 0;
+}
+uint32_t __cdecl Target_DMOC(unsigned int* param, int param2, int param3)
+{
+	uint8_t* block = (uint8_t*)param;
+	uint8_t  playerIdx = block[2] & 1;
+	uint8_t  place = (block[2] >> 1) & 0x1F;
+
+	if (place == 0x0E)
+		return 1;
+
+	uint8_t sub = Utils::ReadUint8((void*)0x00A55C8E);
+
+	switch (sub)
+	{
+	case 0:
+	{
+		FUN::ShowDialog("Do you want to add a @3Spell Card@0 from your Graveyard to add to your hand?");
+		FUN::ShowDialogOptions(1, 0);
+
+		Utils::WriteUint8((void*)0x00A55C8E, 1);
+		return 0;
+	}
+	case 1:
+	{
+		if (Utils::ReadUint8((void*)0x00a558b4) != 0)
+		{
+			Utils::WriteUint8((void*)0x00A55C8E, 2);
+			return 0;
+		}
+		return 1;
+	}
+	case 2:
+	{
+		// Clear target count bits
+		*(uint16_t*)(block + 4) &= 0x1FFF;
+
+		FUN::ShowDialog("Select a @3Spell Card@0 from your Graveyard to add to your hand.");
+
+		Utils::WriteUint8((void*)0x00A55C8E, 3);
+		return 0;
+	}
+	case 3:
+	{
+		FUN::InitiateSelectionList(playerIdx, 6, 0x1AB, 0);
+
+		Utils::WriteUint8((void*)0x00A55C8E, 4);
+		return 0;
+	}
+
+	case 4:
+	{
+		uint32_t count = FUN::GetSelectionListCount();
+		if (count == 0)
+		{
+			Utils::WriteUint8((void*)0x00A55C8E, 0);
+			return 1;
+		}
+
+		uint32_t* entry = (uint32_t*)FUN::GetSelectedItem();
+		if (!entry || (*entry & 0xFFF) == 0)
+			return 0; // not ready
+
+		uint32_t dword = *entry;
+		uint8_t  owner = (dword >> 12) & 1;
+		uint32_t inst = owner + ((dword >> 24) & 0x7F) * 2;
+		uint32_t sideBit = owner ? 0x8000u : 0;
+
+		uint32_t cardId = FUN::GetCardID(dword & 0xFFF); // match your GetCardID arity
+
+		// Highlight / reveal
+		FUN::HighLightCard(sideBit | 0xDF, cardId, 0, 0);
+		FUN::HighLightCard(sideBit | 0x08, owner, 0x0E, 0);  // 0x0E = GY
+
+		// Store targets
+		FUN::FUN_00592a40((int)param, (uint16_t)dword);
+		FUN::FUN_00592a40((int)param, (uint16_t)(dword >> 16));
+
+		Utils::WriteUint8((void*)0x00A55C8E, 0);
+		return 1;
+	}
+
+	default:
+		Utils::WriteUint8((void*)0x00A55C8E, 0);
+		return 1;
+	}
 }
 uint32_t __cdecl Effect_CED(unsigned int* param, int param2, int param3)
 {
@@ -180,46 +372,12 @@ uint32_t __cdecl Effect_CED(unsigned int* param, int param2, int param3)
 
 	return 0x7f;
 }
-uint32_t __cdecl Condition_BLS(uint32_t paramAddress, int param2, int param3)
-{
-	uint8_t zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0x1;
-	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
-	GameData::Player player = GameData::GetDuel().players[playerIdx];
-
-	
-	if (zoneIdx < 0 || zoneIdx > 4) return 0;
-	// Used its effect this turn
-	if ((player.monsterZones[zoneIdx].effectIDs[31] & 0x1) == 0x1) return 0;
-	// Can't change position
-	if ((player.monsterZones[zoneIdx].stateFlags & 0x20000) != 0)
-	{
-		// Attacked this turn
-		if (((player.alreadyAttackedZones >> zoneIdx) & 0x1) == 0x1) return 0;
-	}
-
-	return 1;
-}
 uint32_t __cdecl Condition_CED(uint32_t paramAddress, int param2, int param3)
 {
 	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
 	GameData::Player player = GameData::GetDuel().players[playerIdx];
 
 	if (player.lifePoints <= 1000) return 0;
-
-	return 1;
-}
-uint32_t __cdecl Cost_BLS(uint32_t paramAddress, int param2, int param3)
-{
-	uint8_t zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0x1;
-	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
-
-	GameData::Player player = GameData::GetDuel().players[playerIdx];
-
-	// Make it unable to attack this turn
-	uint16_t stateFlag = player.monsterZones[zoneIdx].stateFlags | 0x4;
-	Utils::WriteUint16((void*)(0x00a55d64 + playerIdx * 0xD44 + 0x10 + 0x90 * zoneIdx + 0x8C + 2), stateFlag);
-	// Set custom once per turn flag
-	Utils::WriteUint16((void*)(0x00a55d64 + playerIdx * 0xD44 + 0x10 + 0x90 * zoneIdx + 0x4A), 0x1);
 
 	return 1;
 }
@@ -259,6 +417,22 @@ void __stdcall BLS_DoubleAttack()
 		}
 	}
 }
+void __stdcall DMOC_BanishOnKill()
+{
+	GameData::BattleResult battleResult = GameData::GetBattleResult();
+	uint8_t attackerIdx = battleResult.StateFlags & 0x1;
+	if (battleResult.sides[attackerIdx].IntID == 0x0D && (battleResult.sides[!attackerIdx].ResultFlags & 0x10) != 0)
+	{
+		uint8_t attackedZoneIdx = (battleResult.StateFlags >> 0xB) & 7;
+		uint32_t mask = 1u << ((((int)(char)!attackerIdx) << 4) + (char)attackedZoneIdx & 0x1f);
+		uint8_t block[0x20];
+		memset(block, 0, sizeof(block));
+
+		FUN::SendCardFromField(block, mask, 0xf, 0);
+	}
+
+
+}
 bool CanBeSummoned()
 {
 	GameData::Player player = GameData::GetDuel().players[1];
@@ -285,7 +459,7 @@ bool CanBeSummoned()
 }
 void ShowDialog()
 {
-	FUN::ShowDialogue("Select @31@0 @2LIGHT@0 and @31@0 @2DARK@0 monster from your Graveyard to banish.");
+	FUN::ShowDialog("Select @31@0 @2LIGHT@0 and @31@0 @2DARK@0 monster from your Graveyard to banish.");
 }
 void LoadSelectionListLight()
 {

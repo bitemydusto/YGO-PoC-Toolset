@@ -182,33 +182,22 @@ uint32_t __cdecl Effect_DMOC(unsigned int* param, int param2, int param3)
 	// Has effect finished resolving?
 	if (block[4] & 4) return 0;
 
-	uint16_t loc = (block[2] >> 1) & 0x1F;
+	//uint16_t loc = (block[2] >> 1) & 0x1F;
 	uint8_t playerIdx = block[2] & 0x1;
 	GameData::Player player = GameData::GetDuel().players[playerIdx];
 
 
-	if (loc == 0xE)
-	{
+	uint16_t lo = *(uint16_t*)(block + 6);
+	uint16_t hi = *(uint16_t*)(block + 8);
+	uint32_t cardDword = lo | ((uint32_t)hi << 16);
 
-	}
-	else
-	{
-		uint16_t lo = *(uint16_t*)(block + 6);
-		uint16_t hi = *(uint16_t*)(block + 8);
-		uint32_t cardDword = lo | ((uint32_t)hi << 16);
+	uint16_t intId = cardDword & 0xFFF;
+	uint8_t  owner = (cardDword >> 12) & 1;
+	uint32_t inst = owner + ((cardDword >> 24) & 0x7F) * 2;
 
-		uint16_t intId = cardDword & 0xFFF;
-		uint8_t  owner = (cardDword >> 12) & 1;
-		uint32_t inst = owner + ((cardDword >> 24) & 0x7F) * 2;
+	if (intId == 0) return 0;
 
-		if (intId == 0)
-			return 0;
-
-		FUN::AddTargetedCardToHand(block, playerIdx, &cardDword);
-
-		return 0;
-	}
-
+	FUN::AddTargetedCardToHand(block, playerIdx, &cardDword);
 
 	return 0;
 }
@@ -227,10 +216,7 @@ uint32_t __cdecl Target_DMOC(unsigned int* param, int param2, int param3)
 {
 	uint8_t* block = (uint8_t*)param;
 	uint8_t  playerIdx = block[2] & 1;
-	uint8_t  place = (block[2] >> 1) & 0x1F;
-
-	if (place == 0x0E)
-		return 1;
+	//uint8_t  loc = (block[2] >> 1) & 0x1F;
 
 	uint8_t sub = Utils::ReadUint8((void*)0x00A55C8E);
 
@@ -238,7 +224,7 @@ uint32_t __cdecl Target_DMOC(unsigned int* param, int param2, int param3)
 	{
 	case 0:
 	{
-		FUN::ShowDialog("Do you want to add a @3Spell Card@0 from your Graveyard to add to your hand?");
+		FUN::ShowDialog("Do you want to add a @2Spell Card@0 from your Graveyard to your hand?");
 		FUN::ShowDialogOptions(1, 0);
 
 		Utils::WriteUint8((void*)0x00A55C8E, 1);
@@ -258,7 +244,7 @@ uint32_t __cdecl Target_DMOC(unsigned int* param, int param2, int param3)
 		// Clear target count bits
 		*(uint16_t*)(block + 4) &= 0x1FFF;
 
-		FUN::ShowDialog("Select a @3Spell Card@0 from your Graveyard to add to your hand.");
+		FUN::ShowDialog("Select a @2Spell Card@0 from your Graveyard to add to your hand.");
 
 		Utils::WriteUint8((void*)0x00A55C8E, 3);
 		return 0;

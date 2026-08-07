@@ -389,7 +389,7 @@ __declspec(naked) void PatchInitialSummonState()
 		PUSH EAX
 		PUSH EAX
 		CALL HookManager::Dispatch_InitialSummonState
-		TEST EAX, EAX
+		TEST AL, AL
 		JZ hook_end
 
 		ADD ESP, 0x4
@@ -499,11 +499,15 @@ __declspec(naked) void PatchSelectionListPopulation()
 	hook:
 		PUSH EBX
 		AND EBX, 0xFFFF
+		PUSH ECX
+		PUSH EDX
 		PUSH EAX
 		PUSH EBX
 		CALL HookManager::Dispatch_SelectionListPopulation
 		TEST AL, AL
 		POP EAX
+		POP EDX
+		POP ECX
 		POP EBX
 		JZ hook_end
 

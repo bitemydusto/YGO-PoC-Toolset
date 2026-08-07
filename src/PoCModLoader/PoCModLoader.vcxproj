@@ -91,7 +91,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
@@ -110,7 +110,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
@@ -155,10 +155,12 @@
     <ClCompile Include="HookAPI.cpp" />
     <ClCompile Include="HookManager.cpp" />
     <ClCompile Include="ModLoader.cpp" />
+    <ClCompile Include="PatchLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HookManager.h" />
     <ClInclude Include="ModLoader.h" />
+    <ClInclude Include="PatchLoader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -201,26 +201,16 @@ namespace GameData
 
     }
 
-    struct EffectScript
-    {
-        uint32_t CardID;
-        uintptr_t Effect;
-        uintptr_t AppliesTo;
-        uintptr_t Condition;
-        uintptr_t Cost;
-        uintptr_t Target;
-    };
-
-	EffectScript GetEffectScript(int index)
+	Utils::EffectScript GetEffectScript(int index)
 	{
-        EffectScript script;
+        Utils::EffectScript script;
 
-		script.CardID = Utils::ReadUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(EffectScript))));
-		script.Effect = Utils::ReadUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(EffectScript)) + 4));
-		script.AppliesTo = Utils::ReadUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(EffectScript)) + 8));
-		script.Condition = Utils::ReadUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(EffectScript)) + 12));
-		script.Cost = Utils::ReadUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(EffectScript)) + 16));
-		script.Target = Utils::ReadUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(EffectScript)) + 20));
+		script.CardID = Utils::ReadUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(Utils::EffectScript))));
+		script.Effect = Utils::ReadUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(Utils::EffectScript)) + 4));
+		script.AppliesTo = Utils::ReadUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(Utils::EffectScript)) + 8));
+		script.Condition = Utils::ReadUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(Utils::EffectScript)) + 12));
+		script.Cost = Utils::ReadUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(Utils::EffectScript)) + 16));
+		script.Target = Utils::ReadUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(Utils::EffectScript)) + 20));
 
 		return script;
 	}
@@ -228,7 +218,7 @@ namespace GameData
     {
         for (int i = 0; i < 443; i++)
         {
-            EffectScript script = GetEffectScript(i);
+            Utils::EffectScript script = GetEffectScript(i);
             if (script.CardID == cardID)
             {
                 return i;
@@ -236,14 +226,14 @@ namespace GameData
         }
         return -1;
     }
-	void SetEffectScript(int index, EffectScript script)
+	void SetEffectScript(int index, Utils::EffectScript script)
 	{
-		Utils::WriteUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(EffectScript))), script.CardID);
-		Utils::WriteUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(EffectScript)) + 4), script.Effect);
-		Utils::WriteUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(EffectScript)) + 8), script.AppliesTo);
-		Utils::WriteUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(EffectScript)) + 12), script.Condition);
-		Utils::WriteUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(EffectScript)) + 16), script.Cost);
-		Utils::WriteUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(EffectScript)) + 20), script.Target);
+		Utils::WriteUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(Utils::EffectScript))), script.CardID);
+		Utils::WriteUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(Utils::EffectScript)) + 4), script.Effect);
+		Utils::WriteUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(Utils::EffectScript)) + 8), script.AppliesTo);
+		Utils::WriteUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(Utils::EffectScript)) + 12), script.Condition);
+		Utils::WriteUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(Utils::EffectScript)) + 16), script.Cost);
+		Utils::WriteUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(Utils::EffectScript)) + 20), script.Target);
 	}
     struct BattleResultSide
     {

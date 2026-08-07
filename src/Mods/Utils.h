@@ -17,6 +17,30 @@ namespace Utils
         BYTE Original[16];
         SIZE_T Length;
     };
+    struct EffectScript
+    {
+        uint32_t CardID;
+        uintptr_t Effect;
+        uintptr_t AppliesTo;
+        uintptr_t Condition;
+        uintptr_t Cost;
+        uintptr_t Target;
+    };
+    struct Fusion2
+    {
+        uint16_t Result;
+        uint16_t Materials[2];
+    };
+    struct Fusion3
+    {
+        uint16_t Result;
+        uint16_t Materials[3];
+    };
+    struct SpellSpeed
+    {
+        uint32_t CardID;
+        uint32_t Speed;
+    };
 
     inline Hook InstallHook(void* target, size_t length, void* detour);
 

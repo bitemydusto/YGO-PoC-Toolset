@@ -9,6 +9,10 @@
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
+using EffectScript = Utils::EffectScript;
+using Fusion2 = Utils::Fusion2;
+using Fusion3 = Utils::Fusion3;
+using SpellSpeed = Utils::SpellSpeed;
 
 const uint32_t EFFECT_SCRIPTS_OFFSET = 0x005ed0a8; // Change this if it's different in your version of the game
 const uint32_t FUSION_RECIPES_OFFSET = 0x005ecf10; // Change this if it's different in your version of the game
@@ -19,30 +23,6 @@ Utils::Hook hSpellSpeed;
 Utils::Hook hFlipMonster;
 Utils::Hook hSpecialSummon;
 
-struct EffectScript
-{
-	uint32_t CardID;
-	uint32_t Effect;
-	uint32_t AppliesTo;
-	uint32_t Condition;
-	uint32_t Cost;
-	uint32_t Target;
-};
-struct Fusion2
-{
-    uint16_t Result;
-    uint16_t Materials[2];
-};
-struct Fusion3
-{
-    uint16_t Result;
-    uint16_t Materials[3];
-};
-struct SpellSpeed
-{
-    uint32_t CardID;
-    uint32_t Speed;
-};
 
 std::vector<EffectScript> EffectScripts;
 std::vector<Fusion2> FusionRecipes2;

@@ -14,9 +14,9 @@
 
 DWORD WINAPI LoaderThread(LPVOID lpParam)
 {
+    HookManager::InstallHooks();
     ModLoader loader;
     loader.LoadMods();
-	HookManager::InstallHooks();
 
     return S_OK;
 }

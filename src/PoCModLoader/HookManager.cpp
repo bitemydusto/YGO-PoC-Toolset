@@ -2,6 +2,9 @@
 
 namespace
 {
+	void* gFlipMonsterTrampoline = nullptr;
+	void* gActivatableEffectTrampoline = nullptr;
+	void* gInherentSpecialSummonTrampoline = nullptr;
 	void* gSpecialSummonTrampoline = nullptr;
 	void* gPhaseTrampoline = nullptr;
 	void* gStatChangeTrampoline = nullptr;
@@ -13,10 +16,20 @@ namespace
 	void* gInitialSummonStateTrampoline = nullptr;
 	void* gSummonStateTrampoline = nullptr;
 	void* gSelectionListPopulationTrampoline = nullptr;
+	void* gSpellSpeedTrampoline = nullptr;
 }
 
 void HookManager::InstallHooks()
 {
+	hFlipMonster = Utils::InstallHook((void*)0x00567632, 5, PatchFlipMonster);
+	gFlipMonsterTrampoline = hFlipMonster.Trampoline;
+
+	hActivatableEffect = Utils::InstallHook((void*)0x00568042, 5, PatchActivatableEffect);
+	gActivatableEffectTrampoline = hActivatableEffect.Trampoline;
+
+	hInherentSpecialSummon = Utils::InstallHook((void*)0x00567a43, 5, PatchInherentSpecialSummon);
+	gInherentSpecialSummonTrampoline = hInherentSpecialSummon.Trampoline;
+
 	hSpecialSummonCondition = Utils::InstallHook((void*)0x005aaeaf, 5, PatchSpecialSummonCondition);
 	gSpecialSummonTrampoline = hSpecialSummonCondition.Trampoline;
 
@@ -51,6 +64,239 @@ void HookManager::InstallHooks()
 
 	hSelectionListPopulation = Utils::InstallHook((void*)0x00599da4, 5, PatchSelectionListPopulation);
 	gSelectionListPopulationTrampoline = hSelectionListPopulation.Trampoline;
+
+	hSpellSpeed = Utils::InstallHook((void*)0x0057e06f, 5, PatchSpellSpeed);
+	gSpellSpeedTrampoline = hSpellSpeed.Trampoline;
+
+
+	PatchLoader::LoadPatches();
+
+	for (const auto& id : PatchLoader::InherentSpecialSummons)
+	{
+		Register_InherentSpecialSummon(id);
+	}
+	for (const auto& id : PatchLoader::ActivatableCards)
+	{
+		Register_ActivatableEffect(id);
+	}
+	for (const auto& id : PatchLoader::FlipMonsters)
+	{
+		Register_FlipMonster(id);
+	}
+	for (const auto& spellSpeed : PatchLoader::SpellSpeeds)
+	{
+		Register_SpellSpeed(spellSpeed.CardID, spellSpeed.Speed);
+	}
+	for (const auto& script : PatchLoader::EffectScripts)
+	{
+		effectScripts.push_back(script);
+	}
+	for (const auto& fusion2 : PatchLoader::FusionRecipes2)
+	{
+		fusionRecipes2.push_back(fusion2);
+	}
+	for (const auto& fusion3 : PatchLoader::FusionRecipes3)
+	{
+		fusionRecipes3.push_back(fusion3);
+	}
+}
+void HookManager::ReplaceEffectScript(uint32_t oldID, EffectScript script)
+{
+	for (auto& existingScript : effectScripts)
+	{
+		if (existingScript.CardID == oldID)
+		{
+			existingScript = script;
+			break;
+		}
+	}
+
+	std::sort(std::begin(effectScripts), std::end(effectScripts),
+		[](const EffectScript& a, const EffectScript& b)
+		{
+			return a.CardID < b.CardID;
+		});
+
+	// Write EffectScripts to memory
+	uint32_t effectScriptAddress = 0x005ed0a8;
+	for (const auto& script : effectScripts)
+	{
+		Utils::WriteUint32((void*)effectScriptAddress, script.CardID);
+		effectScriptAddress += 4;
+		Utils::WriteUint32((void*)effectScriptAddress, script.Effect);
+		effectScriptAddress += 4;
+		Utils::WriteUint32((void*)effectScriptAddress, script.AppliesTo);
+		effectScriptAddress += 4;
+		Utils::WriteUint32((void*)effectScriptAddress, script.Condition);
+		effectScriptAddress += 4;
+		Utils::WriteUint32((void*)effectScriptAddress, script.Cost);
+		effectScriptAddress += 4;
+		Utils::WriteUint32((void*)effectScriptAddress, script.Target);
+		effectScriptAddress += 4;
+	}
+
+}
+void HookManager::ReplaceFusion2(uint16_t oldID, Fusion2 fusion)
+{
+	for (auto& existingFusion : fusionRecipes2)
+	{
+		if (existingFusion.Result == oldID)
+		{
+			existingFusion = fusion;
+			return;
+		}
+	}
+
+	// Write FusionRecipes2 to memory
+	uint32_t fusionRecipe2Address = 0x005ecf10;
+	for (const auto& recipe : fusionRecipes2)
+	{
+		Utils::WriteUint16((void*)fusionRecipe2Address, recipe.Result);
+		fusionRecipe2Address += 2;
+		for (int i = 0; i < 2; i++)
+		{
+			Utils::WriteUint16((void*)fusionRecipe2Address, recipe.Materials[i]);
+			fusionRecipe2Address += 2;
+		}
+	}
+
+}
+void HookManager::ReplaceFusion3(uint16_t oldID, Fusion3 fusion)
+{
+	for (auto& existingFusion : fusionRecipes3)
+	{
+		if (existingFusion.Result == oldID)
+		{
+			existingFusion = fusion;
+			return;
+		}
+	}
+	// Write FusionRecipes3 to memory
+	uint32_t fusionRecipe3Address = 0x005ed048;
+	for (const auto& recipe : fusionRecipes3)
+	{
+		Utils::WriteUint16((void*)fusionRecipe3Address, recipe.Result);
+		fusionRecipe3Address += 2;
+		for (int i = 0; i < 3; i++)
+		{
+			Utils::WriteUint16((void*)fusionRecipe3Address, recipe.Materials[i]);
+			fusionRecipe3Address += 2;
+		}
+	}
+}
+void HookManager::Register_FlipMonster(uint16_t cardID)
+{
+	// Check if the card ID is already registered
+	for (const auto& id : flipMonsters)
+	{
+		if (id == cardID) return;
+	}
+	flipMonsters.push_back(cardID);
+}
+bool __stdcall HookManager::Dispatch_FlipMonster(uint16_t cardID)
+{
+	for (const auto& id : flipMonsters)
+	{
+		if (id == cardID)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+__declspec(naked) void PatchFlipMonster()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH EAX
+		CALL HookManager::Dispatch_FlipMonster
+		TEST AL, AL
+		POP EAX
+		JZ hook_end
+
+		PUSH 0x00567716
+		RET
+	hook_end :
+		JMP[gFlipMonsterTrampoline]
+	}
+}
+void HookManager::Register_ActivatableEffect(uint16_t cardID)
+{
+	// Check if the card ID is already registered
+	for (const auto& id : activatableEffects)
+	{
+		if (id == cardID) return;
+	}
+	activatableEffects.push_back(cardID);
+}
+bool __stdcall HookManager::Dispatch_ActivatableEffect(uint16_t cardID)
+{
+	for (const auto& id : activatableEffects)
+	{
+		if (id == cardID)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+__declspec(naked) void PatchActivatableEffect()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH EAX
+		CALL HookManager::Dispatch_ActivatableEffect
+		TEST AL, AL
+		POP EAX
+		JZ hook_end
+
+		PUSH 0x0056813b
+		RET
+	hook_end :
+		JMP[gActivatableEffectTrampoline]
+	}
+}
+void HookManager::Register_InherentSpecialSummon(uint16_t cardID)
+{
+	// Check if the card ID is already registered
+	for (const auto& id : inherentSpecialSummons)
+	{
+		if (id == cardID) return;
+	}
+	inherentSpecialSummons.push_back(cardID);
+}
+bool __stdcall HookManager::Dispatch_InherentSpecialSummon(uint16_t cardID)
+{
+	for (const auto& id : inherentSpecialSummons)
+	{
+		if (id == cardID)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+__declspec(naked) void PatchInherentSpecialSummon()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH EAX
+		CALL HookManager::Dispatch_InherentSpecialSummon
+		TEST AL, AL
+		POP EAX
+		JZ hook_end
+
+		PUSH 0x00567ab0
+		RET
+	hook_end :
+		JMP[gInherentSpecialSummonTrampoline]
+	}
 }
 void HookManager::Register_SpecialSummonCondition(uint16_t id, Condition condition)
 {
@@ -517,5 +763,63 @@ __declspec(naked) void PatchSelectionListPopulation()
 	hook_end :
 		CMP EBX, 0x460
 		JMP[gSelectionListPopulationTrampoline]
+	}
+}
+void HookManager::Register_SpellSpeed(uint32_t cardID, uint32_t speed)
+{
+	// Check if the card ID is already registered
+	for (const auto& hook : spellSpeedHooks)
+	{
+		if (hook.CardID == cardID) return;
+	}
+	spellSpeedHooks.push_back({ cardID, speed });
+}
+uint32_t __stdcall HookManager::Dispatch_SpellSpeed(uint32_t cardID)
+{
+	for (const auto& hook : spellSpeedHooks)
+	{
+		if (hook.CardID == cardID)
+		{
+			return hook.Speed;
+		}
+	}
+	return 0; // Default speed if not found
+}
+__declspec(naked) void PatchSpellSpeed()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH EAX
+		CALL HookManager::Dispatch_SpellSpeed
+		TEST EAX, EAX
+		JZ hook_end
+
+		CMP EAX, 0x1
+		JE hook_1
+		CMP EAX, 0x2
+		JE hook_2
+		CMP EAX, 0x3
+		JE hook_3
+		JMP hook_end
+	hook_1 :
+		POP EAX
+		MOV EAX, 0x0057e09a
+		JMp EAX
+	hook_2 :
+		POP EAX
+		MOV EAX, 0x0057e0a2
+		JMP EAX
+	hook_3 :
+		POP EAX
+		POP EDI
+		MOV EAX, 0x3
+		POP ESI
+		PUSH 0x0057e0a9
+		RET
+	hook_end :
+		POP EAX
+		JMP[gSpellSpeedTrampoline]
 	}
 }

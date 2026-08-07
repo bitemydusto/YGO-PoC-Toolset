@@ -38,9 +38,10 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
 void Start()
 {
 	Register_StatChange(0x96, ChangeStat);
+	Register_ActivatableEffect(0x96);
 
 
-    GameData::EffectScript script;
+    Utils::EffectScript script;
     script.CardID = 0x96;
     script.Effect = reinterpret_cast<uintptr_t>(&Effect_Breaker);
     script.AppliesTo = 0x0057B4A0;
@@ -48,8 +49,10 @@ void Start()
     script.Cost = reinterpret_cast<uintptr_t>(&Cost_Breaker);
     script.Target = 0x005959D0;
 
-    int idx = GameData::GetEffectScriptIndex(0x96);
-    GameData::SetEffectScript(idx, script);
+    //int idx = GameData::GetEffectScriptIndex(0x96);
+    //GameData::SetEffectScript(idx, script);
+    ReplaceEffectScript(0xC6, script);
+
 
 }
 uint32_t __cdecl Effect_Breaker(uint32_t paramAddress, int param2, int param3)

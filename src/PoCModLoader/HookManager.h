@@ -1,12 +1,19 @@
 #pragma once
 
 #include "Utils.h"
+#include "PatchLoader.h"
+#include <algorithm>
+
 
 using Condition = bool(*)(uint32_t playerIdx);
 using Event = void(__stdcall*)();
 using Event1 = void(__stdcall*)(uint32_t playerIdx, uint32_t zoneIdx);
 using State = uint32_t(__stdcall*)();
 using StatChange = void(__stdcall*)(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
+using EffectScript = Utils::EffectScript;
+using SpellSpeedHook = Utils::SpellSpeed;
+using Fusion2 = Utils::Fusion2;
+using Fusion3 = Utils::Fusion3;
 
 struct SpecialSummonHook
 {
@@ -68,11 +75,28 @@ void PatchBanishOnLeavingField();
 void PatchInitialSummonState();
 void PatchSummonState();
 void PatchSelectionListPopulation();
+void PatchInherentSpecialSummon();
+void PatchActivatableEffect();
+void PatchFlipMonster();
+void PatchSpellSpeed();
 
 class HookManager
 {
 public:
 	static void InstallHooks();
+
+	static void ReplaceEffectScript(uint32_t oldID, EffectScript script);
+	static void ReplaceFusion2(uint16_t oldID, Fusion2 fusion);
+	static void ReplaceFusion3(uint16_t oldID, Fusion3 fusion);
+
+	static void Register_FlipMonster(uint16_t cardID);
+	static bool __stdcall Dispatch_FlipMonster(uint16_t cardID);
+
+	static void Register_ActivatableEffect(uint16_t cardID);
+	static bool __stdcall Dispatch_ActivatableEffect(uint16_t cardID);
+
+	static void Register_InherentSpecialSummon(uint16_t cardID);
+	static bool __stdcall Dispatch_InherentSpecialSummon(uint16_t cardID);
 
 	static void Register_SpecialSummonCondition(uint16_t id, Condition condition);
 	static bool __stdcall Dispatch_SpecialSummonCondition(uint16_t id, uint32_t playerIdx);
@@ -107,7 +131,17 @@ public:
 	static void Register_SelectionListPopulation(uint16_t cardID, Event event);
 	static bool __stdcall Dispatch_SelectionListPopulation(uint16_t cardID);
 
+	static void Register_SpellSpeed(uint32_t cardID, uint32_t speed);
+	static uint32_t __stdcall Dispatch_SpellSpeed(uint32_t cardID);
+
 private:
+	static inline std::vector<EffectScript> effectScripts;
+	static inline std::vector<Fusion2> fusionRecipes2;
+	static inline std::vector<Fusion3> fusionRecipes3;
+
+	static inline std::vector<uint16_t> flipMonsters;
+	static inline std::vector<uint16_t> activatableEffects;
+	static inline std::vector<uint16_t> inherentSpecialSummons;
 	static inline std::vector<SpecialSummonHook> specialSummonHooks;
 	static inline std::vector<PhaseHook> phaseHooks;
 	static inline std::vector<StatChangeHook> statChangeHooks;
@@ -119,7 +153,11 @@ private:
 	static inline std::vector<InitialSummonStateHook> initialSummonStateHooks;
 	static inline std::vector<SummonStateHook> summonStateHooks;
 	static inline std::vector<SelectionListPopulationHook> selectionListPopulationHooks;
+	static inline std::vector<SpellSpeedHook> spellSpeedHooks;
 
+	static inline Utils::Hook hFlipMonster;
+	static inline Utils::Hook hActivatableEffect;
+	static inline Utils::Hook hInherentSpecialSummon;
 	static inline Utils::Hook hSpecialSummonCondition;
 	static inline Utils::Hook hPhase;
 	static inline Utils::Hook hStatChange;
@@ -131,4 +169,5 @@ private:
 	static inline Utils::Hook hInitialSummonState;
 	static inline Utils::Hook hSummonState;
 	static inline Utils::Hook hSelectionListPopulation;
+	static inline Utils::Hook hSpellSpeed;
 };

@@ -50,23 +50,37 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
 }
 void Chaos()
 {
+	Register_ActivatableEffect(0x7B);
+	Register_ActivatableEffect(0x1BD);
+	Register_ActivatableEffect(0x27F);
+
+	Register_InherentSpecialSummon(0x7B);
+	Register_InherentSpecialSummon(0x1BD);
+	Register_InherentSpecialSummon(0x27F);
+
 	Register_SpecialSummonCondition(0x7B, CanBeSummoned);
 	Register_SpecialSummonCondition(0x1BD, CanBeSummoned);
 	Register_SpecialSummonCondition(0x27F, CanBeSummoned);
+
 	Register_Phase(5, EndPhase);
+
 	Register_AfterDamageCalculation(BLS_DoubleAttack);
 	Register_AfterDamageCalculation(DMOC_BanishOnKill);
+
 	Register_NormalSummonTrigger(0x10A);
 	Register_SpecialSummonTrigger(0x10A);
+
 	Register_BanishOnLeavingField(0x10A);
+
 	Register_InitialSummonState(0x7B, 0x39);
 	Register_InitialSummonState(0x1BD, 0x39);
 	Register_InitialSummonState(0x27F, 0x39);
 	Register_SummonState(0x39, SummonStates);
+
 	Register_SelectionListPopulation(0x7B, LoadSelectionListDark);
 
 
-	GameData::EffectScript scriptBLS;
+	Utils::EffectScript scriptBLS;
 	scriptBLS.CardID = 0x7B;
 	scriptBLS.Effect = reinterpret_cast<uintptr_t>(&Effect_BLS);
 	scriptBLS.AppliesTo = 0x0057A880;
@@ -74,11 +88,12 @@ void Chaos()
 	scriptBLS.Cost = reinterpret_cast<uintptr_t>(&Cost_BLS);
 	scriptBLS.Target = 0x00596570;
 
-	int idx = GameData::GetEffectScriptIndex(0x7B);
-	GameData::SetEffectScript(idx, scriptBLS);
+	//int idx = GameData::GetEffectScriptIndex(0x7B);
+	//GameData::SetEffectScript(idx, scriptBLS);
+	ReplaceEffectScript(0x540, scriptBLS);
 
 
-	GameData::EffectScript scriptCED;
+	Utils::EffectScript scriptCED;
 	scriptCED.CardID = 0x1BD;
 	scriptCED.Effect = reinterpret_cast<uintptr_t>(&Effect_CED);
 	scriptCED.AppliesTo = 0;
@@ -86,10 +101,11 @@ void Chaos()
 	scriptCED.Cost = reinterpret_cast<uintptr_t>(&Cost_CED);
 	scriptCED.Target = 0;
 
-	idx = GameData::GetEffectScriptIndex(0x1BD);
-	GameData::SetEffectScript(idx, scriptCED);
+	//idx = GameData::GetEffectScriptIndex(0x1BD);
+	//GameData::SetEffectScript(idx, scriptCED);
+	ReplaceEffectScript(0x538, scriptCED);
 
-	GameData::EffectScript scriptDMOC;
+	Utils::EffectScript scriptDMOC;
 	scriptDMOC.CardID = 0x10A;
 	scriptDMOC.Effect = reinterpret_cast<uintptr_t>(&Effect_DMOC);
 	scriptDMOC.AppliesTo = 0;
@@ -97,10 +113,11 @@ void Chaos()
 	scriptDMOC.Cost = 0;
 	scriptDMOC.Target = reinterpret_cast<uintptr_t>(&Target_DMOC);
 
-	idx = GameData::GetEffectScriptIndex(0x10A);
-	GameData::SetEffectScript(idx, scriptDMOC);
+	//idx = GameData::GetEffectScriptIndex(0x10A);
+	//GameData::SetEffectScript(idx, scriptDMOC);
+	ReplaceEffectScript(0x215, scriptDMOC);
 
-	GameData::EffectScript scriptCS;
+	Utils::EffectScript scriptCS;
 	scriptCS.CardID = 0x27F;
 	scriptCS.Effect = reinterpret_cast<uintptr_t>(&Effect_BLS);
 	scriptCS.AppliesTo = 0x0057AD70;
@@ -108,8 +125,9 @@ void Chaos()
 	scriptCS.Cost = reinterpret_cast<uintptr_t>(&Cost_BLS);
 	scriptCS.Target = 0x00595250;
 
-	idx = GameData::GetEffectScriptIndex(0x27F);
-	GameData::SetEffectScript(idx, scriptCS);
+	//idx = GameData::GetEffectScriptIndex(0x27F);
+	//GameData::SetEffectScript(idx, scriptCS);
+	ReplaceEffectScript(0x46F, scriptCS);
 }
 uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3)
 {
@@ -136,13 +154,13 @@ uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3)
 }
 uint32_t __cdecl Condition_BLS(uint32_t paramAddress, int param2, int param3)
 {
-	uint8_t zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0x1;
+	uint8_t zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0x7;
 	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
 	GameData::Player player = GameData::GetDuel().players[playerIdx];
 
-	if (FUN::IsCardOnSideOfField(playerIdx ^ 0x1, 0x5E7) > 0) return false;
+	if (FUN::IsCardOnSideOfField(playerIdx ^ 0x1, 0x5E7) > 0) return 0;
 
-	if (zoneIdx < 0 || zoneIdx > 4) return 0;
+	if (zoneIdx > 4) return 0;
 	// Used its effect this turn
 	if ((player.monsterZones[zoneIdx].effectIDs[31] & 0x1) == 0x1) return 0;
 	// Can't change position
@@ -156,11 +174,12 @@ uint32_t __cdecl Condition_BLS(uint32_t paramAddress, int param2, int param3)
 }
 uint32_t __cdecl Cost_BLS(uint32_t paramAddress, int param2, int param3)
 {
-	uint8_t zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0x1;
+	uint8_t zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0x7;
 	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
 
 	GameData::Player player = GameData::GetDuel().players[playerIdx];
 
+	if (zoneIdx > 4) return 0;
 	// Make it unable to attack this turn
 	uint16_t stateFlag = player.monsterZones[zoneIdx].stateFlags | 0x4;
 	Utils::WriteUint16((void*)(0x00a55d64 + playerIdx * 0xD44 + 0x10 + 0x90 * zoneIdx + 0x8C + 2), stateFlag);
@@ -385,7 +404,7 @@ void __stdcall BLS_DoubleAttack()
 	{
 		GameData::Player attacker = GameData::GetDuel().players[attackerIdx];
 		uint8_t zoneIdx = (battleResult.StateFlags >> 8) & 7;
-		if (zoneIdx < 0 || zoneIdx > 4) return;
+		if (zoneIdx > 4) return;
 		if ((attacker.monsterZones[zoneIdx].effectIDs[31] & 0x1) == 0)
 		{
 			// Reset attacked flag

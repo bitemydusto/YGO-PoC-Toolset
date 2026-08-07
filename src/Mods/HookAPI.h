@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include "Utils.h"
 
 
 #ifdef MODLOADER_EXPORTS
@@ -14,9 +15,20 @@ using Event = void(__stdcall*)();
 using Event1 = void(__stdcall*)(uint32_t playerIdx, uint32_t zoneIdx);
 using State = uint32_t(__stdcall*)();
 using StatChange = void(__stdcall*)(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
+using EffectScript = Utils::EffectScript;
+using Fusion2 = Utils::Fusion2;
+using Fusion3 = Utils::Fusion3;
+
 
 extern "C"
 {
+	MOD_API void ReplaceEffectScript(uint32_t oldID, EffectScript script);
+	MOD_API void ReplaceFusion2(uint16_t oldID, Fusion2 fusion);
+	MOD_API void ReplaceFusion3(uint16_t oldID, Fusion3 fusion);
+
+	MOD_API void Register_FlipMonster(uint16_t cardID);
+	MOD_API void Register_ActivatableEffect(uint16_t cardID);
+	MOD_API void Register_InherentSpecialSummon(uint16_t cardID);
     MOD_API void Register_SpecialSummonCondition(uint16_t id, Condition condition);
     MOD_API void Register_Phase(uint32_t phase, Event event);
 	MOD_API void Register_StatChange(uint16_t id, StatChange statChange);
@@ -28,4 +40,5 @@ extern "C"
 	MOD_API void Register_InitialSummonState(uint16_t cardIntID, uint8_t stateCode);
 	MOD_API void Register_SummonState(uint8_t stateCode, State state);
 	MOD_API void Register_SelectionListPopulation(uint16_t cardID, Event event);
+	MOD_API void Register_SpellSpeed(uint32_t cardID, uint32_t speed);
 }

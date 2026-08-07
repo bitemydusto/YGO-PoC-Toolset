@@ -41,5 +41,8 @@
     <ClInclude Include="PatchLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CRC.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

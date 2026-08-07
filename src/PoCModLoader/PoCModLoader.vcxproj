@@ -158,6 +158,7 @@
     <ClCompile Include="PatchLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CRC.h" />
     <ClInclude Include="HookManager.h" />
     <ClInclude Include="ModLoader.h" />
     <ClInclude Include="PatchLoader.h" />

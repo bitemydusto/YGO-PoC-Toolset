@@ -49,8 +49,6 @@ void Start()
     script.Cost = reinterpret_cast<uintptr_t>(&Cost_Breaker);
     script.Target = 0x005959D0;
 
-    //int idx = GameData::GetEffectScriptIndex(0x96);
-    //GameData::SetEffectScript(idx, script);
     ReplaceEffectScript(0xC6, script);
 
 

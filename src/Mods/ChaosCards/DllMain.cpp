@@ -4,35 +4,12 @@
 #include "GameData.h"
 #include "HookAPI.h"
 
-using Original_t = uint32_t(__cdecl*)(unsigned int* param, unsigned int param2, unsigned int param3);
-inline Original_t Original = reinterpret_cast<Original_t>(0x00584200);
-using OriginalTarget_t = uint32_t(__cdecl*)(unsigned int* param, int param2, int param3);
-inline OriginalTarget_t OriginalTarget = reinterpret_cast<OriginalTarget_t>(0x00593520);
-
-int isBLS = 0;
-int selectionIndex = 0;
 unsigned int cedDamage;
-
-Utils::Hook hBLS_3;
-Utils::Hook hBLS_4;
-Utils::Hook hBLS_5;
-Utils::Hook hBLS_6;
-
-Utils::Hook hDMOC_1;
-
+int innerState = 0;
 
 
 void Chaos();
 
-void ChooseSummonState();
-void ModifySelectionListPopulation();
-void PatchBanishNeeded();
-void RepeatSelection();
-
-bool CanBeSummoned();
-void LoadSelectionListLight();
-void LoadSelectionListDark();
-void ShowDialog();
 
 uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Condition_BLS(uint32_t paramAddress, int param2, int param3);
@@ -47,9 +24,12 @@ uint32_t __cdecl Target_DMOC(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Condition_DMOC(uint32_t paramAddress, int param2, int param3);
 
 
+bool CanBeSummoned(uint32_t playerIdx);
+void __stdcall LoadSelectionListDark();
 void __stdcall EndPhase();
 void __stdcall BLS_DoubleAttack();
 void __stdcall DMOC_BanishOnKill();
+uint32_t __stdcall SummonStates();
 
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
@@ -72,17 +52,18 @@ void Chaos()
 {
 	Register_SpecialSummonCondition(0x7B, CanBeSummoned);
 	Register_SpecialSummonCondition(0x1BD, CanBeSummoned);
+	Register_SpecialSummonCondition(0x27F, CanBeSummoned);
 	Register_Phase(5, EndPhase);
 	Register_AfterDamageCalculation(BLS_DoubleAttack);
 	Register_AfterDamageCalculation(DMOC_BanishOnKill);
 	Register_NormalSummonTrigger(0x10A);
 	Register_SpecialSummonTrigger(0x10A);
 	Register_BanishOnLeavingField(0x10A);
-
-	hBLS_3 = Utils::InstallHook((void*)0x0059df41, 5, ChooseSummonState);
-	hBLS_4 = Utils::InstallHook((void*)0x00599da4, 5, ModifySelectionListPopulation);
-	hBLS_5 = Utils::InstallHook((void*)0x0059dea2, 5, PatchBanishNeeded);
-	hBLS_6 = Utils::InstallHook((void*)0x0059faf6, 5, RepeatSelection);
+	Register_InitialSummonState(0x7B, 0x39);
+	Register_InitialSummonState(0x1BD, 0x39);
+	Register_InitialSummonState(0x27F, 0x39);
+	Register_SummonState(0x39, SummonStates);
+	Register_SelectionListPopulation(0x7B, LoadSelectionListDark);
 
 
 	GameData::EffectScript scriptBLS;
@@ -118,6 +99,17 @@ void Chaos()
 
 	idx = GameData::GetEffectScriptIndex(0x10A);
 	GameData::SetEffectScript(idx, scriptDMOC);
+
+	GameData::EffectScript scriptCS;
+	scriptCS.CardID = 0x27F;
+	scriptCS.Effect = reinterpret_cast<uintptr_t>(&Effect_BLS);
+	scriptCS.AppliesTo = 0x0057AD70;
+	scriptCS.Condition = reinterpret_cast<uintptr_t>(&Condition_BLS);
+	scriptCS.Cost = reinterpret_cast<uintptr_t>(&Cost_BLS);
+	scriptCS.Target = 0x00595250;
+
+	idx = GameData::GetEffectScriptIndex(0x27F);
+	GameData::SetEffectScript(idx, scriptCS);
 }
 uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3)
 {
@@ -130,7 +122,7 @@ uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3)
 	uint32_t target = 0;
 	if (!FUN::SetTargetParams((uint32_t)block, 0, &target)) return 0;
 
-	uint32_t side = target & 0xff;          // as in original (player in low bits)
+	uint32_t side = target & 0xff;
 	uint32_t zone = (target >> 8) & 0xff;
 
 	uint32_t* zoneCard = (uint32_t*)(0x00a55d74 + (side & 1) * 0xD44 + zone * 0x90);
@@ -148,6 +140,7 @@ uint32_t __cdecl Condition_BLS(uint32_t paramAddress, int param2, int param3)
 	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
 	GameData::Player player = GameData::GetDuel().players[playerIdx];
 
+	if (FUN::IsCardOnSideOfField(playerIdx ^ 0x1, 0x5E7) > 0) return false;
 
 	if (zoneIdx < 0 || zoneIdx > 4) return 0;
 	// Used its effect this turn
@@ -392,6 +385,7 @@ void __stdcall BLS_DoubleAttack()
 	{
 		GameData::Player attacker = GameData::GetDuel().players[attackerIdx];
 		uint8_t zoneIdx = (battleResult.StateFlags >> 8) & 7;
+		if (zoneIdx < 0 || zoneIdx > 4) return;
 		if ((attacker.monsterZones[zoneIdx].effectIDs[31] & 0x1) == 0)
 		{
 			// Reset attacked flag
@@ -407,6 +401,8 @@ void __stdcall DMOC_BanishOnKill()
 {
 	GameData::BattleResult battleResult = GameData::GetBattleResult();
 	uint8_t attackerIdx = battleResult.StateFlags & 0x1;
+
+	if (FUN::IsCardOnSideOfField(!attackerIdx, 0x5E7) > 0) return;
 	if (battleResult.sides[attackerIdx].IntID == 0x0D && (battleResult.sides[!attackerIdx].ResultFlags & 0x10) != 0)
 	{
 		uint8_t attackedZoneIdx = (battleResult.StateFlags >> 0xB) & 7;
@@ -419,9 +415,11 @@ void __stdcall DMOC_BanishOnKill()
 
 
 }
-bool CanBeSummoned()
+bool CanBeSummoned(uint32_t playerIdx)
 {
-	GameData::Player player = GameData::GetDuel().players[1];
+	if (FUN::IsCardOnSideOfField(playerIdx ^ 0x1, 0x5E7) > 0) return false;
+
+	GameData::Player player = GameData::GetDuel().players[playerIdx];
 
 	int numOfLight = 0;
 	int numOfDark = 0;
@@ -430,43 +428,124 @@ bool CanBeSummoned()
 		if (player.grave[i].GetType() < 0x15)
 		{
 			uint32_t attr = player.grave[i].GetAttribute();
-			if (attr == 0x1) // Light
-			{
-				numOfLight++;
-			}
-			else if (attr == 0x2) // Dark
-			{
-				numOfDark++;
-			}
+			if (attr == 0x1) numOfLight++; // Light
+			else if (attr == 0x2) numOfDark++; // Dark
 		}
 	}
-
-	return (numOfLight > 0 && numOfDark > 0) ? true : false;
-}
-void ShowDialog()
-{
-	FUN::ShowDialog("Select @31@0 @2LIGHT@0 and @31@0 @2DARK@0 monster from your Graveyard to banish.");
-}
-void LoadSelectionListLight()
-{
-	std::vector<uint32_t> lightCards;
-
-	GameData::Player player = GameData::GetDuel().players[1];
-	for (size_t i = 0; i < player.cardsInGrave; i++)
+	if (numOfLight > 0 && numOfDark > 0)
 	{
-		if (player.grave[i].GetType() < 0x15)
+		if (FUN::NumOfEmptyValidSummonZones(playerIdx) > 0)
 		{
-			uint32_t attr = player.grave[i].GetAttribute();
-			if (attr == 0x1) // Light
+			if (FUN::CanPlayerSummon(playerIdx) > 0)
 			{
-				lightCards.push_back(player.grave[i].fullValue);
+				return true;
 			}
 		}
 	}
 
-	GameData::ChangeSelectionList(lightCards);
+	return false;
 }
-void LoadSelectionListDark()
+uint32_t __stdcall SummonStates()
+{
+	switch (innerState)
+	{
+		case 0:
+		{
+			FUN::ShowDialog("You must banish @31@0 @2LIGHT@0 and @31@0 @2DARK@0 monster from your Graveyard to summon this monster. Do you wish to @2Summon@0?");
+			FUN::ShowDialogOptions(1, 0);
+			innerState = 0xe;
+		}break;
+		case 0xe:
+		{
+			if (Utils::ReadUint8((void*)0x00a558b4) == 0)
+			{
+				innerState = 0;
+				return 1;
+			}
+			innerState = 1;
+		}break;
+		case 1:
+		{
+			FUN::InitiateSelectionList(1, 6, 0x5EB, 0); // Original population logic: Soul of Purity and Light
+			innerState = 2;
+		}break;
+		case 2:
+		{
+			uint32_t* entry = (uint32_t*)FUN::GetSelectedItem();
+			if (!entry || (*entry & 0xFFF) == 0) return 0; // not ready
+
+			uint32_t dword = *entry;
+			FUN::BanishCardFromGrave(1, &dword);
+
+			innerState = 3;
+		}break;
+		case 3:
+		{
+			FUN::InitiateSelectionList(1, 6, 0x7B, 0); // Use custom population logic
+			innerState = 4;
+		}break;
+		case 4:
+		{
+			uint32_t* entry = (uint32_t*)FUN::GetSelectedItem();
+			if (!entry || (*entry & 0xFFF) == 0) return 0; // not ready
+
+			uint32_t dword = *entry;
+			FUN::BanishCardFromGrave(1, &dword);
+
+			innerState = 0x5;
+		}break;
+		case 5:
+		{
+			uint16_t cardID = FUN::GetCardID(Utils::ReadUint16((void*)0x00a57802));
+			FUN::ShowDialog2(0xF7);
+
+			FUN::SetupSelector(6, cardID); // FUN_005bfa00
+			FUN::InitiateSelector(); // FUN_005bfa20
+
+			innerState = 0x6;
+		}break;
+		case 6:
+		{
+			if (FUN::SelectionConfirmed() != 0) return 0;
+
+			uint16_t choice = Utils::ReadUint16((void*)0x00A558B4);
+
+			uint32_t summonParam = Utils::ReadUint32((void*)0x00A55080);
+			summonParam = (summonParam & 0xFFFF3FFF);
+			if ((choice & 1) == 0) summonParam |= 0x4000;
+			else summonParam |= 0x8000;
+
+			Utils::WriteUint32((void*)0x00A55080, summonParam);
+
+			Utils::WriteUint8((void*)0x00A558B4, (uint8_t)(choice & 1));
+
+			innerState = 0xf;
+		}break;
+		case 0xf:
+		{
+			uint32_t state = Utils::ReadUint32((void*)0x00a57808);
+			Utils::WriteInt32((void*)0x00a57808, state & 0xff00ffff);
+
+			uint16_t choice = Utils::ReadUint16((void*)0x00A558B4) & 1;
+
+			uint32_t param1 = (Utils::ReadUint32((void*)0x00a57808) >> 0x10 & 0x100) >> 8;
+			uint32_t param2 = Utils::ReadUint8((void*)0x00a5780c);
+			uint32_t param3 = FUN::GetSummonZone( ((Utils::ReadUint32((void*)0x00a5780a)) & 0x100) >> 8 );
+			uint32_t param5 = (choice == 0) ? 1 : 0;
+
+			FUN::SpecialSummon(param1, param2, param3, 0, param5);
+
+			uint32_t x = Utils::ReadUint32((void*)0x00a57804);
+			Utils::WriteInt32((void*)0x00a57804, x & 0xfffffffd);
+
+			innerState = 0;
+			return 1;
+		}
+	}
+
+	return 0;
+}
+void __stdcall LoadSelectionListDark()
 {
 	std::vector<uint32_t> darkCards;
 
@@ -484,118 +563,4 @@ void LoadSelectionListDark()
 	}
 
 	GameData::ChangeSelectionList(darkCards);
-}
-__declspec(naked) void ChooseSummonState()
-{
-	__asm
-	{
-	hook:
-		CMP EAX, 0x7B
-		JE hook_1
-		CMP EAX, 0x1BD
-		JE hook_1
-		JMP hook_end
-
-	hook_1:
-		CALL OFFSET ShowDialog
-
-		MOV CL, BYTE PTR DS:[0x00a57808]
-		POP EDI
-		AND ECX, 0xFF
-		POP ESI
-		OR CH, 0x33 // Selection state
-		POP EBP
-		MOV WORD PTR DS:[0x00a57808], CX
-
-		PUSH 0x0059e0e1
-		RET
-	hook_end :
-		JMP[hBLS_3.Trampoline]
-	}
-}
-__declspec(naked) void ModifySelectionListPopulation()
-{
-	__asm
-	{
-	hook:
-		CMP BX, 0x7B
-		JE hook_1
-		CMP BX, 0x1BD
-		JE hook_1
-		JMP hook_end
-
-	hook_1:
-		MOV ESI, 0x4	
-		MOV DWORD PTR DS:[ESP + 0x10], 0x1
-		CMP selectionIndex, 0x0
-		JNE hook_dark
-	hook_light:
-		PUSH EAX
-		CALL OFFSET LoadSelectionListLight
-		POP EAX
-		PUSH 0x0059c432
-		RET
-	hook_dark:
-		PUSH EAX
-		CALL OFFSET LoadSelectionListDark
-		POP EAX
-		PUSH 0x0059c432
-		RET
-	hook_end :
-		CMP EBX, 0x460
-		JMP[hBLS_4.Trampoline]
-	}
-}
-__declspec(naked) void PatchBanishNeeded()
-{
-	__asm
-	{
-	hook:
-		CMP EAX, 0x7B
-		JE hook_1
-		CMP EAX, 0x1BD
-		JE hook_1
-		JMP hook_end
-
-	hook_1:
-		PUSH 0x0059debf
-		RET
-	hook_end :
-		JMP[hBLS_5.Trampoline]
-	}
-}
-__declspec(naked) void RepeatSelection()
-{
-	__asm
-	{
-	hook:
-
-		CMP WORD PTR DS:[0x00a57802], 0x5 // Check intID of card used
-		JE hook_1
-		CMP WORD PTR DS:[0x00a57802], 0x9
-		JE hook_1
-		JMP hook_end
-
-	hook_1:
-		CMP selectionIndex, 0x0
-		JNE hook_no_repeat
-
-	hook_repeat:
-		MOV selectionIndex, 0x1
-		MOV EAX, DWORD PTR DS:[0x00a57808] // Load state
-		AND EAX, 0x00FF
-		OR EAX, 0x3200
-		MOV WORD PTR DS:[0x00a57808], AX // Set state to 0x32 so it will increaced to 0x33 and repeat the selection
-		MOV BYTE PTR DS:[0x00A5780A], 0 // Reset selected so far
-		JMP hook_end
-	hook_no_repeat:
-		MOV selectionIndex, 0x0
-		PUSH EAX
-		MOV EAX, DWORD PTR DS:[0x00a55080]
-		AND EAX, 0xf1ffffff
-		MOV DWORD PTR DS:[0x00a55080], EAX
-		POP EAX
-	hook_end :
-		JMP[hBLS_6.Trampoline]
-	}
 }

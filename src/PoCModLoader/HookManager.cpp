@@ -4,12 +4,15 @@ namespace
 {
 	void* gSpecialSummonTrampoline = nullptr;
 	void* gPhaseTrampoline = nullptr;
-	void* gStateChangeTrampoline = nullptr;
+	void* gStatChangeTrampoline = nullptr;
 	void* gAfterDamageCalculationTrampoline = nullptr;
 	void* gNormalSummonTriggerTrampoline = nullptr;
 	void* gSpecialSummonTriggerTrampoline = nullptr; void* gSpecialSummonTriggerTrampoline2 = nullptr;
 	void* gOnSentToGraveTriggerTrampoline = nullptr;
 	void* gBanishOnLeavingFieldTrampoline = nullptr;
+	void* gInitialSummonStateTrampoline = nullptr;
+	void* gSummonStateTrampoline = nullptr;
+	void* gSelectionListPopulationTrampoline = nullptr;
 }
 
 void HookManager::InstallHooks()
@@ -20,8 +23,8 @@ void HookManager::InstallHooks()
 	hPhase = Utils::InstallHook((void*)0x00404970, 5, PatchPhase);
 	gPhaseTrampoline = hPhase.Trampoline;
 
-	hStateChange = Utils::InstallHook((void*)0x0056dde9, 5, PatchStateChange);
-	gStateChangeTrampoline = hStateChange.Trampoline;
+	hStatChange = Utils::InstallHook((void*)0x0056dde9, 5, PatchStatChange);
+	gStatChangeTrampoline = hStatChange.Trampoline;
 
 	hAfterDamageCalculation = Utils::InstallHook((void*)0x00407aae, 5, PatchAfterDamageCalculation);
 	gAfterDamageCalculationTrampoline = hAfterDamageCalculation.Trampoline;
@@ -39,6 +42,15 @@ void HookManager::InstallHooks()
 
 	hBanishOnLeavingField = Utils::InstallHook((void*)0x00576b58, 7, PatchBanishOnLeavingField);
 	gBanishOnLeavingFieldTrampoline = hBanishOnLeavingField.Trampoline;
+
+	hInitialSummonState = Utils::InstallHook((void*)0x0059df41, 5, PatchInitialSummonState);
+	gInitialSummonStateTrampoline = hInitialSummonState.Trampoline;
+
+	hSummonState = Utils::InstallHook((void*)0x0059deed, 6, PatchSummonState);
+	gSummonStateTrampoline = hSummonState.Trampoline;
+
+	hSelectionListPopulation = Utils::InstallHook((void*)0x00599da4, 5, PatchSelectionListPopulation);
+	gSelectionListPopulationTrampoline = hSelectionListPopulation.Trampoline;
 }
 void HookManager::Register_SpecialSummonCondition(uint16_t id, Condition condition)
 {
@@ -49,13 +61,13 @@ void HookManager::Register_SpecialSummonCondition(uint16_t id, Condition conditi
 	}
 	specialSummonHooks.push_back({ id, condition });
 }
-bool __stdcall HookManager::Dispatch_SpecialSummonCondition(uint16_t id)
+bool __stdcall HookManager::Dispatch_SpecialSummonCondition(uint16_t id, uint32_t playerIdx)
 {
 	for (const auto& hook : specialSummonHooks)
 	{
 		if (hook.cardID == id)
 		{
-			return hook.condition();
+			return hook.condition(playerIdx);
 		}
 	}
 	return false;
@@ -66,6 +78,7 @@ __declspec(naked) void PatchSpecialSummonCondition()
 	{
 	hook:
 		PUSH EAX
+		PUSH DWORD PTR DS : [ESP + 8]
 		PUSH EAX
 		CALL HookManager::Dispatch_SpecialSummonCondition
 		TEST AL, AL
@@ -103,28 +116,28 @@ __declspec(naked) void PatchPhase()
 		JMP[gPhaseTrampoline]
 	}
 }
-void HookManager::Register_StateChange(uint16_t id, StateChange stateChange)
+void HookManager::Register_StatChange(uint16_t id, StatChange statChange)
 {
 	// Check if the card ID is already registered
-	for (const auto& hook : stateChangeHooks)
+	for (const auto& hook : statChangeHooks)
 	{
 		if (hook.cardID == id) return;
 	}
-	stateChangeHooks.push_back({ id, stateChange });
+	statChangeHooks.push_back({ id, statChange });
 }
-bool __stdcall HookManager::Dispatch_StateChange(uint16_t id, uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx)
+bool __stdcall HookManager::Dispatch_StatChange(uint16_t id, uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx)
 {
-	for (const auto& hook : stateChangeHooks)
+	for (const auto& hook : statChangeHooks)
 	{
 		if (hook.cardID == id)
 		{
-			hook.stateChange(statAddress, playerIdx, zoneIdx);
+			hook.statChange(statAddress, playerIdx, zoneIdx);
 			return true;
 		}
 	}
 	return false;
 }
-__declspec(naked) void PatchStateChange()
+__declspec(naked) void PatchStatChange()
 {
 	__asm
 	{
@@ -134,7 +147,7 @@ __declspec(naked) void PatchStateChange()
 		PUSH DWORD PTR DS : [ESP + 68]
 		PUSH ESP
 		PUSH EAX
-		CALL HookManager::Dispatch_StateChange
+		CALL HookManager::Dispatch_StatChange
 		TEST AL, AL
 		POP EAX
 		JZ hook_end
@@ -142,7 +155,7 @@ __declspec(naked) void PatchStateChange()
 		MOV EAX, 0x0056df89
 		JMP EAX
 	hook_end :
-		JMP[gStateChangeTrampoline]
+		JMP[gStatChangeTrampoline]
 	}
 }
 void HookManager::Register_AfterDamageCalculation(Event event)
@@ -346,5 +359,159 @@ __declspec(naked) void PatchBanishOnLeavingField()
 	hook_end :
 		SUB ESP, 0x4
 		JMP[gBanishOnLeavingFieldTrampoline]
+	}
+}
+void HookManager::Register_InitialSummonState(uint16_t cardIntID, uint8_t state)
+{
+	// Check if the card ID is already registered
+	for (const auto& hook : initialSummonStateHooks)
+	{
+		if (hook.cardIntID == cardIntID) return;
+	}
+	initialSummonStateHooks.push_back({ cardIntID, state });
+}
+uint8_t __stdcall HookManager::Dispatch_InitialSummonState(uint16_t cardIntID)
+{
+	for (const auto& hook : initialSummonStateHooks)
+	{
+		if (hook.cardIntID == cardIntID)
+		{
+			return hook.stateCode;
+		}
+	}
+	return 0;
+}
+__declspec(naked) void PatchInitialSummonState()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH EAX
+		CALL HookManager::Dispatch_InitialSummonState
+		TEST EAX, EAX
+		JZ hook_end
+
+		ADD ESP, 0x4
+		MOV CL, BYTE PTR DS : [0x00a57808]
+		POP EDI
+		AND ECX, 0xFF
+		POP ESI
+		OR CH, AL
+		POP EBP
+		MOV WORD PTR DS : [0x00a57808] , CX
+
+		PUSH 0x0059e0e1
+		RET
+	hook_end:
+		POP EAX
+		JMP[gInitialSummonStateTrampoline]
+	}
+}
+void HookManager::Register_SummonState(uint8_t stateCode, State state)
+{
+	// Check if the state code is already registered
+	for (const auto& hook : summonStateHooks)
+	{
+		if (hook.stateCode == stateCode) return;
+	}
+	summonStateHooks.push_back({ stateCode, state });
+}
+uint8_t __stdcall HookManager::Dispatch_SummonState(uint8_t stateCode)
+{
+	for (const auto& hook : summonStateHooks)
+	{
+		if (hook.stateCode == stateCode)
+		{
+			return hook.state();
+		}
+	}
+	return 2; // Not found
+}
+__declspec(naked) void PatchSummonState()
+{
+	__asm
+	{
+	hook:
+		AND ECX, 0xFFFF
+		PUSH EBX
+		SHR ECX, 0x8
+		PUSH EBP
+		PUSH ESI
+		PUSH ECX
+		PUSH EAX
+		PUSH ECX
+		CALL HookManager::Dispatch_SummonState
+		CMP AL, 0x2
+		JE hook_end
+
+		ADD ESP, 0x8
+		CMP AL, 0x0
+		JE hook_0
+	hook_1:
+		AND WORD PTR DS:[0x00a57804], 0xfffd
+		MOV AL, 0x1
+		JMP hook_out
+
+	hook_0:
+		XOR EAX, EAX
+
+	hook_out:
+		POP ESI
+		POP EBP
+		POP EBX
+		ADD ESP, 0x234
+		PUSH 0x0059eb1f
+		RET
+		
+	hook_end:
+		POP EAX
+		POP ECX
+		PUSH 0x0059def9
+		RET
+	}
+}
+void HookManager::Register_SelectionListPopulation(uint16_t cardID, Event event)
+{
+	// Check if the card ID is already registered
+	for (const auto& hook : selectionListPopulationHooks)
+	{
+		if (hook.cardID == cardID) return;
+	}
+	selectionListPopulationHooks.push_back({ cardID, event });
+}
+bool __stdcall HookManager::Dispatch_SelectionListPopulation(uint16_t cardID)
+{
+	for (const auto& hook : selectionListPopulationHooks)
+	{
+		if (hook.cardID == cardID)
+		{
+			hook.event();
+			return true;
+		}
+	}
+	return false;
+}
+__declspec(naked) void PatchSelectionListPopulation()
+{
+	__asm
+	{
+	hook:
+		PUSH EBX
+		AND EBX, 0xFFFF
+		PUSH EAX
+		PUSH EBX
+		CALL HookManager::Dispatch_SelectionListPopulation
+		TEST AL, AL
+		POP EAX
+		POP EBX
+		JZ hook_end
+
+		MOV ESI, 0x4
+		PUSH 0x0059c432
+		RET
+	hook_end :
+		CMP EBX, 0x460
+		JMP[gSelectionListPopulationTrampoline]
 	}
 }

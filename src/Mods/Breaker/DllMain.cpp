@@ -37,7 +37,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
 }
 void Start()
 {
-	Register_StateChange(0x96, ChangeStat);
+	Register_StatChange(0x96, ChangeStat);
 
 
     GameData::EffectScript script;

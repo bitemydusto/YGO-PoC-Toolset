@@ -273,4 +273,13 @@ namespace GameData
 		}
 		return result;
 	}
+
+    uint16_t GetSummonState()
+    {
+		return Utils::ReadUint16((void*)(0x00a57808));
+    }
+    void SetSummonState(uint16_t state)
+    {
+        Utils::WriteUint16((void*)(0x00a57808), state);
+    }
 }

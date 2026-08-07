@@ -28,8 +28,11 @@ namespace FUN
 	using GetMonsterDEF_t = uint32_t(__cdecl*)(uint16_t intID);
 	inline GetMonsterDEF_t GetMonsterDEF = reinterpret_cast<GetMonsterDEF_t>(0x00402800);
 
-	using GetCardID_t = uint32_t(__cdecl*)(uint32_t intID);
+	using GetCardID_t = uint32_t(__cdecl*)(uint16_t intID);
 	inline GetCardID_t GetCardID = reinterpret_cast<GetCardID_t>(0x004022e0);
+
+	using GetCardIntID_t = uint32_t(__cdecl*)(uint16_t cardID);
+	inline GetCardIntID_t GetCardIntID = reinterpret_cast<GetCardIntID_t>(0x00402460);
 
 	using GetSpellTrapType_t = uint32_t(__cdecl*)(uint16_t intID);
 	inline GetSpellTrapType_t GetSpellTrapType = reinterpret_cast<GetSpellTrapType_t>(0x00402700);
@@ -39,6 +42,9 @@ namespace FUN
 
     using ShowDialog_t = void(__cdecl*)(const char*);
     inline ShowDialog_t ShowDialog = reinterpret_cast<ShowDialog_t>(0x005bf860);
+
+	using ShowDialog2_t = void(__cdecl*)(unsigned int);
+	inline ShowDialog2_t ShowDialog2 = reinterpret_cast<ShowDialog2_t>(0x005bf860);
 
 	using ShowDialogOptions_t = void(__cdecl*)(unsigned int, unsigned int);
 	inline ShowDialogOptions_t ShowDialogOptions = reinterpret_cast<ShowDialogOptions_t>(0x005bfa00);
@@ -53,7 +59,7 @@ namespace FUN
 	using GetTargetParams_t = uint32_t(__cdecl*)(unsigned int block, int param2, unsigned int* target);
 	inline GetTargetParams_t SetTargetParams = reinterpret_cast<GetTargetParams_t>(0x005833e0);
 
-    // Sends the card from the field to the destination based on the zone bit field (16 bit for each field, first 11 bits -> monster/st/field spell)
+    // Sends the card from the field to the destination based on the zone bit field (16 bit for each field, first 11 bits -> monster/st/fieldspell)
 	// destCode: 0xb = hand, 0xd = deck, 0xe = grave, 0xf = banish
     // fxCode: bit field for effect, 0 = no effect, 2 = play destroy sound and visual effect
 	using SendCardFromField_t = unsigned int(__cdecl*)(uint8_t* block, unsigned int zoneBitField, unsigned int destCode, unsigned int fxCode);
@@ -65,8 +71,8 @@ namespace FUN
 	using DealEffectDamage_t = void(__cdecl*)(unsigned int playerIdx, unsigned int amount);
 	inline DealEffectDamage_t DealEffectDamage = reinterpret_cast<DealEffectDamage_t>(0x00578430);
 
-	using GetCardPtrFromGrave_t = uint32_t*(__cdecl*)(unsigned int playerIdx, unsigned int destCode, unsigned int graveIdx);
-	inline GetCardPtrFromGrave_t GetCardPtrFromGrave = reinterpret_cast<GetCardPtrFromGrave_t>(0x00570040);
+	using GetCardPtrFromDest_t = uint32_t*(__cdecl*)(unsigned int playerIdx, unsigned int destCode, unsigned int idx);
+	inline GetCardPtrFromDest_t GetCardPtrFromDest = reinterpret_cast<GetCardPtrFromDest_t>(0x00570040);
 
 	using BanishFromGrave_t = void(__cdecl*)(unsigned int playerIdx, unsigned int* cardPtr, unsigned int flag);
 	inline BanishFromGrave_t BanishFromGrave = reinterpret_cast<BanishFromGrave_t>(0x00575f30);
@@ -91,4 +97,36 @@ namespace FUN
 
 	using AddTargetedCardToHand_t = void(__cdecl*)(uint8_t* block, unsigned int playerIdx, unsigned int* param3);
 	inline AddTargetedCardToHand_t AddTargetedCardToHand = reinterpret_cast<AddTargetedCardToHand_t>(0x00575ca0);
+
+	using NumOfEmptyValidSummonZones_t = uint32_t(__cdecl*)(unsigned int playerIdx);
+	inline NumOfEmptyValidSummonZones_t NumOfEmptyValidSummonZones = reinterpret_cast<NumOfEmptyValidSummonZones_t>(0x0056a000);
+
+	using CanPlayerSummon_t = uint32_t(__cdecl*)(unsigned int playerIdx);
+	inline CanPlayerSummon_t CanPlayerSummon = reinterpret_cast<CanPlayerSummon_t>(0x00570a90);
+
+	using IsCardOnField_t = uint32_t(__cdecl*)(unsigned int cardID);
+	inline IsCardOnField_t IsCardOnField = reinterpret_cast<IsCardOnField_t>(0x005699c0);
+
+	using IsCardOnSideOfField_t = uint32_t(__cdecl*)(unsigned int playerIdx, unsigned int cardID);
+	inline IsCardOnSideOfField_t IsCardOnSideOfField = reinterpret_cast<IsCardOnSideOfField_t>(0x005699a0);
+
+	using BanishCardFromGrave_t = void(__cdecl*)(unsigned int playerIdx, unsigned int* cardDword);
+	inline BanishCardFromGrave_t BanishCardFromGrave = reinterpret_cast<BanishCardFromGrave_t>(0x00575f30);
+
+	using SpecialSummon_t = void(__cdecl*)(unsigned int param1, unsigned int param2, unsigned int param3, unsigned int param4, unsigned int param5);
+	inline SpecialSummon_t SpecialSummon = reinterpret_cast<SpecialSummon_t>(0x005adbc0);
+
+	using GetSummonZone_t = uint32_t(__cdecl*)(unsigned int param1);
+	inline GetSummonZone_t GetSummonZone = reinterpret_cast<GetSummonZone_t>(0x0056a030);
+
+	// SelectionType:
+	// 4 = card type
+	// 5 = attribute
+	// 6 = atk/def position
+	using SetupSelector_t = void(__cdecl*)(unsigned int selectionType, unsigned int cardID);
+	inline SetupSelector_t SetupSelector = reinterpret_cast<SetupSelector_t>(0x005bfa00);
+
+	using InitiateSelector_t = void(__cdecl*)();
+	inline InitiateSelector_t InitiateSelector = reinterpret_cast<InitiateSelector_t>(0x005bfa20);
+
 }

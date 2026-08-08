@@ -9,6 +9,8 @@
             <HorizontalStackLayout  Grid.Row="0" Spacing="5">
                 <Button Text="Open Library" Command="{Binding OpenLibraryCommand}" CornerRadius="0" WidthRequest="125"/>
                 <Button Text="Save Library" Command="{Binding SaveLibraryCommand}" CornerRadius="0" WidthRequest="125" IsEnabled="{Binding IsLibraryLoaded}"/>
+                <Button Text="Import Cards" Command="{Binding ImportCardsCommand}" CornerRadius="0" WidthRequest="125" IsEnabled="{Binding IsLibraryLoaded}"/>
+                <Button Text="Export Selected" Command="{Binding ExportSelectedCommand}" CornerRadius="0" WidthRequest="130" IsEnabled="{Binding IsLibraryLoaded}"/>
             </HorizontalStackLayout>
             <Grid Grid.Row="1" ColumnDefinitions="auto,*,auto" Margin="10" IsVisible="{Binding IsLibraryLoaded}">
                 <Grid Grid.Column="0" RowDefinitions="auto,*" WidthRequest="300">

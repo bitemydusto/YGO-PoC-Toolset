@@ -10,6 +10,8 @@ using CommunityToolkit.Maui.Storage;
 using System.Collections.ObjectModel;
 using PoCTools;
 using PoCTools.Library;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 
 namespace Editor.ViewModel
@@ -108,6 +110,144 @@ namespace Editor.ViewModel
                     await Shell.Current.DisplayAlert("Error", $"Unexpected error occurred while saving library: {e.Message}", "OK");
                 }
                 IsLoading = false;
+            }
+        }
+        [RelayCommand]
+        async Task ImportCards()
+        {
+            var result = await FilePicker.Default.PickAsync(new PickOptions
+            {
+                PickerTitle = "Select a card file to import",
+                FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+                {
+                    { DevicePlatform.WinUI, new[] { ".json" } },
+                })
+            });
+            if (result == null) return;
+            if (result.FullPath != null)
+            {
+                IsLoading = true;
+                try
+                {
+                    var jsonString = await File.ReadAllTextAsync(result.FullPath);
+                    List<CardJSON> imports = JsonConvert.DeserializeObject<List<CardJSON>>(jsonString)!;
+                    List<CardJSON> failedImports = [];
+                    List<CardJSON> notFoundImports = [];
+                    foreach (var import in imports)
+                    {
+                        if (import.Name.Length > 64 ||
+                            import.ATK > 5110 ||
+                            import.DEF > 5110 ||
+                            import.Level > 12)
+                        {
+                            failedImports.Add(import);
+                            continue;
+                        }
+
+                        bool found = false;
+                        foreach (var cardInfo in Cards)
+                        {
+                            int id = cardInfo.ID.StartsWith("0x") ? Convert.ToInt32(cardInfo.ID, 16) : Convert.ToInt32(cardInfo.ID);
+                            int importId = import.ID.StartsWith("0x") ? Convert.ToInt32(import.ID, 16) : Convert.ToInt32(import.ID);
+
+                            if (id == importId)
+                            {
+                                found = true;
+
+                                cardInfo.Name = import.Name;
+                                cardInfo.Level = import.Level;
+                                cardInfo.Attribute = import.Attribute;
+                                cardInfo.Type = import.Type;
+                                cardInfo.SubType = import.SubType;
+                                cardInfo.SpellTrapType = import.SpellTrap;
+                                cardInfo.ATK = import.ATK.ToString();
+                                cardInfo.DEF = import.DEF.ToString();
+                                cardInfo.VersionYugi = import.Yugi;
+                                cardInfo.VersionKaiba = import.Kaiba;
+                                cardInfo.VersionJoey = import.Joey;
+                                cardInfo.ImageName = import.ImageName;
+                                cardInfo.Description = import.Description;
+                            }
+                        }
+                        if (!found) notFoundImports.Add(import);
+                    }
+
+                    await Shell.Current.DisplayAlert("Import Result", $"Imported cards: {imports.Count - failedImports.Count - notFoundImports.Count}\nInvalid cards: {failedImports.Count}\nIDs not found: {notFoundImports.Count}", "OK");
+                }
+                catch (JsonException e)
+                {
+                    await Shell.Current.DisplayAlert("Error", $"Failed to parse JSON: {e.Message}", "OK");
+                }
+                catch (LibraryIsNotLoadedException)
+                {
+                    await Shell.Current.DisplayAlert("Error", "Library is not loaded. Please load a library before importing cards.", "OK");
+                }
+                catch (Exception e)
+                {
+                    await Shell.Current.DisplayAlert("Error", $"Unexpected error occurred while importing cards: {e.Message}", "OK");
+                }
+                IsLoading = false;
+            }
+        }
+        [RelayCommand]
+        async Task ExportSelected()
+        {
+            var result = await FilePicker.Default.PickAsync(new PickOptions
+            {
+                PickerTitle = "Select a card file to import",
+                FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+                {
+                    { DevicePlatform.WinUI, new[] { ".json" } },
+                })
+            });
+            if (result == null) return;
+            if (result.FullPath != null)
+            {
+                IsLoading = true;
+                try
+                {
+                    var jsonString = await File.ReadAllTextAsync(result.FullPath);
+                    List<CardJSON> imports = JsonConvert.DeserializeObject<List<CardJSON>>(jsonString)!;
+
+                    CardJSON selected = new()
+                    {
+                        ID = SelectedCard.ID,
+                        Name = SelectedCard.Name,
+                        Level = SelectedCard.Level,
+                        Attribute = SelectedCard.Attribute,
+                        Type = SelectedCard.Type,
+                        SubType = SelectedCard.SubType,
+                        SpellTrap = SelectedCard.SpellTrapType,
+                        ATK = int.Parse(SelectedCard.ATK),
+                        DEF = int.Parse(SelectedCard.DEF),
+                        ImageName = SelectedCard.ImageName,
+                        Yugi = SelectedCard.VersionYugi,
+                        Kaiba = SelectedCard.VersionKaiba,
+                        Joey = SelectedCard.VersionJoey,
+                        Description = SelectedCard.Description
+                    };
+
+                    imports.Add(selected);
+
+                    var updatedJsonString = JsonConvert.SerializeObject(imports, Formatting.Indented);
+                    await File.WriteAllTextAsync(result.FullPath, updatedJsonString);
+
+                    await Shell.Current.DisplayAlert("Export", $"Card exported successfully.", "OK");
+                }
+                catch (JsonException e)
+                {
+                    await Shell.Current.DisplayAlert("Error", $"Failed to parse JSON: {e.Message}", "OK");
+                }
+                catch (LibraryIsNotLoadedException)
+                {
+                    await Shell.Current.DisplayAlert("Error", "Library is not loaded. Please load a library before importing cards.", "OK");
+                }
+                catch (Exception e)
+                {
+                    await Shell.Current.DisplayAlert("Error", $"Unexpected error occurred while importing cards: {e.Message}", "OK");
+                }
+                IsLoading = false;
+
             }
         }
         partial void OnSearchTextChanged(string value)

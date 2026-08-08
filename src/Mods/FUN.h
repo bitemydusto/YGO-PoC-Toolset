@@ -89,6 +89,9 @@ namespace FUN
 	using GetSelectedItem_t = uint32_t(__cdecl*)();
 	inline GetSelectedItem_t GetSelectedItem = reinterpret_cast<GetSelectedItem_t>(0x0040cb00);
 
+	using SetSelectedItemIndex_t = void(__cdecl*)(unsigned int index);
+	inline SetSelectedItemIndex_t SetSelectedItemIndex = reinterpret_cast<SetSelectedItemIndex_t>(0x0040cd00);
+
 	using FUN_00592a40_t = void(__cdecl*)(int block, uint16_t value);
 	inline FUN_00592a40_t FUN_00592a40 = reinterpret_cast<FUN_00592a40_t>(0x00592a40);
 
@@ -129,4 +132,27 @@ namespace FUN
 	using InitiateSelector_t = void(__cdecl*)();
 	inline InitiateSelector_t InitiateSelector = reinterpret_cast<InitiateSelector_t>(0x005bfa20);
 
+	using IssueCommand_t = void(__cdecl*)(unsigned int cmd, unsigned int src, unsigned int dest, unsigned int param3);
+	inline IssueCommand_t IssueCommand = reinterpret_cast<IssueCommand_t>(0x005b91e0);
+
+
+
+
+
+
+	// Wrapers
+	void W_MoveCard(uint32_t cardDword, uint8_t _src, uint8_t _dest)
+	{
+		uint8_t owner = (cardDword >> 12) & 1;
+		uint8_t inst = (uint8_t)(((cardDword >> 24) & 0x7F) * 2 + ((cardDword >> 12) & 1));
+
+		uint32_t src = ((uint32_t)inst << 8) | (_src << 1) | (owner & 1);
+
+		uint32_t dest = (_dest << 1) | (owner & 1);
+
+
+		// CMD 0x8E = move
+		FUN::IssueCommand(0x8E, src, dest, 0);
+
+	}
 }

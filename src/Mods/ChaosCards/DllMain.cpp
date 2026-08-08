@@ -23,9 +23,14 @@ uint32_t __cdecl Effect_DMOC(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Target_DMOC(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Condition_DMOC(uint32_t paramAddress, int param2, int param3);
 
+uint32_t __cdecl Effect_PS(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Condition_PS(uint32_t paramAddress, int param2, int param3);
+uint32_t __cdecl Target_PS(unsigned int* param, int param2, int param3);
+
 
 bool CanBeSummoned(uint32_t playerIdx);
 void __stdcall LoadSelectionListDark();
+void __stdcall LoadSelectionListBanished();
 void __stdcall EndPhase();
 void __stdcall BLS_DoubleAttack();
 void __stdcall DMOC_BanishOnKill();
@@ -78,6 +83,7 @@ void Chaos()
 	Register_SummonState(0x39, SummonStates);
 
 	Register_SelectionListPopulation(0x7B, LoadSelectionListDark);
+	Register_SelectionListPopulation(0x252, LoadSelectionListBanished);
 
 
 	Utils::EffectScript scriptBLS;
@@ -88,8 +94,6 @@ void Chaos()
 	scriptBLS.Cost = reinterpret_cast<uintptr_t>(&Cost_BLS);
 	scriptBLS.Target = 0x00596570;
 
-	//int idx = GameData::GetEffectScriptIndex(0x7B);
-	//GameData::SetEffectScript(idx, scriptBLS);
 	ReplaceEffectScript(0x540, scriptBLS);
 
 
@@ -101,8 +105,6 @@ void Chaos()
 	scriptCED.Cost = reinterpret_cast<uintptr_t>(&Cost_CED);
 	scriptCED.Target = 0;
 
-	//idx = GameData::GetEffectScriptIndex(0x1BD);
-	//GameData::SetEffectScript(idx, scriptCED);
 	ReplaceEffectScript(0x538, scriptCED);
 
 	Utils::EffectScript scriptDMOC;
@@ -113,8 +115,6 @@ void Chaos()
 	scriptDMOC.Cost = 0;
 	scriptDMOC.Target = reinterpret_cast<uintptr_t>(&Target_DMOC);
 
-	//idx = GameData::GetEffectScriptIndex(0x10A);
-	//GameData::SetEffectScript(idx, scriptDMOC);
 	ReplaceEffectScript(0x215, scriptDMOC);
 
 	Utils::EffectScript scriptCS;
@@ -125,9 +125,17 @@ void Chaos()
 	scriptCS.Cost = reinterpret_cast<uintptr_t>(&Cost_BLS);
 	scriptCS.Target = 0x00595250;
 
-	//idx = GameData::GetEffectScriptIndex(0x27F);
-	//GameData::SetEffectScript(idx, scriptCS);
 	ReplaceEffectScript(0x46F, scriptCS);
+
+	Utils::EffectScript scriptPS;
+	scriptPS.CardID = 0x252;
+	scriptPS.Effect = reinterpret_cast<uintptr_t>(&Effect_PS);
+	scriptPS.AppliesTo = 0;
+	scriptPS.Condition = reinterpret_cast<uintptr_t>(&Condition_PS);
+	scriptPS.Cost = 0;
+	scriptPS.Target = reinterpret_cast<uintptr_t>(&Target_PS);
+
+	ReplaceEffectScript(0x444, scriptPS);
 }
 uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3)
 {
@@ -231,6 +239,7 @@ uint32_t __cdecl Target_DMOC(unsigned int* param, int param2, int param3)
 	//uint8_t  loc = (block[2] >> 1) & 0x1F;
 
 	uint8_t sub = Utils::ReadUint8((void*)0x00A55C8E);
+
 
 	switch (sub)
 	{
@@ -386,6 +395,112 @@ uint32_t __cdecl Cost_CED(uint32_t paramAddress, int param2, int param3)
 	FUN::PayLifePoints(playerIdx, 1000);
 	return 1;
 }
+uint32_t __cdecl Effect_PS(unsigned int* param, int param2, int param3)
+{
+	uint8_t* block = (uint8_t*)param;
+	// Has effect finished resolving?
+	if (block[4] & 4) return 0;
+
+	uint16_t loc = (block[2] >> 1) & 0x1F;
+	uint8_t playerIdx = block[2] & 0x1;
+
+
+	uint32_t cardDword0 = *(uint16_t*)(block + 6) | ((uint32_t)*(uint16_t*)(block + 8) << 16);
+	uint32_t cardDword1 = *(uint16_t*)(block + 10) | ((uint32_t)*(uint16_t*)(block + 12) << 16);
+
+	uint8_t state = Utils::ReadUint8((void*)(0x00a55c88 + 2));
+
+	switch (state)
+	{
+		case 0x80:
+		{
+			FUN::W_MoveCard(cardDword0, 0x0F, 0x0B);
+			return 0x7f;
+		}
+		case 0x7f:
+		{
+			FUN::W_MoveCard(cardDword1, 0x0F, 0x0B);
+			return 0;
+		}
+	}
+
+	return 0;
+}
+uint32_t __cdecl Condition_PS(uint32_t paramAddress, int param2, int param3)
+{
+	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
+	GameData::Player player = GameData::GetDuel().players[playerIdx];
+
+	if (player.cardsInBanish < 2) return 0;
+	if (FUN::IsCardOnTheField(0x7B) == 0 && FUN::IsCardOnField(0x1BD) == 0) return 0;
+
+	return 1;
+}
+uint32_t __cdecl Target_PS(unsigned int* param, int param2, int param3)
+{
+	uint8_t* block = (uint8_t*)param;
+	uint8_t  playerIdx = block[2] & 1;
+	//uint8_t  loc = (block[2] >> 1) & 0x1F;
+
+	uint8_t sub = Utils::ReadUint8((void*)0x00A55C8E);
+
+	switch (sub)
+	{
+		case 0:
+		{
+			// Clear target count bits
+			*(uint16_t*)(block + 4) &= 0x1FFF;
+
+			FUN::ShowDialog("Select a @32@0 cards in your banish zone to add to your hand.");
+
+			Utils::WriteUint8((void*)0x00A55C8E, 1);
+			return 0;
+		}
+		case 1:
+		{
+			FUN::InitiateSelectionList(playerIdx, 8, 0x252, 0);
+			Utils::WriteUint8((void*)0x00A55C8E, 2);
+			return 0;
+		}
+		case 2:
+		{
+			if (FUN::SelectionConfirmed() != 0) return 0;
+
+			uint32_t count = FUN::GetSelectionListCount();
+			if (count == 0)
+			{
+				Utils::WriteUint8((void*)0x00A55C8E, 0);
+				return 1;
+			}
+			for (int pick = 0; pick < 2; pick++)
+			{
+				for (size_t i = 0; i < count; i++)
+				{
+					uint8_t pickslot = Utils::ReadUint16((void*)(0x00A584A4 + i * 2)) >> 8;
+
+					if (pickslot == pick + 1)
+					{
+						uint32_t dword = Utils::ReadUint32((void*)(0x00a582a4 + i * 4));
+						uint8_t  owner = (dword >> 12) & 1;
+						uint32_t sideBit = owner ? 0x8000u : 0;
+						uint32_t cardId = FUN::GetCardID(dword & 0xFFF);
+
+						FUN::HighLightCard(sideBit | 0xDF, cardId, 0, 0);
+						FUN::HighLightCard(sideBit | 0x08, owner, 0x0F, 0);
+
+						// One card dword = two target halfwords
+						FUN::FUN_00592a40((int)param, (uint16_t)dword);
+						FUN::FUN_00592a40((int)param, (uint16_t)(dword >> 16));
+					}
+				}
+			}
+
+			Utils::WriteUint8((void*)0x00A55C8E, 0);
+			return 1;
+		}
+	}
+}
+
 void __stdcall EndPhase()
 {
 	for (size_t i = 0; i < 2; i++)
@@ -515,28 +630,28 @@ uint32_t __stdcall SummonStates()
 		}break;
 		case 5:
 		{
-			uint16_t cardID = FUN::GetCardID(Utils::ReadUint16((void*)0x00a57802));
-			FUN::ShowDialog2(0xF7);
+			//uint16_t cardID = FUN::GetCardID(Utils::ReadUint16((void*)0x00a57802));
+			//FUN::ShowDialog2(0xF7);
 
-			FUN::SetupSelector(6, cardID); // FUN_005bfa00
-			FUN::InitiateSelector(); // FUN_005bfa20
+			//FUN::SetupSelector(6, cardID); // FUN_005bfa00
+			//FUN::InitiateSelector(); // FUN_005bfa20
 
 			innerState = 0x6;
 		}break;
 		case 6:
 		{
-			if (FUN::SelectionConfirmed() != 0) return 0;
+			//if (FUN::SelectionConfirmed() != 0) return 0;
 
-			uint16_t choice = Utils::ReadUint16((void*)0x00A558B4);
+			//uint16_t choice = Utils::ReadUint16((void*)0x00A558B4);
 
-			uint32_t summonParam = Utils::ReadUint32((void*)0x00A55080);
-			summonParam = (summonParam & 0xFFFF3FFF);
-			if ((choice & 1) == 0) summonParam |= 0x4000;
-			else summonParam |= 0x8000;
+			//uint32_t summonParam = Utils::ReadUint32((void*)0x00A55080);
+			//summonParam = (summonParam & 0xFFFF3FFF);
+			//if ((choice & 1) == 0) summonParam |= 0x4000;
+			//else summonParam |= 0x8000;
 
-			Utils::WriteUint32((void*)0x00A55080, summonParam);
+			//Utils::WriteUint32((void*)0x00A55080, summonParam);
 
-			Utils::WriteUint8((void*)0x00A558B4, (uint8_t)(choice & 1));
+			//Utils::WriteUint8((void*)0x00A558B4, (uint8_t)(choice & 1));
 
 			innerState = 0xf;
 		}break;
@@ -545,12 +660,18 @@ uint32_t __stdcall SummonStates()
 			uint32_t state = Utils::ReadUint32((void*)0x00a57808);
 			Utils::WriteInt32((void*)0x00a57808, state & 0xff00ffff);
 
-			uint16_t choice = Utils::ReadUint16((void*)0x00A558B4) & 1;
+			uint32_t summonParam = Utils::ReadUint32((void*)0x00A55080);
+			Utils::WriteUint32((void*)0x00A55080, summonParam & 0xf1ffffff);
+
+			//uint16_t choice = Utils::ReadUint16((void*)0x00A558B4) & 1;
+			uint16_t choice = (Utils::ReadUint8((void*)0x00a57804) >> 3) & 1;
 
 			uint32_t param1 = (Utils::ReadUint32((void*)0x00a57808) >> 0x10 & 0x100) >> 8;
 			uint32_t param2 = Utils::ReadUint8((void*)0x00a5780c);
 			uint32_t param3 = FUN::GetSummonZone( ((Utils::ReadUint32((void*)0x00a5780a)) & 0x100) >> 8 );
 			uint32_t param5 = (choice == 0) ? 1 : 0;
+
+
 
 			FUN::SpecialSummon(param1, param2, param3, 0, param5);
 
@@ -582,4 +703,16 @@ void __stdcall LoadSelectionListDark()
 	}
 
 	GameData::ChangeSelectionList(darkCards);
+}
+void __stdcall LoadSelectionListBanished()
+{
+	std::vector<uint32_t> banishedCards;
+	GameData::Player player = GameData::GetDuel().players[1];
+
+	for (size_t i = 0; i < player.cardsInBanish; i++)
+	{
+		banishedCards.push_back(player.banish[i].fullValue);
+	}
+
+	GameData::ChangeSelectionList(banishedCards);
 }

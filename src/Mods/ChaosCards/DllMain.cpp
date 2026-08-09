@@ -12,19 +12,19 @@ void Chaos();
 
 
 uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3);
-uint32_t __cdecl Condition_BLS(uint32_t paramAddress, int param2, int param3);
-uint32_t __cdecl Cost_BLS(uint32_t paramAddress, int param2, int param3);
+uint32_t __cdecl Condition_BLS(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Cost_BLS(unsigned int* param, int param2, int param3);
 
 uint32_t __cdecl Effect_CED(unsigned int* param, int param2, int param3);
-uint32_t __cdecl Condition_CED(uint32_t paramAddress, int param2, int param3);
-uint32_t __cdecl Cost_CED(uint32_t paramAddress, int param2, int param3);
+uint32_t __cdecl Condition_CED(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Cost_CED(unsigned int* param, int param2, int param3);
 
 uint32_t __cdecl Effect_DMOC(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Target_DMOC(unsigned int* param, int param2, int param3);
-uint32_t __cdecl Condition_DMOC(uint32_t paramAddress, int param2, int param3);
+uint32_t __cdecl Condition_DMOC(unsigned int* param, int param2, int param3);
 
 uint32_t __cdecl Effect_PS(unsigned int* param, int param2, int param3);
-uint32_t __cdecl Condition_PS(uint32_t paramAddress, int param2, int param3);
+uint32_t __cdecl Condition_PS(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Target_PS(unsigned int* param, int param2, int param3);
 
 
@@ -139,92 +139,80 @@ void Chaos()
 }
 uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3)
 {
-	uint8_t* block = (uint8_t*)param;
+	FUN::Param funParam(param);
 
-	// Has effect finished resolving?
-	if (block[4] & 4) return 0;
+	if (funParam.finishedResolving) return 0;
 
-	// Get target parameters
-	uint32_t target = 0;
-	if (!FUN::SetTargetParams((uint32_t)block, 0, &target)) return 0;
+	if (funParam.targetCount == 0) return 0;
 
-	uint32_t side = target & 0xff;
-	uint32_t zone = (target >> 8) & 0xff;
+	uint32_t side = funParam.GetFieldTargetSide(0);
+	uint32_t zone = funParam.GetFieldTargetZone(0);
 
-	uint32_t* zoneCard = (uint32_t*)(0x00a55d74 + (side & 1) * 0xD44 + zone * 0x90);
-	if ((*zoneCard & 0xfff) == 0) return 0;
+	if (GameData::GetDuel().players[side].monsterZones[zone].card.intID == 0) return 0;
 
-	// Banish: dest 0xF, flags 0 (like FUN_005778a0)
-	uint32_t mask = 1u << ((((int)(char)side) << 4) + (char)zone & 0x1f);
-	FUN::SendCardFromField(block, mask, 0xf, 0);
+	FUN::FieldMaskGenerator maskGen;
+	maskGen.zones[side][zone] = true;
+
+	FUN::SendCardFromField(funParam.block, maskGen.GenerateMask(), 0xf, 0);
 
 	return 0;
 }
-uint32_t __cdecl Condition_BLS(uint32_t paramAddress, int param2, int param3)
+uint32_t __cdecl Condition_BLS(unsigned int* param, int param2, int param3)
 {
-	uint8_t zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0x7;
-	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
-	GameData::Player player = GameData::GetDuel().players[playerIdx];
+	FUN::Param funParam(param);
+	GameData::Player player = GameData::GetDuel().players[funParam.playerIdx];
 
-	if (FUN::IsCardOnSideOfField(playerIdx ^ 0x1, 0x5E7) > 0) return 0;
+	if (FUN::IsCardOnSideOfField(funParam.playerIdx ^ 0x1, 0x5E7) > 0) return 0;
 
-	if (zoneIdx > 4) return 0;
+	if (funParam.zoneIdx > 4) return 0;
 	// Used its effect this turn
-	if ((player.monsterZones[zoneIdx].effectIDs[31] & 0x1) == 0x1) return 0;
+	if ((player.monsterZones[funParam.zoneIdx].effectIDs[31] & 0x1) == 0x1) return 0;
 	// Can't change position
-	if ((player.monsterZones[zoneIdx].stateFlags & 0x20000) != 0)
+	if ((player.monsterZones[funParam.zoneIdx].stateFlags & 0x20000) != 0)
 	{
 		// Attacked this turn
-		if (((player.alreadyAttackedZones >> zoneIdx) & 0x1) == 0x1) return 0;
+		if (((player.alreadyAttackedZones >> funParam.zoneIdx) & 0x1) == 0x1) return 0;
 	}
 
 	return 1;
 }
-uint32_t __cdecl Cost_BLS(uint32_t paramAddress, int param2, int param3)
+uint32_t __cdecl Cost_BLS(unsigned int* param, int param2, int param3)
 {
-	uint8_t zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0x7;
-	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
+	FUN::Param funParam(param);
 
-	GameData::Player player = GameData::GetDuel().players[playerIdx];
+	GameData::Player player = GameData::GetDuel().players[funParam.playerIdx];
 
-	if (zoneIdx > 4) return 0;
+	if (funParam.zoneIdx > 4) return 0;
 	// Make it unable to attack this turn
-	uint16_t stateFlag = player.monsterZones[zoneIdx].stateFlags | 0x4;
-	Utils::WriteUint16((void*)(0x00a55d64 + playerIdx * 0xD44 + 0x10 + 0x90 * zoneIdx + 0x8C + 2), stateFlag);
+	uint16_t stateFlag = player.monsterZones[funParam.zoneIdx].stateFlags | 0x4;
+	Utils::WriteUint16((void*)(0x00a55d64 + funParam.playerIdx * 0xD44 + 0x10 + 0x90 * funParam.zoneIdx + 0x8C + 2), stateFlag);
 	// Set custom once per turn flag
-	Utils::WriteUint16((void*)(0x00a55d64 + playerIdx * 0xD44 + 0x10 + 0x90 * zoneIdx + 0x4A), 0x1);
+	Utils::WriteUint16((void*)(0x00a55d64 + funParam.playerIdx * 0xD44 + 0x10 + 0x90 * funParam.zoneIdx + 0x4A), 0x1);
 
 	return 1;
 }
 uint32_t __cdecl Effect_DMOC(unsigned int* param, int param2, int param3)
 {
-	uint8_t* block = (uint8_t*)param;
-	// Has effect finished resolving?
-	if (block[4] & 4) return 0;
+	FUN::Param funParam(param);
 
-	//uint16_t loc = (block[2] >> 1) & 0x1F;
-	uint8_t playerIdx = block[2] & 0x1;
-	GameData::Player player = GameData::GetDuel().players[playerIdx];
+	if (funParam.finishedResolving) return 0;
 
+	GameData::Player player = GameData::GetDuel().players[funParam.playerIdx];
 
-	uint16_t lo = *(uint16_t*)(block + 6);
-	uint16_t hi = *(uint16_t*)(block + 8);
-	uint32_t cardDword = lo | ((uint32_t)hi << 16);
-
-	uint16_t intId = cardDword & 0xFFF;
-	uint8_t  owner = (cardDword >> 12) & 1;
-	uint32_t inst = owner + ((cardDword >> 24) & 0x7F) * 2;
+	uint16_t intId = funParam.outerTargets[0] & 0xFFF;
 
 	if (intId == 0) return 0;
 
-	FUN::AddTargetedCardToHand(block, playerIdx, &cardDword);
+	FUN::AddTargetedCardToHand(funParam.block, funParam.playerIdx, &funParam.outerTargets[0]);
 
 	return 0;
 }
-uint32_t __cdecl Condition_DMOC(uint32_t paramAddress, int param2, int param3)
+uint32_t __cdecl Condition_DMOC(unsigned int* param, int param2, int param3)
 {
-	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
-	GameData::Player player = GameData::GetDuel().players[playerIdx];
+	FUN::Param funParam(param);
+
+	GameData::Player player = GameData::GetDuel().players[funParam.playerIdx];
+
 	int spells = 0;
 	for (size_t i = 0; i < player.cardsInGrave; i++)
 	{
@@ -234,11 +222,9 @@ uint32_t __cdecl Condition_DMOC(uint32_t paramAddress, int param2, int param3)
 }
 uint32_t __cdecl Target_DMOC(unsigned int* param, int param2, int param3)
 {
-	uint8_t* block = (uint8_t*)param;
-	uint8_t  playerIdx = block[2] & 1;
-	//uint8_t  loc = (block[2] >> 1) & 0x1F;
+	FUN::Param funParam(param);
 
-	uint8_t sub = Utils::ReadUint8((void*)0x00A55C8E);
+	uint8_t sub = GameData::GetEffectSubState();
 
 
 	switch (sub)
@@ -248,33 +234,34 @@ uint32_t __cdecl Target_DMOC(unsigned int* param, int param2, int param3)
 		FUN::ShowDialog("Do you want to add a @2Spell Card@0 from your Graveyard to your hand?");
 		FUN::ShowDialogOptions(1, 0);
 
-		Utils::WriteUint8((void*)0x00A55C8E, 1);
+		GameData::SetEffectSubState(1);
 		return 0;
 	}
 	case 1:
 	{
-		if (Utils::ReadUint8((void*)0x00a558b4) != 0)
+		if (GameData::GetDialogResult() != 0)
 		{
-			Utils::WriteUint8((void*)0x00A55C8E, 2);
+			GameData::SetEffectSubState(2);
 			return 0;
 		}
+		GameData::SetEffectSubState(0);
 		return 1;
 	}
 	case 2:
 	{
 		// Clear target count bits
-		*(uint16_t*)(block + 4) &= 0x1FFF;
+		*(uint16_t*)(funParam.block + 4) &= 0x1FFF;
 
 		FUN::ShowDialog("Select a @2Spell Card@0 from your Graveyard to add to your hand.");
 
-		Utils::WriteUint8((void*)0x00A55C8E, 3);
+		GameData::SetEffectSubState(3);
 		return 0;
 	}
 	case 3:
 	{
-		FUN::InitiateSelectionList(playerIdx, 6, 0x1AB, 0);
+		FUN::InitiateSelectionList(funParam.playerIdx, 6, 0x1AB, 0);
 
-		Utils::WriteUint8((void*)0x00A55C8E, 4);
+		GameData::SetEffectSubState(4);
 		return 0;
 	}
 
@@ -283,13 +270,12 @@ uint32_t __cdecl Target_DMOC(unsigned int* param, int param2, int param3)
 		uint32_t count = FUN::GetSelectionListCount();
 		if (count == 0)
 		{
-			Utils::WriteUint8((void*)0x00A55C8E, 0);
+			GameData::SetEffectSubState(0);
 			return 1;
 		}
 
 		uint32_t* entry = (uint32_t*)FUN::GetSelectedItem();
-		if (!entry || (*entry & 0xFFF) == 0)
-			return 0; // not ready
+		if (!entry || (*entry & 0xFFF) == 0) return 0; // not ready
 
 		uint32_t dword = *entry;
 		uint8_t  owner = (dword >> 12) & 1;
@@ -306,24 +292,24 @@ uint32_t __cdecl Target_DMOC(unsigned int* param, int param2, int param3)
 		FUN::FUN_00592a40((int)param, (uint16_t)dword);
 		FUN::FUN_00592a40((int)param, (uint16_t)(dword >> 16));
 
-		Utils::WriteUint8((void*)0x00A55C8E, 0);
+		GameData::SetEffectSubState(0);
 		return 1;
 	}
 
 	default:
-		Utils::WriteUint8((void*)0x00A55C8E, 0);
+		GameData::SetEffectSubState(0);
 		return 1;
 	}
 }
 uint32_t __cdecl Effect_CED(unsigned int* param, int param2, int param3)
 {
-	uint8_t* block = (uint8_t*)param;
+	FUN::Param funParam(param);
 
 	// Has effect finished resolving?
-	if (block[4] & 4) return 0;
+	if (funParam.finishedResolving) return 0;
 
-	uint8_t state = Utils::ReadUint8((void*)(0x00a55c88 + 2));
-	uint8_t playerIdx = block[2] & 0x1;
+	uint8_t state = GameData::GetEffectState();
+	uint8_t playerIdx = funParam.playerIdx;
 	uint8_t opp = playerIdx ^ 0x1;
 	GameData::Duel duel = GameData::GetDuel();
 
@@ -366,12 +352,12 @@ uint32_t __cdecl Effect_CED(unsigned int* param, int param2, int param3)
 		}break;
 		case 0x7d:
 		{
-			FUN::SendCardFromField(block, 0x07ff07ff, 0xe, 0);
+			FUN::SendCardFromField(funParam.block, 0x07ff07ff, 0xe, 0);
 			return 0x7c;
 		}break;
 		case 0x7c:
 		{
-			FUN::DealEffectDamage(!playerIdx, cedDamage);
+			FUN::DealEffectDamage(opp, cedDamage);
 			return 0;
 		}break;
 	}
@@ -379,57 +365,55 @@ uint32_t __cdecl Effect_CED(unsigned int* param, int param2, int param3)
 
 	return 0x7f;
 }
-uint32_t __cdecl Condition_CED(uint32_t paramAddress, int param2, int param3)
+uint32_t __cdecl Condition_CED(unsigned int* param, int param2, int param3)
 {
-	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
-	GameData::Player player = GameData::GetDuel().players[playerIdx];
+	FUN::Param funParam(param);
+
+	GameData::Player player = GameData::GetDuel().players[funParam.playerIdx];
 
 	if (player.lifePoints <= 1000) return 0;
 
 	return 1;
 }
-uint32_t __cdecl Cost_CED(uint32_t paramAddress, int param2, int param3)
+uint32_t __cdecl Cost_CED(unsigned int* param, int param2, int param3)
 {
-	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
-	GameData::Player player = GameData::GetDuel().players[playerIdx];
-	FUN::PayLifePoints(playerIdx, 1000);
+	FUN::Param funParam(param);
+
+	GameData::Player player = GameData::GetDuel().players[funParam.playerIdx];
+	FUN::PayLifePoints(funParam.playerIdx, 1000);
 	return 1;
 }
 uint32_t __cdecl Effect_PS(unsigned int* param, int param2, int param3)
 {
-	uint8_t* block = (uint8_t*)param;
+	FUN::Param funParam(param);
+
 	// Has effect finished resolving?
-	if (block[4] & 4) return 0;
+	if (funParam.finishedResolving) return 0;
+	if (funParam.targetCount < 2) return 0;
 
-	uint16_t loc = (block[2] >> 1) & 0x1F;
-	uint8_t playerIdx = block[2] & 0x1;
-
-
-	uint32_t cardDword0 = *(uint16_t*)(block + 6) | ((uint32_t)*(uint16_t*)(block + 8) << 16);
-	uint32_t cardDword1 = *(uint16_t*)(block + 10) | ((uint32_t)*(uint16_t*)(block + 12) << 16);
-
-	uint8_t state = Utils::ReadUint8((void*)(0x00a55c88 + 2));
+	uint8_t state = GameData::GetEffectState();
 
 	switch (state)
 	{
 		case 0x80:
 		{
-			FUN::W_MoveCard(cardDword0, 0x0F, 0x0B);
+			FUN::W_MoveCard(funParam.outerTargets[0], 0x0F, 0x0B);
 			return 0x7f;
 		}
 		case 0x7f:
 		{
-			FUN::W_MoveCard(cardDword1, 0x0F, 0x0B);
+			FUN::W_MoveCard(funParam.outerTargets[1], 0x0F, 0x0B);
 			return 0;
 		}
 	}
 
 	return 0;
 }
-uint32_t __cdecl Condition_PS(uint32_t paramAddress, int param2, int param3)
+uint32_t __cdecl Condition_PS(unsigned int* param, int param2, int param3)
 {
-	uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) & 0x1;
-	GameData::Player player = GameData::GetDuel().players[playerIdx];
+	FUN::Param funParam(param);
+
+	GameData::Player player = GameData::GetDuel().players[funParam.playerIdx];
 
 	if (player.cardsInBanish < 2) return 0;
 	if (FUN::IsCardOnTheField(0x7B) == 0 && FUN::IsCardOnField(0x1BD) == 0) return 0;
@@ -438,28 +422,26 @@ uint32_t __cdecl Condition_PS(uint32_t paramAddress, int param2, int param3)
 }
 uint32_t __cdecl Target_PS(unsigned int* param, int param2, int param3)
 {
-	uint8_t* block = (uint8_t*)param;
-	uint8_t  playerIdx = block[2] & 1;
-	//uint8_t  loc = (block[2] >> 1) & 0x1F;
+	FUN::Param funParam(param);
 
-	uint8_t sub = Utils::ReadUint8((void*)0x00A55C8E);
+	uint8_t sub = GameData::GetEffectSubState();
 
 	switch (sub)
 	{
 		case 0:
 		{
 			// Clear target count bits
-			*(uint16_t*)(block + 4) &= 0x1FFF;
+			*(uint16_t*)(funParam.block + 4) &= 0x1FFF;
 
 			FUN::ShowDialog("Select a @32@0 cards in your banish zone to add to your hand.");
 
-			Utils::WriteUint8((void*)0x00A55C8E, 1);
+			GameData::SetEffectSubState(1);
 			return 0;
 		}
 		case 1:
 		{
-			FUN::InitiateSelectionList(playerIdx, 8, 0x252, 0);
-			Utils::WriteUint8((void*)0x00A55C8E, 2);
+			FUN::InitiateSelectionList(funParam.playerIdx, 8, 0x252, 0);
+			GameData::SetEffectSubState(2);
 			return 0;
 		}
 		case 2:
@@ -469,13 +451,14 @@ uint32_t __cdecl Target_PS(unsigned int* param, int param2, int param3)
 			uint32_t count = FUN::GetSelectionListCount();
 			if (count == 0)
 			{
-				Utils::WriteUint8((void*)0x00A55C8E, 0);
+				GameData::SetEffectSubState(0);
 				return 1;
 			}
 			for (int pick = 0; pick < 2; pick++)
 			{
 				for (size_t i = 0; i < count; i++)
 				{
+					// List of 2 bytes for every entry in the selection list, first byte = pick number, second byte = flags for things like location
 					uint8_t pickslot = Utils::ReadUint16((void*)(0x00A584A4 + i * 2)) >> 8;
 
 					if (pickslot == pick + 1)
@@ -495,7 +478,7 @@ uint32_t __cdecl Target_PS(unsigned int* param, int param2, int param3)
 				}
 			}
 
-			Utils::WriteUint8((void*)0x00A55C8E, 0);
+			GameData::SetEffectSubState(0);
 			return 1;
 		}
 	}
@@ -630,6 +613,8 @@ uint32_t __stdcall SummonStates()
 		}break;
 		case 5:
 		{
+			// The commented code below is for manual position selection, but it's not needed when summoning from the hand
+
 			//uint16_t cardID = FUN::GetCardID(Utils::ReadUint16((void*)0x00a57802));
 			//FUN::ShowDialog2(0xF7);
 

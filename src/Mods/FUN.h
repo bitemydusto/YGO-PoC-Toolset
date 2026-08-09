@@ -170,4 +170,56 @@ namespace FUN
 		FUN::IssueCommand(0x8E, src, dest, 0);
 
 	}
+
+	// Helper structs
+	struct FieldMaskGenerator
+	{
+		bool zones[2][11] = {};
+
+		uint32_t GenerateMask()
+		{
+			uint32_t mask = 0;
+			for (int i = 0; i < 11; i++)
+			{
+				if (zones[0][i]) mask |= (1 << i);
+				if (zones[1][i]) mask |= (1 << (i + 16));
+			}
+			return mask;
+		}
+	};
+	struct Param
+	{
+		uint8_t* block;
+
+
+		uint8_t finishedResolving;
+		uint16_t cardIntID;
+		uint8_t  playerIdx;
+		uint8_t zoneIdx;
+		uint8_t  location;
+		uint32_t targetCount;
+		uint16_t* fieldTargets;
+		uint32_t* outerTargets;
+		Param(unsigned int* param)
+		{
+			block = (uint8_t*)param;
+
+			finishedResolving = block[4] & 4;
+			cardIntID = *(uint16_t*)(block + 0) & 0xFFF;
+			playerIdx = block[2] & 0x1;
+			zoneIdx = *(uint8_t*)(block + 2) >> 1 & 0x7;
+			location = (block[2] >> 1) & 0x1F;
+			targetCount = *(uint16_t*)(block + 4) >> 13;
+			fieldTargets = (uint16_t*)(block + 6);
+			outerTargets = (uint32_t*)(block + 6);
+		}
+		uint8_t GetFieldTargetSide(uint8_t index)
+		{
+			return fieldTargets[index] & 1;
+		}
+		uint8_t GetFieldTargetZone(uint8_t index)
+		{
+			return (fieldTargets[index] >> 4) & 0xF;
+		}
+	};
 }

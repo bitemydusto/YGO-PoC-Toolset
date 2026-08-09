@@ -272,4 +272,26 @@ namespace GameData
     {
         Utils::WriteUint16((void*)(0x00a57808), state);
     }
+    // Used by effect functions
+    // Starts at 0x80 and changes to what the effect function returns
+    // When the effect function returns 0, it is finished resolving
+	uint8_t GetEffectState()
+	{
+		return Utils::ReadUint8((void*)(0x00a55c88 + 2));
+	}
+	// Used by target and cost functions
+    // Starts at 0 and must be set manually
+	// Make sure to set it back to 0 when the effect is finished resolving
+	uint8_t GetEffectSubState()
+	{
+		return Utils::ReadUint8((void*)(0x00a55c8e));
+	}
+	void SetEffectSubState(uint8_t subState)
+	{
+		Utils::WriteUint8((void*)(0x00a55c8e), subState);
+	}
+    uint8_t GetDialogResult()
+    {
+        return Utils::ReadUint8((void*)0x00a558b4);
+    }
 }

@@ -673,7 +673,7 @@ uint32_t __stdcall SummonStates()
 
 
 
-			FUN::SpecialSummon(param1, param2, param3, 0, param5);
+			FUN::SpecialSummonFromHand(param1, param2, param3, 0, param5);
 
 			uint32_t x = Utils::ReadUint32((void*)0x00a57804);
 			Utils::WriteInt32((void*)0x00a57804, x & 0xfffffffd);
@@ -702,7 +702,7 @@ void __stdcall LoadSelectionListDark()
 		}
 	}
 
-	GameData::ChangeSelectionList(darkCards);
+	GameData::ChangeSelectionList(darkCards, 4);
 }
 void __stdcall LoadSelectionListBanished()
 {
@@ -714,5 +714,5 @@ void __stdcall LoadSelectionListBanished()
 		banishedCards.push_back(player.banish[i].fullValue);
 	}
 
-	GameData::ChangeSelectionList(banishedCards);
+	GameData::ChangeSelectionList(banishedCards, 4);
 }

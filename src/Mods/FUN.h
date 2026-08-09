@@ -116,11 +116,26 @@ namespace FUN
 	using BanishCardFromGrave_t = void(__cdecl*)(unsigned int playerIdx, unsigned int* cardDword);
 	inline BanishCardFromGrave_t BanishCardFromGrave = reinterpret_cast<BanishCardFromGrave_t>(0x00575f30);
 
-	using SpecialSummon_t = void(__cdecl*)(unsigned int param1, unsigned int param2, unsigned int param3, unsigned int param4, unsigned int param5);
-	inline SpecialSummon_t SpecialSummon = reinterpret_cast<SpecialSummon_t>(0x005adbc0);
+	using SpecialSummonFromHand_t = void(__cdecl*)(unsigned int param1, unsigned int param2, unsigned int param3, unsigned int param4, unsigned int param5);
+	inline SpecialSummonFromHand_t SpecialSummonFromHand = reinterpret_cast<SpecialSummonFromHand_t>(0x005adbc0);
+
+	using SpecialSummon_t = void(__cdecl*)(unsigned int player, unsigned int* cardPtr, unsigned int posSelectorType, unsigned int flags, unsigned int srcLoc, unsigned int param6);
+	inline SpecialSummon_t SpecialSummon = reinterpret_cast<SpecialSummon_t>(0x005adae0);
 
 	using GetSummonZone_t = uint32_t(__cdecl*)(unsigned int param1);
 	inline GetSummonZone_t GetSummonZone = reinterpret_cast<GetSummonZone_t>(0x0056a030);
+
+	using IsFieldSelectionReady_t = uint32_t(__cdecl*)(unsigned int mask);
+	inline IsFieldSelectionReady_t IsFieldSelectionReady = reinterpret_cast<IsFieldSelectionReady_t>(0x005aa410);
+
+	using MarkZoneAsTributed_t = void(__cdecl*)(unsigned int side, unsigned int col);
+	inline MarkZoneAsTributed_t MarkZoneAsTributed = reinterpret_cast<MarkZoneAsTributed_t>(0x00486bb0);
+
+	using IsFieldSelectionConfirmed_t = uint32_t(__cdecl*)();
+	inline IsFieldSelectionConfirmed_t IsFieldSelectionConfirmed = reinterpret_cast<IsFieldSelectionConfirmed_t>(0x005aa450);
+
+	using TributeSelected_t = uint32_t(__cdecl*)(unsigned int side, unsigned int col);
+	inline TributeSelected_t TributeSelected = reinterpret_cast<TributeSelected_t>(0x00577a80);
 
 	// SelectionType:
 	// 4 = card type

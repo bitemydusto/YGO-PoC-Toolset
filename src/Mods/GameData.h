@@ -190,13 +190,13 @@ namespace GameData
         return duel;
     }
 
-    void ChangeSelectionList(std::vector<uint32_t> items)
+    void ChangeSelectionList(std::vector<uint32_t> items, uint8_t loc)
     {
         Utils::WriteUint8((void*)SELECTION_LIST_SIZE_ADDRESS, items.size());
         for (size_t i = 0; i < items.size(); i++)
         {
             Utils::WriteUint32((void*)(SELECTION_LIST_ADDRESS + (i * 4)), items[i]);
-            Utils::WriteUint16((void*)(0x00a584a4 + (i * 2)), 0x4);
+            Utils::WriteUint16((void*)(0x00a584a4 + (i * 2)), loc);
         }
 
     }

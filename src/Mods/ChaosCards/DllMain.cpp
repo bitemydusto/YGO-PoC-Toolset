@@ -642,16 +642,16 @@ uint32_t __stdcall SummonStates()
 		}break;
 		case 0xf:
 		{
-			uint32_t state = Utils::ReadUint32((void*)0x00a57808);
-			Utils::WriteInt32((void*)0x00a57808, state & 0xff00ffff);
+			uint16_t sel = GameData::GetSelectedSoFar();
+			GameData::SetSelectedSoFar(sel & 0xff00);
 
-			uint32_t summonParam = Utils::ReadUint32((void*)0x00A55080);
-			Utils::WriteUint32((void*)0x00A55080, summonParam & 0xf1ffffff);
+			uint32_t summonParam = GameData::GetSummonParam();
+			GameData::SetSummonParam(summonParam & 0xf1ffffff);
 
 			//uint16_t choice = Utils::ReadUint16((void*)0x00A558B4) & 1;
 			uint16_t choice = (Utils::ReadUint8((void*)0x00a57804) >> 3) & 1;
 
-			uint32_t param1 = (Utils::ReadUint32((void*)0x00a57808) >> 0x10 & 0x100) >> 8;
+			uint32_t param1 = (GameData::GetSelectedSoFar() & 0x100) >> 8;
 			uint32_t param2 = Utils::ReadUint8((void*)0x00a5780c);
 			uint32_t param3 = FUN::GetSummonZone( ((Utils::ReadUint32((void*)0x00a5780a)) & 0x100) >> 8 );
 			uint32_t param5 = (choice == 0) ? 1 : 0;

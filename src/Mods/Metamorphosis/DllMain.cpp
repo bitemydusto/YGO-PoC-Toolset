@@ -38,6 +38,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
 void Start()
 {
     // Uses Arlownay as base
+
 	Register_SelectionListPopulation(Cards::ARLOWNAY, LoadSelectionListFusion);
 
     Utils::EffectScript script;
@@ -68,7 +69,7 @@ uint32_t __cdecl Effect_Meta(unsigned int* param, int param2, int param3)
         }
         case 0x7f:
         {
-            FUN::InitiateSelectionList(funParam.playerIdx, 6, 0xB3, 1);
+            FUN::InitiateSelectionList(funParam.playerIdx, 6, Cards::ARLOWNAY, 0);
 
             return 0xfe;
         }
@@ -99,15 +100,16 @@ uint32_t __cdecl Condition_Meta(unsigned int* param, int param2, int param3)
 
 	if (player.cardsInExtra == 0) return 0;
     if (FUN::CanPlayerSummon(funParam.playerIdx) == 0) return 0;
-	if (FUN::IsCardOnField(0x58A) != 0) return 0;
+	if (FUN::IsCardOnField(Cards::MASK_OF_RESTRICT) != 0) return 0;
 
 	for (size_t i = 0; i < 5; i++)
 	{
         if (player.monsterZones[i].card.intID != 0)
         {
+            int fieldLevel = FUN::GetMonsterLevel(player.monsterZones[i].card.intID);
+
 			for (size_t j = 0; j < player.cardsInExtra; j++)
 			{
-				int fieldLevel = FUN::GetMonsterLevel(player.monsterZones[i].card.intID);
 				int extraLevel = FUN::GetMonsterLevel(player.extra[j].intID);
 
 				if (fieldLevel == extraLevel) return 1;
@@ -134,8 +136,8 @@ uint32_t __cdecl Cost_Meta(unsigned int* param, int param2, int param3)
         {
             if (FUN::IsFieldSelectionReady(0xf000f0) == 0) return 0;
 
-			uint8_t side = Utils::ReadUint8((void*)0x000a55044);
-			uint8_t col = Utils::ReadUint8((void*)0x00a5504c);
+			uint8_t side = GameData::GetSelectedSide();
+			uint8_t col = GameData::GetSelectedColumn();
 
 			if (!CanBeTributed(funParam.playerIdx, side, col)) return 0;
 

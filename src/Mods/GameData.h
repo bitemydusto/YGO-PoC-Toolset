@@ -272,6 +272,7 @@ namespace GameData
     {
         Utils::WriteUint16((void*)(0x00a57808), state);
     }
+
     // Used by effect functions
     // Starts at 0x80 and changes to what the effect function returns
     // When the effect function returns 0, it is finished resolving
@@ -281,7 +282,7 @@ namespace GameData
 	}
 	// Used by target and cost functions
     // Starts at 0 and must be set manually
-	// Make sure to set it back to 0 when the effect is finished resolving
+	// Make sure to set it back to 0 when the function is done
 	uint8_t GetEffectSubState()
 	{
 		return Utils::ReadUint8((void*)(0x00a55c8e));
@@ -290,8 +291,42 @@ namespace GameData
 	{
 		Utils::WriteUint8((void*)(0x00a55c8e), subState);
 	}
+
     uint8_t GetDialogResult()
     {
         return Utils::ReadUint8((void*)0x00a558b4);
     }
+    uint8_t GetSelectedSide()
+    {
+        return Utils::ReadUint8((void*)0x000a55044);
+    }
+	uint8_t GetSelectedColumn()
+	{
+		return Utils::ReadUint8((void*)0x00a5504c);
+	}
+
+    uint16_t GetState()
+    {
+       return Utils::ReadUint16((void*)0x00a57808);
+    }
+	void SetState(uint16_t state)
+	{
+		Utils::WriteUint16((void*)0x00a57808, state);
+	}
+	uint16_t GetSelectedSoFar()
+	{
+		return Utils::ReadUint16((void*)0x00a5780a);
+	}
+	void SetSelectedSoFar(uint16_t value)
+	{
+		Utils::WriteUint16((void*)0x00a5780a, value);
+	}
+    uint32_t GetSummonParam()
+    {
+        return Utils::ReadUint32((void*)0x00A55080);
+    }
+	void SetSummonParam(uint32_t param)
+	{
+		Utils::WriteUint32((void*)0x00A55080, param);
+	}
 }

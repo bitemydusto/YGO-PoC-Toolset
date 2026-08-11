@@ -329,4 +329,8 @@ namespace GameData
 	{
 		Utils::WriteUint32((void*)0x00A55080, param);
 	}
+	uint8_t GetTurnPlayer()
+	{
+		return Utils::ReadUint8((void*)0x00a577fa) & 1;
+	}
 }

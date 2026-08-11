@@ -44,7 +44,7 @@ void Start()
 	Register_InitialSummonState(LAVA_GOLEM, 0x38);
 	Register_SummonState(0x38, SummonStates);
 	Register_Phase(1, StandbyPhase);
-	Register_Phase(6, EndPhase);
+	Register_Phase(5, EndPhase);
 
 
 	Utils::EffectScript script;
@@ -184,6 +184,7 @@ void __stdcall StandbyPhase()
 			if (cardID == LAVA_GOLEM)
 			{
 				if ((duel.players[i].monsterZones[j].effectIDs[31] & 0x1) == 0x1) return; // Already used its effect this turn
+				if (GameData::GetTurnPlayer() != i) return; // Not the turn of the player who controls it
 				Utils::WriteUint16((void*)(0x00a55d64 + i * 0xD44 + 0x10 + 0x90 * j + 0x4A), 0x1); // Set custom once per turn flag
 
 

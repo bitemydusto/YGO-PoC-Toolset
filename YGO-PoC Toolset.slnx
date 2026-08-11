@@ -17,6 +17,7 @@
     <Project Path="src/Mods/GodCards/GodCards.vcxproj" Id="8e7a5a7d-2740-4130-b875-2de787417ee6">
       <Platform Solution="Release|Any CPU" Project="Win32" />
     </Project>
+    <Project Path="src/Mods/LavaGolem/LavaGolem.vcxproj" Id="14ccfd03-8442-4afb-a114-985f239b9037" />
     <Project Path="src/Mods/Metamorphosis/Metamorphosis.vcxproj" Id="9f73b0d1-184c-4a78-8ec4-449162a78aec" />
     <Project Path="src/Mods/PatchLoader/PatchLoader.vcxproj" Id="250a4c34-d26c-4a93-bf1d-010c21e9239f" />
     <Project Path="src/Mods/ScriptLoader/ScriptLoader.vcxproj" Id="ee89654c-08da-4f1e-8b3e-ea9a514ffb8e" />

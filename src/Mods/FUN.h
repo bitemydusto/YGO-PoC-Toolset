@@ -2,6 +2,11 @@
 
 #include <cstdint>
 
+namespace GameData {
+	uint32_t GetSummonParam();
+	void SetSummonParam(uint32_t param);
+}
+
 namespace FUN
 {
     template <typename T>
@@ -137,6 +142,22 @@ namespace FUN
 	using TributeSelected_t = uint32_t(__cdecl*)(unsigned int side, unsigned int col);
 	inline TributeSelected_t TributeSelected = reinterpret_cast<TributeSelected_t>(0x00577a80);
 
+	using IsMonsterTributable_t = uint32_t(__cdecl*)(unsigned int sideIdx, unsigned int playerIdx, unsigned int zoneIdx);
+	inline IsMonsterTributable_t IsMonsterTributable = reinterpret_cast<IsMonsterTributable_t>(0x0056a0d0);
+
+	using CopyCard_t = void(__cdecl*)(void* dest, void* src);
+	inline CopyCard_t CopyCard = reinterpret_cast<CopyCard_t>(0x005675c0);
+
+	using PayCostToSummon_t = void(__cdecl*)(unsigned int playerIdx);
+	inline PayCostToSummon_t PayCostToSummon = reinterpret_cast<PayCostToSummon_t>(0x0059cfe0);
+
+	using SummonMonster_t = void(__cdecl*)();
+	inline SummonMonster_t SummonMonster = reinterpret_cast<SummonMonster_t>(0x005ad890);
+
+	using InvokeEffect_t = void(__cdecl*)(unsigned int param, unsigned int param2, unsigned int param3);
+	inline InvokeEffect_t InvokeEffect = reinterpret_cast<InvokeEffect_t>(0x005ba500);
+
+
 	// SelectionType:
 	// 4 = card type
 	// 5 = attribute
@@ -169,6 +190,56 @@ namespace FUN
 		// CMD 0x8E = move
 		FUN::IssueCommand(0x8E, src, dest, 0);
 
+	}
+	void W_SS_HandToOpp(uint32_t handPlayer,int handIndex, uint32_t destZone, uint32_t extra,int posArg)
+	{
+		// This is a reimplementation of FUN_SpecialSummonFromHand, but modified so it summons to the opponent's field instead of the player's field.
+
+		if ((int)destZone < 0) return;
+
+		const uint32_t src = handPlayer & 1;
+		const uint32_t dst = src ^ 1;
+
+		const uint8_t posFlag = (uint8_t)(((uint32_t)(posArg == 0) << 9) >> 8);
+		uint32_t mid = ((uint32_t)((posFlag << 8) | (uint8_t)handIndex) | 0x100);
+		mid = (mid << 5 | (destZone & 0x1F)) << 1;
+
+		uint32_t summonParam = GameData::GetSummonParam();
+
+		uint32_t kept = (summonParam & 0xFFFF4000) ^ dst;
+
+		if (extra == 0) summonParam = mid | (kept & 0xF1FFFFFF);
+		else
+		{
+			const uint8_t b8 = (uint8_t)(extra >> 8);
+			const uint8_t b16 = (uint8_t)(extra >> 16);
+			uint32_t hi =
+				((((((((b16 & 0x10) << 1 | (b8 & 0x10)) << 1 | (extra & 0x10)) << 2
+					| (b16 & 7)) << 2
+					| (b16 & 0x80)) << 1
+					| (b8 & 0x87)) << 1
+					| (extra & 0x80)) << 2
+					| (extra & 7));
+			summonParam = (hi << 16) | mid | (kept & 0x8000FFFF);
+		}
+
+		GameData::SetSummonParam(summonParam);
+
+		const uintptr_t handAddr = 0x00A56434 + (uint32_t)(handIndex + (int)src * 0x351) * 4;
+
+		const uint32_t handDword = Utils::ReadUint32((void*)handAddr);
+		const uint32_t old84 = Utils::ReadUint32((void*)0x00a55084);
+		Utils::WriteUint32((void*)0x00a55084, (handDword & 0xFFF) | (old84 & 0xFFFF0000));
+
+		CopyCard((void*)0x00A55088, (void*)handAddr);
+
+		const uint16_t old8e = Utils::ReadUint16((void*)0x00A5508E);
+		Utils::WriteUint16((void*)0x00A5508E, (uint16_t)((old8e & 0xFFFB) | 0x18));
+		Utils::WriteUint16((void*)0x00A5508C, 5);
+
+		PayCostToSummon(src);
+
+		SummonMonster();
 	}
 
 	// Helper structs

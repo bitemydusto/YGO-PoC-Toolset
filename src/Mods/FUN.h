@@ -2,18 +2,6 @@
 
 #include <cstdint>
 
-namespace GameData {
-	uint32_t GetSummonParam()
-	{
-		return Utils::ReadUint32((void*)0x00A55080);
-	}
-
-	void SetSummonParam(uint32_t param)
-	{
-		Utils::WriteUint32((void*)0x00A55080, param);
-	}
-}
-
 namespace FUN
 {
     template <typename T>
@@ -211,7 +199,7 @@ namespace FUN
 		uint32_t mid = ((uint32_t)((posFlag << 8) | (uint8_t)handIndex) | 0x100);
 		mid = (mid << 5 | (destZone & 0x1F)) << 1;
 
-		uint32_t summonParam = GameData::GetSummonParam();
+		uint32_t summonParam = Utils::ReadUint32((void*)0x00A55080);
 
 		uint32_t kept = (summonParam & 0xFFFF4000) ^ dst;
 
@@ -230,7 +218,7 @@ namespace FUN
 			summonParam = (hi << 16) | mid | (kept & 0x8000FFFF);
 		}
 
-		GameData::SetSummonParam(summonParam);
+		Utils::WriteUint32((void*)0x00A55080, summonParam);
 
 		const uintptr_t handAddr = 0x00A56434 + (uint32_t)(handIndex + (int)src * 0x351) * 4;
 

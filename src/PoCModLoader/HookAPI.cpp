@@ -3,9 +3,9 @@
 
 extern "C"
 {
-	void ReplaceEffectScript(uint32_t oldID, EffectScript script)
+	void Register_EffectScript(EffectScript script)
 	{
-		HookManager::ReplaceEffectScript(oldID, script);
+		HookManager::Register_EffectScript(script);
 	}
 	void ReplaceFusion2(uint16_t oldID, Fusion2 fusion)
 	{

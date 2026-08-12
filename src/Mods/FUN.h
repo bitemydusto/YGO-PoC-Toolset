@@ -3,8 +3,15 @@
 #include <cstdint>
 
 namespace GameData {
-	uint32_t GetSummonParam();
-	void SetSummonParam(uint32_t param);
+	uint32_t GetSummonParam()
+	{
+		return Utils::ReadUint32((void*)0x00A55080);
+	}
+
+	void SetSummonParam(uint32_t param)
+	{
+		Utils::WriteUint32((void*)0x00A55080, param);
+	}
 }
 
 namespace FUN

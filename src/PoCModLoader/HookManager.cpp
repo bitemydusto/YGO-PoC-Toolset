@@ -1,4 +1,5 @@
 #include "HookManager.h"
+#include "FUN.h"
 
 namespace
 {
@@ -21,7 +22,7 @@ namespace
 
 void HookManager::InstallHooks()
 {
-	hFlipMonster = Utils::InstallHook((void*)0x00567632, 5, PatchFlipMonster);
+	hFlipMonster = Utils::InstallHook((void*)0x0059dc13, 7, PatchFlipMonster);
 	gFlipMonsterTrampoline = hFlipMonster.Trampoline;
 
 	hActivatableEffect = Utils::InstallHook((void*)0x00568042, 5, PatchActivatableEffect);
@@ -89,7 +90,13 @@ void HookManager::InstallHooks()
 	}
 	for (const auto& script : PatchLoader::EffectScripts)
 	{
-		effectScripts.push_back(script);
+		uint16_t index = FUN::GetCardIntID(script.CardID);
+		effectScripts[index].CardID = script.CardID;
+		effectScripts[index].Effect = script.Effect;
+		effectScripts[index].AppliesTo = script.AppliesTo;
+		effectScripts[index].Condition = script.Condition;
+		effectScripts[index].Cost = script.Cost;
+		effectScripts[index].Target = script.Target;
 	}
 	for (const auto& fusion2 : PatchLoader::FusionRecipes2)
 	{
@@ -99,42 +106,43 @@ void HookManager::InstallHooks()
 	{
 		fusionRecipes3.push_back(fusion3);
 	}
+
+	EffectScript* arrayStart = effectScripts;
+	Utils::WriteUint32((void*)0x5ed0a8, (uint32_t)arrayStart);
+	hCardEffectSctript1 = Utils::InstallHook((void*)0x0059dc13, 7, PatchCardEffectScript1);
+	hCardEffectSctript2 = Utils::InstallHook((void*)0x0059dc62, 7, PatchCardEffectScript2);
+	hCardEffectSctript3 = Utils::InstallHook((void*)0x0059dce2, 7, PatchCardEffectScript3);
+	hCardEffectSctript4 = Utils::InstallHook((void*)0x0059dd4f, 6, PatchCardEffectScript4);
+	hCardEffectSctript5 = Utils::InstallHook((void*)0x0059ddef, 7, PatchCardEffectScript5);
+	hCardEffectSctript6 = Utils::InstallHook((void*)0x0059de2f, 7, PatchCardEffectScript6);
+	hCardEffectSctript7 = Utils::InstallHook((void*)0x0059de6c, 7, PatchCardEffectScript7);
+	hCardEffectSctript8 = Utils::InstallHook((void*)0x005b3e4c, 7, PatchCardEffectScript8);
+	hCardEffectSctript9 = Utils::InstallHook((void*)0x005bb1f1, 7, PatchCardEffectScript9);
+	hcardEffectScript10 = Utils::InstallHook((void*)0x005bb316, 7, PatchCardEffectScript10);
+	hcardEffectScript11 = Utils::InstallHook((void*)0x005bba21, 7, PatchCardEffectScript11);
+
+	Utils::PatchCall(0x0059dbfd, M_GetEffectScriptIndex);
+	Utils::PatchCall(0x0059dc53, M_GetEffectScriptIndex);
+	Utils::PatchCall(0x0059dcd3, M_GetEffectScriptIndex);
+	Utils::PatchCall(0x0059dd3d, M_GetEffectScriptIndex);
+	Utils::PatchCall(0x0059ddd9, M_GetEffectScriptIndex);
+	Utils::PatchCall(0x0059de19, M_GetEffectScriptIndex);
+	Utils::PatchCall(0x0059de59, M_GetEffectScriptIndex);
+	Utils::PatchCall(0x005b3def, M_GetEffectScriptIndex);
+	Utils::PatchCall(0x005bb1d0, M_GetEffectScriptIndex);
+	Utils::PatchCall(0x005bb2f5, M_GetEffectScriptIndex);
+	Utils::PatchCall(0x005bba12, M_GetEffectScriptIndex);
 }
-void HookManager::ReplaceEffectScript(uint32_t oldID, EffectScript script)
+void HookManager::Register_EffectScript(EffectScript script)
 {
-	for (auto& existingScript : effectScripts)
-	{
-		if (existingScript.CardID == oldID)
-		{
-			existingScript = script;
-			break;
-		}
-	}
+	uint16_t index = FUN::GetCardIntID(script.CardID);
 
-	std::sort(std::begin(effectScripts), std::end(effectScripts),
-		[](const EffectScript& a, const EffectScript& b)
-		{
-			return a.CardID < b.CardID;
-		});
-
-	// Write EffectScripts to memory
-	uint32_t effectScriptAddress = 0x005ed0a8;
-	for (const auto& script : effectScripts)
-	{
-		Utils::WriteUint32((void*)effectScriptAddress, script.CardID);
-		effectScriptAddress += 4;
-		Utils::WriteUint32((void*)effectScriptAddress, script.Effect);
-		effectScriptAddress += 4;
-		Utils::WriteUint32((void*)effectScriptAddress, script.AppliesTo);
-		effectScriptAddress += 4;
-		Utils::WriteUint32((void*)effectScriptAddress, script.Condition);
-		effectScriptAddress += 4;
-		Utils::WriteUint32((void*)effectScriptAddress, script.Cost);
-		effectScriptAddress += 4;
-		Utils::WriteUint32((void*)effectScriptAddress, script.Target);
-		effectScriptAddress += 4;
-	}
-
+	effectScripts[index].CardID = script.CardID;
+	effectScripts[index].Effect = script.Effect;
+	effectScripts[index].AppliesTo = script.AppliesTo;
+	effectScripts[index].Condition = script.Condition;
+	effectScripts[index].Cost = script.Cost;
+	effectScripts[index].Target = script.Target;
 }
 void HookManager::ReplaceFusion2(uint16_t oldID, Fusion2 fusion)
 {
@@ -821,5 +829,159 @@ __declspec(naked) void PatchSpellSpeed()
 	hook_end :
 		POP EAX
 		JMP[gSpellSpeedTrampoline]
+	}
+}
+// Card Effect Scripts
+int __cdecl HookManager::M_GetEffectScriptIndex(uint32_t cardIntID)
+{
+	if (effectScripts[cardIntID].CardID == 0)
+	{
+		return -1;
+	}
+
+	return cardIntID;
+}
+__declspec(naked) void PatchCardEffectScript1()
+{
+	__asm
+	{
+	hook:
+		PUSH EDX
+		MOV EDX, DWORD PTR DS:[0x5ed0a8]
+		MOV EAX, DWORD PTR DS:[ECX * 0x8 + EDX + 0x8]
+		POP EDX
+		PUSH 0x0059dc1a
+		RET
+	}
+}
+__declspec(naked) void PatchCardEffectScript2()
+{
+	__asm
+	{
+	hook:
+		PUSH EDX
+		MOV EDX, DWORD PTR DS :[0x5ed0a8]
+		MOV EDI, DWORD PTR DS:[ECX * 0x8 + EDX + 0x8]
+		POP EDX
+		PUSH 0x0059dc69
+		RET
+	}
+}
+__declspec(naked) void PatchCardEffectScript3()
+{
+	__asm
+	{
+	hook:
+		PUSH EDX
+		MOV EDX, DWORD PTR DS :[0x5ed0a8]
+		MOV ESI, DWORD PTR DS:[ECX * 0x8 + EDX + 0x8]
+		POP EDX
+		PUSH 0x0059dce9
+		RET
+	}
+}
+__declspec(naked) void PatchCardEffectScript4()
+{
+	__asm
+	{
+	hook:
+		PUSH EDX
+		MOV EDX, DWORD PTR DS:[0x5ed0a8]
+		MOV ECX, DWORD PTR DS:[EAX + EDX + 0xC]
+		MOV EDI, DWORD PTR DS:[EAX + EDX + 0x8]
+		POP EDX
+		PUSH 0x0059dd5b
+		RET
+	}
+}
+__declspec(naked) void PatchCardEffectScript5()
+{
+	__asm
+	{
+	hook:
+		PUSH EDX
+		MOV EDX, DWORD PTR DS :[0x5ed0a8]
+		MOV EAX, DWORD PTR DS:[ECX * 0x8 + EDX + 0x10]
+		POP EDX
+		PUSH 0x0059ddf6
+		RET
+	}
+}
+__declspec(naked) void PatchCardEffectScript6()
+{
+	__asm
+	{
+	hook:
+		PUSH EDX
+		MOV EDX, DWORD PTR DS : [0x5ed0a8]
+		MOV EAX, DWORD PTR DS : [ECX * 0x8 + EDX + 0x14]
+		POP EDX
+		PUSH 0x0059de36
+		RET
+	}
+}
+__declspec(naked) void PatchCardEffectScript7()
+{
+	__asm
+	{
+	hook:
+		PUSH EDX
+		MOV EDX, DWORD PTR DS : [0x5ed0a8]
+		MOV EAX, DWORD PTR DS: [ECX * 0x8 + EDX + 0x4]
+		POP EDX
+		PUSH 0x0059de73
+		RET
+	}
+}
+__declspec(naked) void PatchCardEffectScript8()
+{
+	__asm
+	{
+	hook:
+		PUSH EDX
+		MOV EDX, DWORD PTR DS : [0x5ed0a8]
+		MOV EAX, DWORD PTR DS : [EAX * 0x8 + EDX + 0x8]
+		POP EDX
+		PUSH 0x005b3e53
+		RET
+	}
+}
+__declspec(naked) void PatchCardEffectScript9()
+{
+	__asm
+	{
+	hook:
+		PUSH ECX
+		MOV ECX, DWORD PTR DS : [0x5ed0a8]
+		MOV EDX, DWORD PTR DS : [EAX * 0x8 + ECX + 0x10]
+		POP ECX
+		PUSH 0x005bb1f8
+		RET
+	}
+}
+__declspec(naked) void PatchCardEffectScript10()
+{
+	__asm
+	{
+	hook:
+		PUSH ECX
+		MOV ECX, DWORD PTR DS : [0x5ed0a8]
+		MOV EAX, DWORD PTR DS : [EDX * 0x8 + ECX + 0x14]
+		POP ECX
+		PUSH 0x005bb31d
+		RET
+	}
+}
+__declspec(naked) void PatchCardEffectScript11()
+{
+	__asm
+	{
+	hook:
+		PUSH ECX
+		MOV ECX, DWORD PTR DS : [0x5ed0a8]
+		MOV EAX, DWORD PTR DS : [EDX * 0x8 + ECX + 0x4]
+		POP ECX
+		PUSH 0x005bba28
+		RET
 	}
 }

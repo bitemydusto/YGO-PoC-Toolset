@@ -22,7 +22,7 @@ using Fusion3 = Utils::Fusion3;
 
 extern "C"
 {
-	MOD_API void ReplaceEffectScript(uint32_t oldID, EffectScript script);
+	MOD_API void Register_EffectScript(EffectScript script);
 	MOD_API void ReplaceFusion2(uint16_t oldID, Fusion2 fusion);
 	MOD_API void ReplaceFusion3(uint16_t oldID, Fusion3 fusion);
 

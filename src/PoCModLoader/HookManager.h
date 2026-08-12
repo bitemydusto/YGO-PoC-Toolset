@@ -63,6 +63,18 @@ struct SelectionListPopulationHook
 	Event event;
 };
 
+void PatchCardEffectScript1();
+void PatchCardEffectScript2();
+void PatchCardEffectScript3();
+void PatchCardEffectScript4();
+void PatchCardEffectScript5();
+void PatchCardEffectScript6();
+void PatchCardEffectScript7();
+void PatchCardEffectScript8();
+void PatchCardEffectScript9();
+void PatchCardEffectScript10();
+void PatchCardEffectScript11();
+
 void PatchSpecialSummonCondition();
 void PatchPhase();
 void PatchStatChange();
@@ -85,7 +97,7 @@ class HookManager
 public:
 	static void InstallHooks();
 
-	static void ReplaceEffectScript(uint32_t oldID, EffectScript script);
+	static void Register_EffectScript(EffectScript script);
 	static void ReplaceFusion2(uint16_t oldID, Fusion2 fusion);
 	static void ReplaceFusion3(uint16_t oldID, Fusion3 fusion);
 
@@ -135,7 +147,9 @@ public:
 	static uint32_t __stdcall Dispatch_SpellSpeed(uint32_t cardID);
 
 private:
-	static inline std::vector<EffectScript> effectScripts;
+	static int __cdecl M_GetEffectScriptIndex(uint32_t cardID);
+
+	static inline EffectScript effectScripts[4096];
 	static inline std::vector<Fusion2> fusionRecipes2;
 	static inline std::vector<Fusion3> fusionRecipes3;
 
@@ -154,6 +168,18 @@ private:
 	static inline std::vector<SummonStateHook> summonStateHooks;
 	static inline std::vector<SelectionListPopulationHook> selectionListPopulationHooks;
 	static inline std::vector<SpellSpeedHook> spellSpeedHooks;
+
+	static inline Utils::Hook hCardEffectSctript1;
+	static inline Utils::Hook hCardEffectSctript2;
+	static inline Utils::Hook hCardEffectSctript3;
+	static inline Utils::Hook hCardEffectSctript4;
+	static inline Utils::Hook hCardEffectSctript5;
+	static inline Utils::Hook hCardEffectSctript6;
+	static inline Utils::Hook hCardEffectSctript7;
+	static inline Utils::Hook hCardEffectSctript8;
+	static inline Utils::Hook hCardEffectSctript9;
+	static inline Utils::Hook hcardEffectScript10;
+	static inline Utils::Hook hcardEffectScript11;
 
 	static inline Utils::Hook hFlipMonster;
 	static inline Utils::Hook hActivatableEffect;

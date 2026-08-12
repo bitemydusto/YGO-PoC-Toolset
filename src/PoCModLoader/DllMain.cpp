@@ -15,6 +15,8 @@
 
 DWORD WINAPI LoaderThread(LPVOID lpParam)
 {
+    Sleep(200);
+    CRC::CheckGameHash();
     ModLoader loader;
     HookManager::InstallHooks();
     loader.LoadMods();
@@ -26,7 +28,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
     if (reason == DLL_PROCESS_ATTACH)
     {
         DisableThreadLibraryCalls(hinst);
-        CRC::CheckGameHash();
         CreateThread(0, 0, &LoaderThread, 0, 0, NULL);
     }
 

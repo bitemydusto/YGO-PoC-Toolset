@@ -5,6 +5,7 @@
 #include "HookAPI.h"
 #include "Cards.h"
 
+const uint16_t METAMORPHOSIS = Cards::ARLOWNAY;
 int tributedLevel = 0;
 uint32_t cardDword = 0;
 
@@ -39,17 +40,17 @@ void Start()
 {
     // Uses Arlownay as base
 
-	Register_SelectionListPopulation(Cards::ARLOWNAY, LoadSelectionListFusion);
+	Register_SelectionListPopulation(METAMORPHOSIS, LoadSelectionListFusion);
 
     Utils::EffectScript script;
-    script.CardID = Cards::ARLOWNAY;
+    script.CardID = METAMORPHOSIS;
     script.Effect = reinterpret_cast<uintptr_t>(&Effect_Meta);
     script.AppliesTo = 0;
     script.Condition = reinterpret_cast<uintptr_t>(&Condition_Meta);
     script.Cost = reinterpret_cast<uintptr_t>(&Cost_Meta);
     script.Target = 0;
 
-    ReplaceEffectScript(Cards::RAIN_OF_MERCY, script);
+    Register_EffectScript(script);
 }
 uint32_t __cdecl Effect_Meta(unsigned int* param, int param2, int param3)
 {

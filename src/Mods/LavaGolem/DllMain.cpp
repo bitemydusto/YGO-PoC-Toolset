@@ -54,7 +54,7 @@ void Start()
 	script.Condition =0;
 	script.Cost = 0;
 	script.Target = 0;
-	ReplaceEffectScript(Cards::RAIMEI, script);
+	Register_EffectScript(script);
 }
 uint32_t __cdecl Effect_LG(unsigned int* param, int param2, int param3)
 {

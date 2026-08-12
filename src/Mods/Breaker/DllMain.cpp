@@ -49,7 +49,7 @@ void Start()
     script.Cost = reinterpret_cast<uintptr_t>(&Cost_Breaker);
     script.Target = 0x005959D0;
 
-    ReplaceEffectScript(0xC6, script);
+    Register_EffectScript(script);
 
 
 }

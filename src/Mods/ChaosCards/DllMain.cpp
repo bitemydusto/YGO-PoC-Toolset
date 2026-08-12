@@ -94,7 +94,7 @@ void Chaos()
 	scriptBLS.Cost = reinterpret_cast<uintptr_t>(&Cost_BLS);
 	scriptBLS.Target = 0x00596570;
 
-	ReplaceEffectScript(0x540, scriptBLS);
+	Register_EffectScript(scriptBLS);
 
 
 	Utils::EffectScript scriptCED;
@@ -105,7 +105,7 @@ void Chaos()
 	scriptCED.Cost = reinterpret_cast<uintptr_t>(&Cost_CED);
 	scriptCED.Target = 0;
 
-	ReplaceEffectScript(0x538, scriptCED);
+	Register_EffectScript(scriptCED);
 
 	Utils::EffectScript scriptDMOC;
 	scriptDMOC.CardID = 0x10A;
@@ -115,7 +115,7 @@ void Chaos()
 	scriptDMOC.Cost = 0;
 	scriptDMOC.Target = reinterpret_cast<uintptr_t>(&Target_DMOC);
 
-	ReplaceEffectScript(0x215, scriptDMOC);
+	Register_EffectScript(scriptDMOC);
 
 	Utils::EffectScript scriptCS;
 	scriptCS.CardID = 0x27F;
@@ -125,7 +125,7 @@ void Chaos()
 	scriptCS.Cost = reinterpret_cast<uintptr_t>(&Cost_BLS);
 	scriptCS.Target = 0x00595250;
 
-	ReplaceEffectScript(0x46F, scriptCS);
+	Register_EffectScript(scriptCS);
 
 	Utils::EffectScript scriptPS;
 	scriptPS.CardID = 0x252;
@@ -135,7 +135,7 @@ void Chaos()
 	scriptPS.Cost = 0;
 	scriptPS.Target = reinterpret_cast<uintptr_t>(&Target_PS);
 
-	ReplaceEffectScript(0x444, scriptPS);
+	Register_EffectScript(scriptPS);
 }
 uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3)
 {

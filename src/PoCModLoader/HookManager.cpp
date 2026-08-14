@@ -834,12 +834,13 @@ __declspec(naked) void PatchSpellSpeed()
 // Card Effect Scripts
 int __cdecl HookManager::M_GetEffectScriptIndex(uint32_t cardIntID)
 {
-	if (effectScripts[cardIntID].CardID == 0)
+	uint16_t index = cardIntID & 0xFFF;
+	if (effectScripts[index].CardID == 0)
 	{
 		return -1;
 	}
 
-	return cardIntID;
+	return index;
 }
 __declspec(naked) void PatchCardEffectScript1()
 {
@@ -984,4 +985,43 @@ __declspec(naked) void PatchCardEffectScript11()
 		PUSH 0x005bba28
 		RET
 	}
+}
+// Fusion reqs
+uint32_t __cdecl HookManager::M_GetNumOfFusionReqs(uint32_t cardIntID)
+{
+	uint16_t cardID = FUN::GetCardID(cardIntID);
+	for (const auto& fusion : fusionRecipes2)
+	{
+		if (fusion.Result == cardID)
+		{
+			return 2;
+		}
+	}
+	for (const auto& fusion : fusionRecipes3)
+	{
+		if (fusion.Result == cardID)
+		{
+			return 3;
+		}
+	}
+	return 0;
+}
+int __cdecl HookManager::M_GetFusionMaterial(uint32_t cardIntID, uint32_t materialIndex)
+{
+	uint16_t cardID = FUN::GetCardID(cardIntID);
+	for (const auto& fusion : fusionRecipes2)
+	{
+		if (fusion.Result == cardID)
+		{
+			return FUN::GetCardIntID(fusion.Materials[materialIndex]);
+		}
+	}
+	for (const auto& fusion : fusionRecipes3)
+	{
+		if (fusion.Result == cardID)
+		{
+			return FUN::GetCardIntID(fusion.Materials[materialIndex]);
+		}
+	}
+	return 0;
 }

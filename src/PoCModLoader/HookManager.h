@@ -148,6 +148,8 @@ public:
 
 private:
 	static int __cdecl M_GetEffectScriptIndex(uint32_t cardID);
+	static uint32_t __cdecl M_GetNumOfFusionReqs(uint32_t cardIntID);
+	static int __cdecl M_GetFusionMaterial(uint32_t cardIntID, uint32_t materialIndex);
 
 	static inline EffectScript effectScripts[4096];
 	static inline std::vector<Fusion2> fusionRecipes2;

@@ -76,5 +76,8 @@ extern "C"
 	{
 		HookManager::Register_SpellSpeed(cardID, speed);
 	}
-
+	void Register_HasEffectInHand(uint16_t cardID)
+	{
+		HookManager::Register_HasEffectInHand(cardID);
+	}
 }

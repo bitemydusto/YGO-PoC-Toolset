@@ -18,6 +18,7 @@ namespace
 	void* gSummonStateTrampoline = nullptr;
 	void* gSelectionListPopulationTrampoline = nullptr;
 	void* gSpellSpeedTrampoline = nullptr;
+	void* gHasEffectInHandTrampoline = nullptr;
 }
 
 void HookManager::InstallHooks()
@@ -68,6 +69,9 @@ void HookManager::InstallHooks()
 
 	hSpellSpeed = Utils::InstallHook((void*)0x0057e06f, 5, PatchSpellSpeed);
 	gSpellSpeedTrampoline = hSpellSpeed.Trampoline;
+
+	hHasEffectInHand = Utils::InstallHook((void*)0x005682e2, 5, PatchHasEffectInHand);
+	gHasEffectInHandTrampoline = hHasEffectInHand.Trampoline;
 
 
 	PatchLoader::LoadPatches();
@@ -817,6 +821,44 @@ __declspec(naked) void PatchSpellSpeed()
 	hook_end :
 		POP EAX
 		JMP[gSpellSpeedTrampoline]
+	}
+}
+
+void HookManager::Register_HasEffectInHand(uint16_t cardID)
+{
+	// Check if the card ID is already registered
+	for (const auto& id : hasEffectInHandHooks)
+	{
+		if (id == cardID) return;
+	}
+	hasEffectInHandHooks.push_back(cardID);
+}
+bool __stdcall HookManager::Dispatch_HasEffectInHand(uint16_t cardID)
+{
+	for (const auto& id : hasEffectInHandHooks)
+	{
+		if (id == cardID)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+__declspec(naked) void PatchHasEffectInHand()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH EAX
+		CALL HookManager::Dispatch_HasEffectInHand
+		TEST AL, AL
+		POP EAX
+		JZ hook_end
+		PUSH 0x00568302
+		RET
+	hook_end :
+		JMP[gHasEffectInHandTrampoline]
 	}
 }
 // Card Effect Scripts

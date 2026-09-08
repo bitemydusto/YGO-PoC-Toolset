@@ -75,6 +75,13 @@ void PatchCardEffectScript9();
 void PatchCardEffectScript10();
 void PatchCardEffectScript11();
 
+void PatchFusion1();
+void PatchFusion2();
+void PatchFusion3();
+void PatchFusion4();
+void PatchFusion5();
+void PatchFusion6();
+
 void PatchSpecialSummonCondition();
 void PatchPhase();
 void PatchStatChange();
@@ -91,6 +98,7 @@ void PatchInherentSpecialSummon();
 void PatchActivatableEffect();
 void PatchFlipMonster();
 void PatchSpellSpeed();
+void PatchHasEffectInHand();
 
 class HookManager
 {
@@ -146,6 +154,9 @@ public:
 	static void Register_SpellSpeed(uint32_t cardID, uint32_t speed);
 	static uint32_t __stdcall Dispatch_SpellSpeed(uint32_t cardID);
 
+	static void Register_HasEffectInHand(uint16_t cardID);
+	static bool __stdcall Dispatch_HasEffectInHand(uint16_t cardID);
+
 private:
 	static int __cdecl M_GetEffectScriptIndex(uint32_t cardID);
 	static uint32_t __cdecl M_GetNumOfFusionReqs(uint32_t cardIntID);
@@ -170,6 +181,7 @@ private:
 	static inline std::vector<SummonStateHook> summonStateHooks;
 	static inline std::vector<SelectionListPopulationHook> selectionListPopulationHooks;
 	static inline std::vector<SpellSpeedHook> spellSpeedHooks;
+	static inline std::vector<uint16_t> hasEffectInHandHooks;
 
 	static inline Utils::Hook hCardEffectSctript1;
 	static inline Utils::Hook hCardEffectSctript2;
@@ -205,4 +217,5 @@ private:
 	static inline Utils::Hook hSummonState;
 	static inline Utils::Hook hSelectionListPopulation;
 	static inline Utils::Hook hSpellSpeed;
+	static inline Utils::Hook hHasEffectInHand;
 };

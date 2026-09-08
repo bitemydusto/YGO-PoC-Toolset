@@ -41,4 +41,5 @@ extern "C"
 	MOD_API void Register_SummonState(uint8_t stateCode, State state);
 	MOD_API void Register_SelectionListPopulation(uint16_t cardID, Event event);
 	MOD_API void Register_SpellSpeed(uint32_t cardID, uint32_t speed);
+	MOD_API void Register_HasEffectInHand(uint16_t cardID);
 }

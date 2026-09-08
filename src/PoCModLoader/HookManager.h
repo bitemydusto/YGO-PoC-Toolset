@@ -99,6 +99,7 @@ void PatchActivatableEffect();
 void PatchFlipMonster();
 void PatchSpellSpeed();
 void PatchHasEffectInHand();
+void PatchCanBeRevived();
 
 class HookManager
 {
@@ -115,7 +116,7 @@ public:
 	static void Register_ActivatableEffect(uint16_t cardID);
 	static bool __stdcall Dispatch_ActivatableEffect(uint16_t cardID);
 
-	static void Register_InherentSpecialSummon(uint16_t cardID);
+	static void Register_InherentSpecialSummon(uint16_t cardID, bool firstOnly);
 	static bool __stdcall Dispatch_InherentSpecialSummon(uint16_t cardID);
 
 	static void Register_SpecialSummonCondition(uint16_t id, Condition condition);
@@ -157,6 +158,9 @@ public:
 	static void Register_HasEffectInHand(uint16_t cardID);
 	static bool __stdcall Dispatch_HasEffectInHand(uint16_t cardID);
 
+	static void Register_UnRevivable(uint16_t cardID);
+	static bool __stdcall Dispatch_UnRevivable(uint16_t cardIntID);
+
 private:
 	static int __cdecl M_GetEffectScriptIndex(uint32_t cardID);
 	static uint32_t __cdecl M_GetNumOfFusionReqs(uint32_t cardIntID);
@@ -182,6 +186,7 @@ private:
 	static inline std::vector<SelectionListPopulationHook> selectionListPopulationHooks;
 	static inline std::vector<SpellSpeedHook> spellSpeedHooks;
 	static inline std::vector<uint16_t> hasEffectInHandHooks;
+	static inline std::vector<uint16_t> unRevivableHooks;
 
 	static inline Utils::Hook hCardEffectSctript1;
 	static inline Utils::Hook hCardEffectSctript2;
@@ -218,4 +223,5 @@ private:
 	static inline Utils::Hook hSelectionListPopulation;
 	static inline Utils::Hook hSpellSpeed;
 	static inline Utils::Hook hHasEffectInHand;
+	static inline Utils::Hook hCanBeRevived;
 };

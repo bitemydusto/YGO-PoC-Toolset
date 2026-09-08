@@ -19,6 +19,7 @@ namespace
 	void* gSelectionListPopulationTrampoline = nullptr;
 	void* gSpellSpeedTrampoline = nullptr;
 	void* gHasEffectInHandTrampoline = nullptr;
+	void* gCanBeRevivedTrampoline = nullptr;
 }
 
 void HookManager::InstallHooks()
@@ -73,12 +74,15 @@ void HookManager::InstallHooks()
 	hHasEffectInHand = Utils::InstallHook((void*)0x005682e2, 5, PatchHasEffectInHand);
 	gHasEffectInHandTrampoline = hHasEffectInHand.Trampoline;
 
+	hCanBeRevived = Utils::InstallHook((void*)0x00568bd8, 5, PatchCanBeRevived);
+	gCanBeRevivedTrampoline = hCanBeRevived.Trampoline;
+
 
 	PatchLoader::LoadPatches();
 
 	for (const auto& id : PatchLoader::InherentSpecialSummons)
 	{
-		Register_InherentSpecialSummon(id);
+		Register_InherentSpecialSummon(id, true);
 	}
 	for (const auto& id : PatchLoader::ActivatableCards)
 	{
@@ -260,7 +264,7 @@ __declspec(naked) void PatchActivatableEffect()
 		JMP[gActivatableEffectTrampoline]
 	}
 }
-void HookManager::Register_InherentSpecialSummon(uint16_t cardID)
+void HookManager::Register_InherentSpecialSummon(uint16_t cardID, bool firstOnly)
 {
 	// Check if the card ID is already registered
 	for (const auto& id : inherentSpecialSummons)
@@ -268,6 +272,10 @@ void HookManager::Register_InherentSpecialSummon(uint16_t cardID)
 		if (id == cardID) return;
 	}
 	inherentSpecialSummons.push_back(cardID);
+	if (!firstOnly)
+	{
+		HookManager::Register_UnRevivable(cardID);
+	}
 }
 bool __stdcall HookManager::Dispatch_InherentSpecialSummon(uint16_t cardID)
 {
@@ -859,6 +867,48 @@ __declspec(naked) void PatchHasEffectInHand()
 		RET
 	hook_end :
 		JMP[gHasEffectInHandTrampoline]
+	}
+}
+void HookManager::Register_UnRevivable(uint16_t cardID)
+{
+	// Check if the card ID is already registered
+	for (const auto& id : unRevivableHooks)
+	{
+		if (id == cardID) return;
+	}
+	unRevivableHooks.push_back(cardID);
+}
+bool __stdcall HookManager::Dispatch_UnRevivable(uint16_t cardIntID)
+{
+	uint16_t cardID = FUN::GetCardID(cardIntID);
+
+	for (const auto& id : unRevivableHooks)
+	{
+		if (id == cardID)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+__declspec(naked) void PatchCanBeRevived()
+{
+	__asm
+	{
+	hook:
+		AND EAX, 0xFFF
+		PUSH EAX
+		PUSH EAX
+		CALL HookManager::Dispatch_UnRevivable
+		TEST AL, AL
+		POP EAX
+		JZ hook_end
+		POP ESI
+		MOV EAX, 0x0
+		PUSH 0x00568bfa
+		RET
+	hook_end :
+		JMP[gCanBeRevivedTrampoline]
 	}
 }
 // Card Effect Scripts

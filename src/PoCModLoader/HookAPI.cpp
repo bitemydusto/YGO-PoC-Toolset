@@ -24,9 +24,9 @@ extern "C"
 	{
 		HookManager::Register_ActivatableEffect(cardID);
 	}
-	void Register_InherentSpecialSummon(uint16_t cardID)
+	void Register_InherentSpecialSummon(uint16_t cardID, bool firstOnly)
 	{
-		HookManager::Register_InherentSpecialSummon(cardID);
+		HookManager::Register_InherentSpecialSummon(cardID, firstOnly);
 	}
 	void Register_SpecialSummonCondition(uint16_t id, Condition condition)
 	{

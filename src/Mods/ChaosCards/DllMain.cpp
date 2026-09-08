@@ -59,9 +59,9 @@ void Chaos()
 	Register_ActivatableEffect(0x1BD);
 	Register_ActivatableEffect(0x27F);
 
-	Register_InherentSpecialSummon(0x7B);
-	Register_InherentSpecialSummon(0x1BD);
-	Register_InherentSpecialSummon(0x27F);
+	Register_InherentSpecialSummon(0x7B, true);
+	Register_InherentSpecialSummon(0x1BD, false);
+	Register_InherentSpecialSummon(0x27F, true);
 
 	Register_SpecialSummonCondition(0x7B, CanBeSummoned);
 	Register_SpecialSummonCondition(0x1BD, CanBeSummoned);
@@ -185,9 +185,9 @@ uint32_t __cdecl Cost_BLS(unsigned int* param, int param2, int param3)
 	if (funParam.zoneIdx > 4) return 0;
 	// Make it unable to attack this turn
 	uint16_t stateFlag = player.monsterZones[funParam.zoneIdx].stateFlags | 0x4;
-	Utils::WriteUint16((void*)(0x00a55d64 + funParam.playerIdx * 0xD44 + 0x10 + 0x90 * funParam.zoneIdx + 0x8C + 2), stateFlag);
+	Utils::WriteUint16((void*)(GameData::BASE_PLAYER_ADDRESS + funParam.playerIdx * GameData::PLAYER_OFFSET + 0x10 + 0x90 * funParam.zoneIdx + 0x8C + 0x2), stateFlag);
 	// Set custom once per turn flag
-	Utils::WriteUint16((void*)(0x00a55d64 + funParam.playerIdx * 0xD44 + 0x10 + 0x90 * funParam.zoneIdx + 0x4A), 0x1);
+	Utils::WriteUint16((void*)(GameData::BASE_PLAYER_ADDRESS + funParam.playerIdx * GameData::PLAYER_OFFSET + 0x10 + 0x90 * funParam.zoneIdx + 0x4A), 0x1);
 
 	return 1;
 }

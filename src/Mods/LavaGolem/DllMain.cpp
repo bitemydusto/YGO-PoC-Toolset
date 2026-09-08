@@ -39,7 +39,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
 }
 void Start()
 {
-	Register_InherentSpecialSummon(LAVA_GOLEM);
+	Register_InherentSpecialSummon(LAVA_GOLEM, true);
 	Register_SpecialSummonCondition(LAVA_GOLEM, SummonCondition);
 	Register_InitialSummonState(LAVA_GOLEM, 0x38);
 	Register_SummonState(0x38, SummonStates);

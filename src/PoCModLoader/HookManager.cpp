@@ -989,7 +989,7 @@ __declspec(naked) void PatchCardEffectScript11()
 // Fusion reqs
 uint32_t __cdecl HookManager::M_GetNumOfFusionReqs(uint32_t cardIntID)
 {
-	uint16_t cardID = FUN::GetCardID(cardIntID);
+	uint16_t cardID = FUN::GetCardID(cardIntID & 0xFFF);
 	for (const auto& fusion : fusionRecipes2)
 	{
 		if (fusion.Result == cardID)
@@ -1008,7 +1008,7 @@ uint32_t __cdecl HookManager::M_GetNumOfFusionReqs(uint32_t cardIntID)
 }
 int __cdecl HookManager::M_GetFusionMaterial(uint32_t cardIntID, uint32_t materialIndex)
 {
-	uint16_t cardID = FUN::GetCardID(cardIntID);
+	uint16_t cardID = FUN::GetCardID(cardIntID & 0xFFF);
 	for (const auto& fusion : fusionRecipes2)
 	{
 		if (fusion.Result == cardID)

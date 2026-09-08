@@ -152,6 +152,12 @@ namespace FUN
 	using InvokeEffect_t = void(__cdecl*)(unsigned int param, unsigned int param2, unsigned int param3);
 	inline InvokeEffect_t InvokeEffect = reinterpret_cast<InvokeEffect_t>(0x005ba500);
 
+	using DrawCards_t = void(__cdecl*)(unsigned int playerIdx, unsigned int amount);
+	inline DrawCards_t DrawCards = reinterpret_cast<DrawCards_t>(0x00578ab0);
+
+	using SelectCardsToDiscard_t = void(__cdecl*)(unsigned int playerIdx, unsigned int amount, int param3, int param4);
+	inline SelectCardsToDiscard_t SelectCardsToDiscard = reinterpret_cast<SelectCardsToDiscard_t>(0x005bce30);
+
 
 	// SelectionType:
 	// 4 = card type

@@ -7,13 +7,13 @@ extern "C"
 	{
 		HookManager::Register_EffectScript(script);
 	}
-	void ReplaceFusion2(uint16_t oldID, Fusion2 fusion)
+	void Register_Fusion2(Fusion2 fusion)
 	{
-		HookManager::ReplaceFusion2(oldID, fusion);
+		HookManager::Register_Fusion2(fusion);
 	}
-	void ReplaceFusion3(uint16_t oldID, Fusion3 fusion)
+	void Register_Fusion3(Fusion3 fusion)
 	{
-		HookManager::ReplaceFusion3(oldID, fusion);
+		HookManager::Register_Fusion3(fusion);
 	}
 
 	void Register_FlipMonster(uint16_t cardID)

@@ -100,11 +100,11 @@ void HookManager::InstallHooks()
 	}
 	for (const auto& fusion2 : PatchLoader::FusionRecipes2)
 	{
-		fusionRecipes2.push_back(fusion2);
+		fusionRecipes2[fusion2.Result] = fusion2;
 	}
 	for (const auto& fusion3 : PatchLoader::FusionRecipes3)
 	{
-		fusionRecipes3.push_back(fusion3);
+		fusionRecipes3[fusion3.Result] = fusion3;
 	}
 
 	EffectScript* arrayStart = effectScripts;
@@ -132,6 +132,25 @@ void HookManager::InstallHooks()
 	Utils::PatchCall(0x005bb1d0, M_GetEffectScriptIndex);
 	Utils::PatchCall(0x005bb2f5, M_GetEffectScriptIndex);
 	Utils::PatchCall(0x005bba12, M_GetEffectScriptIndex);
+
+
+	Fusion2* fusion2ArrayStart = fusionRecipes2;
+	Utils::WriteUint32((void*)0x5ecf10, (uint32_t)fusion2ArrayStart);
+	Fusion3* fusion3ArrayStart = fusionRecipes3;
+	Utils::WriteUint32((void*)0x5ed048, (uint32_t)fusion3ArrayStart);
+	hFusion1 = Utils::InstallHook((void*)0x00591d5e, 5, PatchFusion1);
+	hFusion2 = Utils::InstallHook((void*)0x00591da9, 7, PatchFusion2);
+	hFusion3 = Utils::InstallHook((void*)0x00591d76, 5, PatchFusion3);
+	hFusion4 = Utils::InstallHook((void*)0x00591d6c, 6, PatchFusion4);
+	hFusion5 = Utils::InstallHook((void*)0x00591d76, 5, PatchFusion5);
+	hFusion6 = Utils::InstallHook((void*)0x00591e8f, 8, PatchFusion6);
+
+	Utils::PatchCall(0x0059be65, M_GetFusionMaterial);
+	Utils::PatchCall(0x00591578, M_GetNumOfFusionReqs);
+	Utils::PatchCall(0x00591640, M_GetNumOfFusionReqs);
+	Utils::PatchCall(0x005922cc, M_GetNumOfFusionReqs);
+	Utils::PatchCall(0x0059bde6, M_GetNumOfFusionReqs);
+
 }
 void HookManager::Register_EffectScript(EffectScript script)
 {
@@ -144,53 +163,22 @@ void HookManager::Register_EffectScript(EffectScript script)
 	effectScripts[index].Cost = script.Cost;
 	effectScripts[index].Target = script.Target;
 }
-void HookManager::ReplaceFusion2(uint16_t oldID, Fusion2 fusion)
+void HookManager::Register_Fusion2(Fusion2 fusion)
 {
-	for (auto& existingFusion : fusionRecipes2)
-	{
-		if (existingFusion.Result == oldID)
-		{
-			existingFusion = fusion;
-			return;
-		}
-	}
+	uint16_t index = FUN::GetCardIntID(fusion.Result);
 
-	// Write FusionRecipes2 to memory
-	uint32_t fusionRecipe2Address = 0x005ecf10;
-	for (const auto& recipe : fusionRecipes2)
-	{
-		Utils::WriteUint16((void*)fusionRecipe2Address, recipe.Result);
-		fusionRecipe2Address += 2;
-		for (int i = 0; i < 2; i++)
-		{
-			Utils::WriteUint16((void*)fusionRecipe2Address, recipe.Materials[i]);
-			fusionRecipe2Address += 2;
-		}
-	}
-
+	fusionRecipes2[index].Result = fusion.Result;
+	fusionRecipes2[index].Materials[0] = fusion.Materials[0];
+	fusionRecipes2[index].Materials[1] = fusion.Materials[1];
 }
-void HookManager::ReplaceFusion3(uint16_t oldID, Fusion3 fusion)
+void HookManager::Register_Fusion3(Fusion3 fusion)
 {
-	for (auto& existingFusion : fusionRecipes3)
-	{
-		if (existingFusion.Result == oldID)
-		{
-			existingFusion = fusion;
-			return;
-		}
-	}
-	// Write FusionRecipes3 to memory
-	uint32_t fusionRecipe3Address = 0x005ed048;
-	for (const auto& recipe : fusionRecipes3)
-	{
-		Utils::WriteUint16((void*)fusionRecipe3Address, recipe.Result);
-		fusionRecipe3Address += 2;
-		for (int i = 0; i < 3; i++)
-		{
-			Utils::WriteUint16((void*)fusionRecipe3Address, recipe.Materials[i]);
-			fusionRecipe3Address += 2;
-		}
-	}
+	uint16_t index = FUN::GetCardIntID(fusion.Result);
+
+	fusionRecipes3[index].Result = fusion.Result;
+	fusionRecipes3[index].Materials[0] = fusion.Materials[0];
+	fusionRecipes3[index].Materials[1] = fusion.Materials[1];
+	fusionRecipes3[index].Materials[2] = fusion.Materials[2];
 }
 void HookManager::Register_FlipMonster(uint16_t cardID)
 {
@@ -990,38 +978,104 @@ __declspec(naked) void PatchCardEffectScript11()
 uint32_t __cdecl HookManager::M_GetNumOfFusionReqs(uint32_t cardIntID)
 {
 	uint16_t cardID = FUN::GetCardID(cardIntID & 0xFFF);
-	for (const auto& fusion : fusionRecipes2)
+	if (fusionRecipes2[cardIntID].Result == cardID)
 	{
-		if (fusion.Result == cardID)
-		{
-			return 2;
-		}
+		return 2;
 	}
-	for (const auto& fusion : fusionRecipes3)
+	if (fusionRecipes3[cardIntID].Result == cardID)
 	{
-		if (fusion.Result == cardID)
-		{
-			return 3;
-		}
+		return 3;
 	}
 	return 0;
 }
 int __cdecl HookManager::M_GetFusionMaterial(uint32_t cardIntID, uint32_t materialIndex)
 {
 	uint16_t cardID = FUN::GetCardID(cardIntID & 0xFFF);
-	for (const auto& fusion : fusionRecipes2)
+	if (fusionRecipes2[cardIntID].Result == cardID)
 	{
-		if (fusion.Result == cardID)
-		{
-			return FUN::GetCardIntID(fusion.Materials[materialIndex]);
-		}
+		return FUN::GetCardIntID(fusionRecipes2[cardIntID].Materials[materialIndex]);
 	}
-	for (const auto& fusion : fusionRecipes3)
+	if (fusionRecipes3[cardIntID].Result == cardID)
 	{
-		if (fusion.Result == cardID)
-		{
-			return FUN::GetCardIntID(fusion.Materials[materialIndex]);
-		}
+		return FUN::GetCardIntID(fusionRecipes3[cardIntID].Materials[materialIndex]);
 	}
 	return 0;
 }
+__declspec(naked) void PatchFusion1()
+{
+	__asm
+	{
+	hook:
+		MOV ECX, DWORD PTR DS : [0x5ecf10]
+		PUSH 0x00591d63
+		RET
+	}
+}
+__declspec(naked) void PatchFusion2()
+{
+	__asm
+	{
+	hook:
+		PUSH EDX
+		MOV EDX, DWORD PTR DS : [0x5ecf10]
+		MOV CX, WORD PTR DS : [EAX + EDX + 0x2]
+		MOV BX, WORD PTR DS : [EAX + EDX + 0x4]
+		POP EDX
+		PUSH 0x00591db7
+		RET
+	}
+}
+__declspec(naked) void PatchFusion3()
+{
+	__asm
+	{
+	hook:
+		MOV ECX, DWORD PTR DS : [0x005ed048]
+		PUSH 0x00591d7b
+		RET
+	}
+}
+__declspec(naked) void PatchFusion4()
+{
+	__asm
+	{
+	hook:
+		PUSH EDX
+		MOV EDX, DWORD PTR DS : [0x005ed048]
+		CMP ECX, EDX
+		POP EDX
+		PUSH 0x00591d72
+		RET
+	}
+}
+__declspec(naked) void PatchFusion5()
+{
+	__asm
+	{
+	hook:
+		PUSH EDX
+		MOV EDX, DWORD PTR DS : [0x005ed048]
+		MOV ECX, EDX
+		POP EDX
+		PUSH 0x00591d7b
+		RET
+	}
+}
+__declspec(naked) void PatchFusion6()
+{
+	__asm
+	{
+	hook:
+		PUSH EDX
+		MOV EDX, DWORD PTR DS : [0x005ed048]
+		MOV CX, WORD PTR DS : [EAX * 0x8 + EDX + 0x2]
+		MOV EDI, DWORD PTR DS : [ESP + 0x10]
+		MOV BX, WORD PTR DS : [EAX * 0x8 + EDX + 0x4]
+		MOV BP, WORD PTR DS : [EAX * 0x8 + EDX + 0x6]
+		POP EDX
+		PUSH EBP
+		PUSH 0x00591eac
+		RET
+	}
+}
+

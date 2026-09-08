@@ -98,8 +98,8 @@ public:
 	static void InstallHooks();
 
 	static void Register_EffectScript(EffectScript script);
-	static void ReplaceFusion2(uint16_t oldID, Fusion2 fusion);
-	static void ReplaceFusion3(uint16_t oldID, Fusion3 fusion);
+	static void Register_Fusion2(Fusion2 fusion);
+	static void Register_Fusion3(Fusion3 fusion);
 
 	static void Register_FlipMonster(uint16_t cardID);
 	static bool __stdcall Dispatch_FlipMonster(uint16_t cardID);
@@ -152,8 +152,8 @@ private:
 	static int __cdecl M_GetFusionMaterial(uint32_t cardIntID, uint32_t materialIndex);
 
 	static inline EffectScript effectScripts[4096];
-	static inline std::vector<Fusion2> fusionRecipes2;
-	static inline std::vector<Fusion3> fusionRecipes3;
+	static inline Fusion2 fusionRecipes2[4096];
+	static inline Fusion3 fusionRecipes3[4096];
 
 	static inline std::vector<uint16_t> flipMonsters;
 	static inline std::vector<uint16_t> activatableEffects;
@@ -182,6 +182,13 @@ private:
 	static inline Utils::Hook hCardEffectSctript9;
 	static inline Utils::Hook hcardEffectScript10;
 	static inline Utils::Hook hcardEffectScript11;
+
+	static inline Utils::Hook hFusion1;
+	static inline Utils::Hook hFusion2;
+	static inline Utils::Hook hFusion3;
+	static inline Utils::Hook hFusion4;
+	static inline Utils::Hook hFusion5;
+	static inline Utils::Hook hFusion6;
 
 	static inline Utils::Hook hFlipMonster;
 	static inline Utils::Hook hActivatableEffect;

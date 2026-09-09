@@ -80,4 +80,8 @@ extern "C"
 	{
 		HookManager::Register_HasEffectInHand(cardID);
 	}
+	void Register_UnRevivable(uint16_t cardID)
+	{
+		HookManager::Register_UnRevivable(cardID);
+	}
 }

@@ -42,4 +42,5 @@ extern "C"
 	MOD_API void Register_SelectionListPopulation(uint16_t cardID, Event event);
 	MOD_API void Register_SpellSpeed(uint32_t cardID, uint32_t speed);
 	MOD_API void Register_HasEffectInHand(uint16_t cardID);
+	MOD_API void Register_UnRevivable(uint16_t cardID);
 }

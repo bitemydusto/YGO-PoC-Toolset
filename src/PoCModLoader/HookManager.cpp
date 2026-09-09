@@ -108,11 +108,13 @@ void HookManager::InstallHooks()
 	}
 	for (const auto& fusion2 : PatchLoader::FusionRecipes2)
 	{
-		fusionRecipes2[fusion2.Result] = fusion2;
+		uint16_t index = FUN::GetCardIntID(fusion2.Result);
+		fusionRecipes2[index] = fusion2;
 	}
 	for (const auto& fusion3 : PatchLoader::FusionRecipes3)
 	{
-		fusionRecipes3[fusion3.Result] = fusion3;
+		uint16_t index = FUN::GetCardIntID(fusion3.Result);
+		fusionRecipes3[index] = fusion3;
 	}
 
 	EffectScript* arrayStart = effectScripts;
@@ -142,22 +144,14 @@ void HookManager::InstallHooks()
 	Utils::PatchCall(0x005bba12, M_GetEffectScriptIndex);
 
 
-	Fusion2* fusion2ArrayStart = fusionRecipes2;
-	Utils::WriteUint32((void*)0x5ecf10, (uint32_t)fusion2ArrayStart);
-	Fusion3* fusion3ArrayStart = fusionRecipes3;
-	Utils::WriteUint32((void*)0x5ed048, (uint32_t)fusion3ArrayStart);
-	hFusion1 = Utils::InstallHook((void*)0x00591d5e, 5, PatchFusion1);
-	hFusion2 = Utils::InstallHook((void*)0x00591da9, 7, PatchFusion2);
-	hFusion3 = Utils::InstallHook((void*)0x00591d76, 5, PatchFusion3);
-	hFusion4 = Utils::InstallHook((void*)0x00591d6c, 6, PatchFusion4);
-	hFusion5 = Utils::InstallHook((void*)0x00591d76, 5, PatchFusion5);
-	hFusion6 = Utils::InstallHook((void*)0x00591e8f, 8, PatchFusion6);
-
 	Utils::PatchCall(0x0059be65, M_GetFusionMaterial);
 	Utils::PatchCall(0x00591578, M_GetNumOfFusionReqs);
 	Utils::PatchCall(0x00591640, M_GetNumOfFusionReqs);
 	Utils::PatchCall(0x005922cc, M_GetNumOfFusionReqs);
 	Utils::PatchCall(0x0059bde6, M_GetNumOfFusionReqs);
+	Utils::PatchCall(0x005805f3, M_CanFuse);
+	Utils::PatchCall(0x005922b2, M_CanFuse);
+	Utils::PatchCall(0x0059c190, M_CanFuse);
 
 }
 void HookManager::Register_EffectScript(EffectScript script)
@@ -1093,81 +1087,81 @@ int __cdecl HookManager::M_GetFusionMaterial(uint32_t cardIntID, uint32_t materi
 	}
 	return 0;
 }
-__declspec(naked) void PatchFusion1()
+int __cdecl HookManager::M_CanFuse(uint32_t player, uint32_t fusionIntId, uint16_t* out)
 {
-	__asm
-	{
-	hook:
-		MOV ECX, DWORD PTR DS : [0x5ecf10]
-		PUSH 0x00591d63
-		RET
-	}
-}
-__declspec(naked) void PatchFusion2()
-{
-	__asm
-	{
-	hook:
-		PUSH EDX
-		MOV EDX, DWORD PTR DS : [0x5ecf10]
-		MOV CX, WORD PTR DS : [EAX + EDX + 0x2]
-		MOV BX, WORD PTR DS : [EAX + EDX + 0x4]
-		POP EDX
-		PUSH 0x00591db7
-		RET
-	}
-}
-__declspec(naked) void PatchFusion3()
-{
-	__asm
-	{
-	hook:
-		MOV ECX, DWORD PTR DS : [0x005ed048]
-		PUSH 0x00591d7b
-		RET
-	}
-}
-__declspec(naked) void PatchFusion4()
-{
-	__asm
-	{
-	hook:
-		PUSH EDX
-		MOV EDX, DWORD PTR DS : [0x005ed048]
-		CMP ECX, EDX
-		POP EDX
-		PUSH 0x00591d72
-		RET
-	}
-}
-__declspec(naked) void PatchFusion5()
-{
-	__asm
-	{
-	hook:
-		PUSH EDX
-		MOV EDX, DWORD PTR DS : [0x005ed048]
-		MOV ECX, EDX
-		POP EDX
-		PUSH 0x00591d7b
-		RET
-	}
-}
-__declspec(naked) void PatchFusion6()
-{
-	__asm
-	{
-	hook:
-		PUSH EDX
-		MOV EDX, DWORD PTR DS : [0x005ed048]
-		MOV CX, WORD PTR DS : [EAX * 0x8 + EDX + 0x2]
-		MOV EDI, DWORD PTR DS : [ESP + 0x10]
-		MOV BX, WORD PTR DS : [EAX * 0x8 + EDX + 0x4]
-		MOV BP, WORD PTR DS : [EAX * 0x8 + EDX + 0x6]
-		POP EDX
-		PUSH EBP
-		PUSH 0x00591eac
-		RET
-	}
-}
+	player &= 1;
 
+	if (FUN::GetMonsterType(fusionIntId) >= 0x15) return 0;
+	if (FUN::GetCardSubType(fusionIntId) != 2) return 0;
+
+	uint16_t id = FUN::GetCardID(fusionIntId);
+	if (id > 1999)
+		id = (uint16_t)(id - 2000);
+
+	if (FUN::IsCardProhibited(fusionIntId, 0xFFFFFFFF)) return 0;
+
+	const uint32_t numOfReqs = HookManager::M_GetNumOfFusionReqs(fusionIntId);
+	if (numOfReqs != 2 && numOfReqs != 3) return 0;
+
+	uint16_t need[3] = {};
+	if (numOfReqs == 2)
+	{
+		if (fusionRecipes2[fusionIntId].Result == 0) return 0;
+		need[0] = fusionRecipes2[fusionIntId].Materials[0];
+		need[1] = fusionRecipes2[fusionIntId].Materials[1];
+	}
+	else
+	{
+		if (fusionRecipes3[fusionIntId].Result == 0) return 0;
+		need[0] = fusionRecipes3[fusionIntId].Materials[0];
+		need[1] = fusionRecipes3[fusionIntId].Materials[1];
+		need[2] = fusionRecipes3[fusionIntId].Materials[2];
+	}
+
+	uint16_t slot1, slot2, slot3;
+
+	if (numOfReqs == 2)
+	{
+		slot1 = (uint16_t)FUN::FUN_00591A00(player, need[0], 0xFFFF, 0xFFFF);
+		out[1] = slot1;
+		slot2 = (uint16_t)FUN::FUN_00591A00(player, need[1], slot1, 0xFFFF);
+		out[0] = slot2;
+
+		if (slot1 == 0xFFFF || slot2 == 0xFFFF) return 0;
+
+		if (FUN::W_BothLocked(player, out[0], out[1])) return 0;
+	}
+	else
+	{
+		slot1 = (uint16_t)FUN::FUN_00591A00(player, need[0], 0xFFFF, 0xFFFF);
+		out[2] = slot1;
+		slot2 = (uint16_t)FUN::FUN_00591A00(player, need[1], slot1, 0xFFFF);
+		out[1] = slot2;
+		slot3 = (uint16_t)FUN::FUN_00591A00(player, need[2], slot1, slot2);
+		out[0] = slot3;
+
+		if (slot1 == 0xFFFF || slot2 == 0xFFFF || slot3 == 0xFFFF) return 0;
+
+		// Stock checks several pairs; reject if any forbidden pair is both locked
+		if (FUN::W_BothLocked(player, out[0], out[1])) return 0;
+		if (FUN::W_BothLocked(player, out[0], out[2])) return 0;
+		if (FUN::W_BothLocked(player, out[1], out[2])) return 0;
+	}
+
+	if (FUN::FUN_0056A030(player) >= 0) return 1;
+
+	// No free zone: at least one material on field must free a zone
+	if (numOfReqs == 2)
+	{
+		if (FUN::W_FieldCanFreeZone(player, out[0]) || FUN::W_FieldCanFreeZone(player, out[1])) return 1;
+	}
+	else
+	{
+		if (FUN::W_FieldCanFreeZone(player, out[0]) ||
+			FUN::W_FieldCanFreeZone(player, out[1]) ||
+			FUN::W_FieldCanFreeZone(player, out[2]))
+			return 1;
+	}
+
+	return 0;
+}

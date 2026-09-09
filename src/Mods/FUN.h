@@ -158,6 +158,21 @@ namespace FUN
 	using SelectCardsToDiscard_t = void(__cdecl*)(unsigned int playerIdx, unsigned int amount, int param3, int param4);
 	inline SelectCardsToDiscard_t SelectCardsToDiscard = reinterpret_cast<SelectCardsToDiscard_t>(0x005bce30);
 
+	using IsCardProhibited_t = uint32_t(__cdecl*)(unsigned int cardIntID, unsigned int param2);
+	inline IsCardProhibited_t IsCardProhibited = reinterpret_cast<IsCardProhibited_t>(0x0056b440);
+
+	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);
+	using FUN_591C90_t = uint32_t(__cdecl*)(uint32_t player, uint32_t packed);
+	using FUN_568580_t = int(__cdecl*)(uint32_t cardIntId);
+	using FUN_56A030_t = int(__cdecl*)(uint32_t player);
+	using FUN_569E10_t = int(__cdecl*)(uint32_t player, uint32_t zone);
+
+	static FUN_591A00_t  FUN_00591A00 = (FUN_591A00_t)0x00591A00;
+	static FUN_591C90_t  FUN_00591C90 = (FUN_591C90_t)0x00591C90;
+	static FUN_568580_t  FUN_00568580 = (FUN_568580_t)0x00568580;
+	static FUN_56A030_t  FUN_0056A030 = (FUN_56A030_t)0x0056A030;
+	static FUN_569E10_t  FUN_00569E10 = (FUN_569E10_t)0x00569E10;
+
 
 	// SelectionType:
 	// 4 = card type
@@ -241,6 +256,19 @@ namespace FUN
 		PayCostToSummon(src);
 
 		SummonMonster();
+	}
+
+	bool W_BothLocked(uint32_t player, uint16_t a, uint16_t b)
+	{
+		uint32_t idA = FUN_00591C90(player, a) & 0xFFFF;
+		uint32_t idB = FUN_00591C90(player, b) & 0xFFFF;
+		return FUN_00568580(idA) != 0 && FUN_00568580(idB) != 0;
+	}
+
+	bool W_FieldCanFreeZone(uint32_t player, uint16_t packed)
+	{
+		if ((packed & 0x4000) == 0) return false;
+		return FUN_00569E10(player, packed & 0xFFF) != 0;
 	}
 
 	// Helper structs

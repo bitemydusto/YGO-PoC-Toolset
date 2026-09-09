@@ -75,13 +75,6 @@ void PatchCardEffectScript9();
 void PatchCardEffectScript10();
 void PatchCardEffectScript11();
 
-void PatchFusion1();
-void PatchFusion2();
-void PatchFusion3();
-void PatchFusion4();
-void PatchFusion5();
-void PatchFusion6();
-
 void PatchSpecialSummonCondition();
 void PatchPhase();
 void PatchStatChange();
@@ -165,6 +158,7 @@ private:
 	static int __cdecl M_GetEffectScriptIndex(uint32_t cardID);
 	static uint32_t __cdecl M_GetNumOfFusionReqs(uint32_t cardIntID);
 	static int __cdecl M_GetFusionMaterial(uint32_t cardIntID, uint32_t materialIndex);
+	static int  __cdecl M_CanFuse(uint32_t player, uint32_t fusionIntId, uint16_t* out);
 
 	static inline EffectScript effectScripts[4096];
 	static inline Fusion2 fusionRecipes2[4096];
@@ -199,13 +193,6 @@ private:
 	static inline Utils::Hook hCardEffectSctript9;
 	static inline Utils::Hook hcardEffectScript10;
 	static inline Utils::Hook hcardEffectScript11;
-
-	static inline Utils::Hook hFusion1;
-	static inline Utils::Hook hFusion2;
-	static inline Utils::Hook hFusion3;
-	static inline Utils::Hook hFusion4;
-	static inline Utils::Hook hFusion5;
-	static inline Utils::Hook hFusion6;
 
 	static inline Utils::Hook hFlipMonster;
 	static inline Utils::Hook hActivatableEffect;

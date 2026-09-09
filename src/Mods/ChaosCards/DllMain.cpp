@@ -184,7 +184,7 @@ uint32_t __cdecl Cost_BLS(unsigned int* param, int param2, int param3)
 
 	if (funParam.zoneIdx > 4) return 0;
 	// Make it unable to attack this turn
-	uint16_t stateFlag = player.monsterZones[funParam.zoneIdx].stateFlags | 0x4;
+	uint16_t stateFlag = player.monsterZones[funParam.zoneIdx].stateFlags | 0x2;
 	Utils::WriteUint16((void*)(GameData::BASE_PLAYER_ADDRESS + funParam.playerIdx * GameData::PLAYER_OFFSET + 0x10 + 0x90 * funParam.zoneIdx + 0x8C + 0x2), stateFlag);
 	// Set custom once per turn flag
 	Utils::WriteUint16((void*)(GameData::BASE_PLAYER_ADDRESS + funParam.playerIdx * GameData::PLAYER_OFFSET + 0x10 + 0x90 * funParam.zoneIdx + 0x4A), 0x1);

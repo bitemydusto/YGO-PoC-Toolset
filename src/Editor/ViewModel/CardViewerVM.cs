@@ -16,14 +16,22 @@ using Newtonsoft.Json.Converters;
 
 namespace Editor.ViewModel
 {
-    public partial class CardViewerVM(IPoCLibrary library) : ObservableObject
+    public partial class CardViewerVM : ObservableObject
     {
-        IPoCLibrary _library = library;
+        public CardViewerVM(IPoCLibrary library)
+        {
+            Filters.PropertyChanged += Filters_PropertyChanged;
+            _library = library;
+        }
+
+        IPoCLibrary _library;
 
         private List<CardInfoVM> cards = [];
 
         [ObservableProperty]
-        public partial CardInfoVM SelectedCard { get; set; }
+        public partial CardInfoVM? SelectedCard { get; set; }
+        [ObservableProperty]
+        public partial FiltersVM Filters { get; set; } = new();
         [ObservableProperty]
         public partial int SelectedAttributeIndex { get; set; } = -1;
         [ObservableProperty]
@@ -39,7 +47,11 @@ namespace Editor.ViewModel
         [ObservableProperty]
         public partial bool IsLibraryLoaded { get; set; }
         [ObservableProperty]
+        public partial bool IsFilterOpened { get; set; }
+        [ObservableProperty]
         public partial bool IsCardSelected { get; set; }
+        [ObservableProperty]
+        public partial bool ShowFilters { get; set; }
 
 
         [ObservableProperty]
@@ -47,7 +59,6 @@ namespace Editor.ViewModel
 
         async Task Load(string path)
         {
-
             try
             {
                 await _library.LoadLibrary(path);
@@ -192,6 +203,7 @@ namespace Editor.ViewModel
         [RelayCommand]
         async Task ExportSelected()
         {
+            if (SelectedCard == null) return;
             var result = await FilePicker.Default.PickAsync(new PickOptions
             {
                 PickerTitle = "Select a card file to import",
@@ -250,6 +262,11 @@ namespace Editor.ViewModel
 
             }
         }
+        [RelayCommand]
+        async Task ToggleFilterDisplay()
+        {
+            ShowFilters = !ShowFilters;
+        }
         partial void OnSearchTextChanged(string value)
         {
             if (string.IsNullOrWhiteSpace(SearchText))
@@ -258,13 +275,46 @@ namespace Editor.ViewModel
             }
             else
             {
-                var filteredCards = cards.Where(c => c.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase)).ToList();
+                var filteredCards = cards.Where(c => c.DisplayName.Contains(SearchText, StringComparison.OrdinalIgnoreCase)).ToList();
                 Cards = new(filteredCards);
             }
         }
-        partial void OnSelectedCardChanged(CardInfoVM value)
+        private void Filters_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (value == null) return;
+            var filteredCards = new List<CardInfoVM>();
+            foreach (var card in cards)
+            {
+                if (card.SubType == CardSubType.Spell)
+                {
+                    if (card.SpellTrapType == SpellTrapType.Normal && !Filters.NormalSpell) continue;
+                    if (card.SpellTrapType == SpellTrapType.Continuous && !Filters.ContinuousSpell) continue;
+                    if (card.SpellTrapType == SpellTrapType.Quickplay && !Filters.QuickPlaySpell) continue;
+                    if (card.SpellTrapType == SpellTrapType.Equip && !Filters.EquipSpell) continue;
+                    if (card.SpellTrapType == SpellTrapType.Ritual && !Filters.RitualSpell) continue;
+                    if (card.SpellTrapType == SpellTrapType.Field && !Filters.FieldSpell) continue;
+                }
+                else if (card.SubType == CardSubType.Trap)
+                {
+                    if (card.SpellTrapType == SpellTrapType.Normal && !Filters.NormalTrap) continue;
+                    if (card.SpellTrapType == SpellTrapType.Continuous && !Filters.ContinuousTrap) continue;
+                    if (card.SpellTrapType == SpellTrapType.Counter && !Filters.CounterTrap) continue;
+                }
+                else
+                {
+                    if (card.SubType == CardSubType.Normal && !Filters.Normal) continue;
+                    if (card.SubType == CardSubType.Effect && !Filters.Effect) continue;
+                    if (card.SubType == CardSubType.Fusion && !Filters.Fusion) continue;
+                    if (card.SubType == CardSubType.Ritual && !Filters.Ritual) continue;
+                }
+
+                filteredCards.Add(card);
+            }
+
+            Cards = new(filteredCards);
+        }
+        partial void OnSelectedCardChanged(CardInfoVM? value)
+        {
+            if (SelectedCard == null || value == null) return;
             IsCardSelected = true;
 
             SelectedAttributeIndex = AttributeList.ToList().IndexOf(value.Attribute.ToString());
@@ -277,28 +327,28 @@ namespace Editor.ViewModel
         {
             if (Enum.TryParse<CardAttribute>(AttributeList[value], out var attr))
             {
-                SelectedCard.Attribute = attr;
+                SelectedCard?.Attribute = attr;
             }
         }
         partial void OnSelectedTypeIndexChanged(int value)
         {
             if (Enum.TryParse<CardType>(TypeList[value], out var type))
             {
-                SelectedCard.Type = type;
+                SelectedCard?.Type = type;
             }
         }
         partial void OnSelectedSubTypeIndexChanged(int value)
         {
             if (Enum.TryParse<CardSubType>(SubTypeList[value], out var sub))
             {
-                SelectedCard.SubType = sub;
+                SelectedCard?.SubType = sub;
             }
         }
         partial void OnSelectedSpellTrapTypeIndexChanged(int value)
         {
             if (Enum.TryParse<SpellTrapType>(SpellTrapList[value], out var st))
             {
-                SelectedCard.SpellTrapType = st;
+                SelectedCard?.SpellTrapType = st;
             }
         }
         public IReadOnlyList<string> LevelList { get; } = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];

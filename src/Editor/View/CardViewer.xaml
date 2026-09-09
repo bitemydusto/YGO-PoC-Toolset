@@ -13,9 +13,101 @@
                 <Button Text="Export Selected" Command="{Binding ExportSelectedCommand}" CornerRadius="0" WidthRequest="130" IsEnabled="{Binding IsLibraryLoaded}"/>
             </HorizontalStackLayout>
             <Grid Grid.Row="1" ColumnDefinitions="auto,*,auto" Margin="10" IsVisible="{Binding IsLibraryLoaded}">
-                <Grid Grid.Column="0" RowDefinitions="auto,*" WidthRequest="300">
-                    <SearchBar Grid.Row="0" Placeholder="Search" Margin="0,0,0,5" Text="{Binding SearchText}"/>
-                    <CollectionView Grid.Row="1" ItemsSource="{Binding Cards}" SelectedItem="{Binding SelectedCard}" SelectionMode="Single">
+                <Grid Grid.Column="0" RowDefinitions="auto,auto,auto,*" WidthRequest="350">
+                    <Grid Grid.Row="0" Margin="0,0,0,5">
+                        <HorizontalStackLayout Spacing="5">
+                            <Label Text="Results:"/>
+                            <Label Text="{Binding Cards.Count}"/>
+                        </HorizontalStackLayout>
+                    </Grid>
+                    <Grid Grid.Row="1" ColumnDefinitions="*,auto">
+                        <SearchBar Grid.Column="0" Placeholder="Search" Margin="0,0,0,5" Text="{Binding SearchText}"/>
+                        <Button Grid.Column="1" Text="Filters" HorizontalOptions="End" VerticalOptions="Start" Margin="0" Padding="0" CornerRadius="0"
+                                Command="{Binding ToggleFilterDisplayCommand}">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding ShowFilters}" Value="False">
+                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource PrimaryDarkText}}" />
+                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="Button" Binding="{Binding ShowFilters}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource PrimaryDarkText}}" />
+                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                    </Grid>
+                    <Grid Grid.Row="2" IsVisible="{Binding ShowFilters}">
+                        <Border>
+                            <VerticalStackLayout Margin="5">
+                                <Label Text="Monsters"/>
+                                <Grid ColumnDefinitions="auto,auto" HorizontalOptions="Center">
+                                    <Grid ColumnDefinitions="*,auto" Grid.Column="0" WidthRequest="100">
+                                        <Label Text="Normal" Grid.Column="0" VerticalOptions="Center"/>
+                                        <CheckBox Grid.Column="1" IsChecked="{Binding Filters.Normal}" HorizontalOptions="End"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,auto" Grid.Column="1" WidthRequest="100">
+                                        <Label Text="Effect" Grid.Column="0" VerticalOptions="Center"/>
+                                        <CheckBox Grid.Column="1" IsChecked="{Binding Filters.Effect}" HorizontalOptions="End"/>
+                                    </Grid>
+                                </Grid>
+                                <Grid ColumnDefinitions="auto,auto" HorizontalOptions="Center">
+                                    <Grid ColumnDefinitions="*,auto" Grid.Column="0" WidthRequest="100">
+                                        <Label Text="Fusion" Grid.Column="0" VerticalOptions="Center"/>
+                                        <CheckBox Grid.Column="1" IsChecked="{Binding Filters.Fusion}" HorizontalOptions="End"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,auto" Grid.Column="1" WidthRequest="100">
+                                        <Label Text="Ritual" Grid.Column="0" VerticalOptions="Center"/>
+                                        <CheckBox Grid.Column="1" IsChecked="{Binding Filters.Ritual}" HorizontalOptions="End"/>
+                                    </Grid>
+                                </Grid>
+                                <Label Text="Spells"/>
+                                <Grid ColumnDefinitions="auto,auto,auto" HorizontalOptions="Center">
+                                    <Grid ColumnDefinitions="*,auto" Grid.Column="0" WidthRequest="100">
+                                        <Label Text="Normal" Grid.Column="0" VerticalOptions="Center"/>
+                                        <CheckBox Grid.Column="1" IsChecked="{Binding Filters.NormalSpell}" HorizontalOptions="End"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,auto" Grid.Column="1" WidthRequest="100">
+                                        <Label Text="Quick" Grid.Column="0" VerticalOptions="Center"/>
+                                        <CheckBox Grid.Column="1" IsChecked="{Binding Filters.QuickPlaySpell}" HorizontalOptions="End"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,auto" Grid.Column="2" WidthRequest="100">
+                                        <Label Text="Equip" Grid.Column="0" VerticalOptions="Center"/>
+                                        <CheckBox Grid.Column="1" IsChecked="{Binding Filters.EquipSpell}" HorizontalOptions="End"/>
+                                    </Grid>
+                                </Grid>
+                                <Grid ColumnDefinitions="auto,auto,auto" HorizontalOptions="Center">
+                                    <Grid ColumnDefinitions="*,auto" Grid.Column="0" WidthRequest="100">
+                                        <Label Text="Field" Grid.Column="0" VerticalOptions="Center"/>
+                                        <CheckBox Grid.Column="1" IsChecked="{Binding Filters.FieldSpell}" HorizontalOptions="End"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,auto" Grid.Column="1" WidthRequest="100">
+                                        <Label Text="Cont." Grid.Column="0" VerticalOptions="Center"/>
+                                        <CheckBox Grid.Column="1" IsChecked="{Binding Filters.ContinuousSpell}" HorizontalOptions="End"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,auto" Grid.Column="2" WidthRequest="100">
+                                        <Label Text="Ritual" Grid.Column="0" VerticalOptions="Center"/>
+                                        <CheckBox Grid.Column="1" IsChecked="{Binding Filters.RitualSpell}" HorizontalOptions="End"/>
+                                    </Grid>
+                                </Grid>
+                                <Label Text="Traps"/>
+                                <Grid ColumnDefinitions="auto,auto,auto" HorizontalOptions="Center">
+                                    <Grid ColumnDefinitions="*,auto" Grid.Column="0" WidthRequest="100">
+                                        <Label Text="Normal" Grid.Column="0" VerticalOptions="Center"/>
+                                        <CheckBox Grid.Column="1" IsChecked="{Binding Filters.NormalTrap}" HorizontalOptions="End"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,auto" Grid.Column="1" WidthRequest="100">
+                                        <Label Text="Cont." Grid.Column="0" VerticalOptions="Center"/>
+                                        <CheckBox Grid.Column="1" IsChecked="{Binding Filters.ContinuousTrap}" HorizontalOptions="End"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,auto" Grid.Column="2" WidthRequest="100">
+                                        <Label Text="Counter" Grid.Column="0" VerticalOptions="Center"/>
+                                        <CheckBox Grid.Column="1" IsChecked="{Binding Filters.CounterTrap}" HorizontalOptions="End"/>
+                                    </Grid>
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+                    <CollectionView Grid.Row="3" ItemsSource="{Binding Cards}" SelectedItem="{Binding SelectedCard}" SelectionMode="Single">
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="viewmodel:CardInfoVM">
                                 <Label Text="{Binding DisplayName}" LineBreakMode="TailTruncation"/>

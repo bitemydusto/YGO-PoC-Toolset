@@ -24,7 +24,7 @@ namespace
 
 void HookManager::InstallHooks()
 {
-	hFlipMonster = Utils::InstallHook((void*)0x0059dc13, 7, PatchFlipMonster);
+	hFlipMonster = Utils::InstallHook((void*)0x00567632, 5, PatchFlipMonster);
 	gFlipMonsterTrampoline = hFlipMonster.Trampoline;
 
 	hActivatableEffect = Utils::InstallHook((void*)0x00568042, 5, PatchActivatableEffect);

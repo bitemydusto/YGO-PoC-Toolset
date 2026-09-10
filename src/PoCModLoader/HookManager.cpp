@@ -98,23 +98,15 @@ void HookManager::InstallHooks()
 	}
 	for (const auto& script : PatchLoader::EffectScripts)
 	{
-		uint16_t index = FUN::GetCardIntID(script.CardID);
-		effectScripts[index].CardID = script.CardID;
-		effectScripts[index].Effect = script.Effect;
-		effectScripts[index].AppliesTo = script.AppliesTo;
-		effectScripts[index].Condition = script.Condition;
-		effectScripts[index].Cost = script.Cost;
-		effectScripts[index].Target = script.Target;
+		Register_EffectScript(script);
 	}
 	for (const auto& fusion2 : PatchLoader::FusionRecipes2)
 	{
-		uint16_t index = FUN::GetCardIntID(fusion2.Result);
-		fusionRecipes2[index] = fusion2;
+		Register_Fusion2(fusion2);
 	}
 	for (const auto& fusion3 : PatchLoader::FusionRecipes3)
 	{
-		uint16_t index = FUN::GetCardIntID(fusion3.Result);
-		fusionRecipes3[index] = fusion3;
+		Register_Fusion3(fusion3);
 	}
 
 	EffectScript* arrayStart = effectScripts;

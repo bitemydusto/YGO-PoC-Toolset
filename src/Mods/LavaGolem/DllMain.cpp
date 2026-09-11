@@ -90,7 +90,7 @@ uint32_t __stdcall SummonStates()
 			uint8_t side = GameData::GetSelectedSide();
 			uint8_t col = GameData::GetSelectedColumn();
 
-			if (!CanBeTributed(0, side, col)) return 0;
+			if (!CanBeTributed(1, side, col)) return 0;
 
 			if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
 
@@ -108,7 +108,7 @@ uint32_t __stdcall SummonStates()
 			uint8_t col = GameData::GetSelectedColumn();
 
 			if (col == firstZone) return 0;
-			if (!CanBeTributed(0, side, col)) return 0;
+			if (!CanBeTributed(1, side, col)) return 0;
 
 			if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
 
@@ -165,9 +165,9 @@ bool CanBeTributed(uint8_t playerIdx, uint8_t side, uint8_t col)
 {
 	GameData::Duel duel = GameData::GetDuel();
 
-	if (side != 0) return false;
+	if (side == playerIdx) return false;
 	if (col > 4) return false;
-	if (duel.players[0].monsterZones[col].card.intID == 0) return false;
+	if (duel.players[playerIdx ^ 1].monsterZones[col].card.intID == 0) return false;
 
 	return true;
 }

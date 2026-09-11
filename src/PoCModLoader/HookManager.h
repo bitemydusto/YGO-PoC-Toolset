@@ -76,6 +76,7 @@ void PatchCardEffectScript10();
 void PatchCardEffectScript11();
 
 void PatchSpecialSummonCondition();
+void PatchNormalSummonCondition();
 void PatchPhase();
 void PatchStatChange();
 void PatchAfterDamageCalculation();
@@ -114,6 +115,9 @@ public:
 
 	static void Register_SpecialSummonCondition(uint16_t id, Condition condition);
 	static bool __stdcall Dispatch_SpecialSummonCondition(uint16_t id, uint32_t playerIdx);
+
+	static void Register_NormalSummonCondition(uint16_t id, Condition condition);
+	static uint32_t __stdcall Dispatch_NormalSummonCondition(uint16_t id, uint32_t playerIdx);
 
 	static void Register_Phase(uint32_t phase, Event event);
 	static void __stdcall Dispatch_Phase(uint32_t phase);
@@ -168,6 +172,7 @@ private:
 	static inline std::vector<uint16_t> activatableEffects;
 	static inline std::vector<uint16_t> inherentSpecialSummons;
 	static inline std::vector<SpecialSummonHook> specialSummonHooks;
+	static inline std::vector<SpecialSummonHook> normalSummonHooks;
 	static inline std::vector<PhaseHook> phaseHooks;
 	static inline std::vector<StatChangeHook> statChangeHooks;
 	static inline std::vector<Event> afterDamageCalculationHooks;
@@ -198,6 +203,7 @@ private:
 	static inline Utils::Hook hActivatableEffect;
 	static inline Utils::Hook hInherentSpecialSummon;
 	static inline Utils::Hook hSpecialSummonCondition;
+	static inline Utils::Hook hNormalSummonCondition;
 	static inline Utils::Hook hPhase;
 	static inline Utils::Hook hStatChange;
 	static inline Utils::Hook hAfterDamageCalculation;

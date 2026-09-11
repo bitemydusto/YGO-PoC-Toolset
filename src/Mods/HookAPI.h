@@ -30,6 +30,7 @@ extern "C"
 	MOD_API void Register_ActivatableEffect(uint16_t cardID);
 	MOD_API void Register_InherentSpecialSummon(uint16_t cardID, bool firstOnly);
     MOD_API void Register_SpecialSummonCondition(uint16_t id, Condition condition);
+	MOD_API void Register_NormalSummonCondition(uint16_t id, Condition condition);
     MOD_API void Register_Phase(uint32_t phase, Event event);
 	MOD_API void Register_StatChange(uint16_t id, StatChange statChange);
 	MOD_API void Register_AfterDamageCalculation(Event event);

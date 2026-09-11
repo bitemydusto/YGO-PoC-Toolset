@@ -32,6 +32,10 @@ extern "C"
 	{
 		HookManager::Register_SpecialSummonCondition(id, condition);
 	}
+	void Register_NormalSummonCondition(uint16_t id, Condition condition)
+	{
+		HookManager::Register_NormalSummonCondition(id, condition);
+	}
 	void Register_Phase(uint32_t phase, Event event)
 	{
 		HookManager::Register_Phase(phase, event);

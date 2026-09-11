@@ -104,6 +104,9 @@ namespace FUN
 	using NumOfEmptyValidSummonZones_t = uint32_t(__cdecl*)(unsigned int playerIdx);
 	inline NumOfEmptyValidSummonZones_t NumOfEmptyValidSummonZones = reinterpret_cast<NumOfEmptyValidSummonZones_t>(0x0056a000);
 
+	using NumOfTributableMonsters_t = int(__cdecl*)(unsigned int playerIdx, unsigned int param2);
+	inline NumOfTributableMonsters_t NumOfTributableMonsters = reinterpret_cast<NumOfTributableMonsters_t>(0x0056a200);
+
 	using CanPlayerSummon_t = uint32_t(__cdecl*)(unsigned int playerIdx);
 	inline CanPlayerSummon_t CanPlayerSummon = reinterpret_cast<CanPlayerSummon_t>(0x00570a90);
 
@@ -122,7 +125,10 @@ namespace FUN
 	using SpecialSummon_t = void(__cdecl*)(unsigned int player, unsigned int* cardPtr, unsigned int posSelectorType, unsigned int flags, unsigned int srcLoc, unsigned int param6);
 	inline SpecialSummon_t SpecialSummon = reinterpret_cast<SpecialSummon_t>(0x005adae0);
 
-	using GetSummonZone_t = uint32_t(__cdecl*)(unsigned int param1);
+	using NormalSummon_t = void(__cdecl*)(unsigned int playerIdx, unsigned int handIdx, unsigned int destZone, unsigned int packedTributes, int set);
+	inline NormalSummon_t NormalSummon = reinterpret_cast<NormalSummon_t>(0x005ad710);
+
+	using GetSummonZone_t = uint32_t(__cdecl*)(unsigned int playerIdx);
 	inline GetSummonZone_t GetSummonZone = reinterpret_cast<GetSummonZone_t>(0x0056a030);
 
 	using IsFieldSelectionReady_t = uint32_t(__cdecl*)(unsigned int mask);
@@ -161,17 +167,27 @@ namespace FUN
 	using IsCardProhibited_t = uint32_t(__cdecl*)(unsigned int cardIntID, unsigned int param2);
 	inline IsCardProhibited_t IsCardProhibited = reinterpret_cast<IsCardProhibited_t>(0x0056b440);
 
+	using GetCurrentATK_t = uint32_t(__cdecl*)(unsigned int playerIdx, unsigned int zoneIdx);
+	inline GetCurrentATK_t GetCurrentATK = reinterpret_cast<GetCurrentATK_t>(0x0056f5e0);
+
+	using GetCurrentDEF_t = uint32_t(__cdecl*)(unsigned int playerIdx, unsigned int zoneIdx);
+	inline GetCurrentDEF_t GetCurrentDEF = reinterpret_cast<GetCurrentDEF_t>(0x0056f600);
+
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);
 	using FUN_591C90_t = uint32_t(__cdecl*)(uint32_t player, uint32_t packed);
 	using FUN_568580_t = int(__cdecl*)(uint32_t cardIntId);
 	using FUN_56A030_t = int(__cdecl*)(uint32_t player);
 	using FUN_569E10_t = int(__cdecl*)(uint32_t player, uint32_t zone);
+	using FUN_56c510_t = bool(__cdecl*)(unsigned int playerIdx, int zoneIdx);
+	using FUN_5777d0_t = uint32_t(__cdecl*)(uint8_t* block, unsigned int playerIdx, unsigned int zoneIdx);
 
 	static FUN_591A00_t  FUN_00591A00 = (FUN_591A00_t)0x00591A00;
 	static FUN_591C90_t  FUN_00591C90 = (FUN_591C90_t)0x00591C90;
 	static FUN_568580_t  FUN_00568580 = (FUN_568580_t)0x00568580;
 	static FUN_56A030_t  FUN_0056A030 = (FUN_56A030_t)0x0056A030;
 	static FUN_569E10_t  FUN_00569E10 = (FUN_569E10_t)0x00569E10;
+	static FUN_56c510_t  FUN_0056C510 = (FUN_56c510_t)0x0056C510;
+	static FUN_5777d0_t  FUN_005777D0 = (FUN_5777d0_t)0x005777D0;
 
 
 	// SelectionType:

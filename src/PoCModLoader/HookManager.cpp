@@ -7,6 +7,7 @@ namespace
 	void* gActivatableEffectTrampoline = nullptr;
 	void* gInherentSpecialSummonTrampoline = nullptr;
 	void* gSpecialSummonTrampoline = nullptr;
+	void* gNormalSummonTrampoline = nullptr;
 	void* gPhaseTrampoline = nullptr;
 	void* gStatChangeTrampoline = nullptr;
 	void* gAfterDamageCalculationTrampoline = nullptr;
@@ -35,6 +36,9 @@ void HookManager::InstallHooks()
 
 	hSpecialSummonCondition = Utils::InstallHook((void*)0x005aaeaf, 5, PatchSpecialSummonCondition);
 	gSpecialSummonTrampoline = hSpecialSummonCondition.Trampoline;
+
+	hNormalSummonCondition = Utils::InstallHook((void*)0x005aac59, 7, PatchNormalSummonCondition);
+	gNormalSummonTrampoline = hNormalSummonCondition.Trampoline;
 
 	hPhase = Utils::InstallHook((void*)0x00404970, 5, PatchPhase);
 	gPhaseTrampoline = hPhase.Trampoline;
@@ -329,6 +333,57 @@ __declspec(naked) void PatchSpecialSummonCondition()
 		RET
 	hook_end :
 		JMP[gSpecialSummonTrampoline]
+	}
+}
+void HookManager::Register_NormalSummonCondition(uint16_t id, Condition condition)
+{
+	// Check if the card ID is already registered
+	for (const auto& hook : normalSummonHooks)
+	{
+		if (hook.cardID == id) return;
+	}
+	normalSummonHooks.push_back({ id, condition });
+}
+uint32_t __stdcall HookManager::Dispatch_NormalSummonCondition(uint16_t id, uint32_t playerIdx)
+{
+	for (const auto& hook : normalSummonHooks)
+	{
+		if (hook.cardID == id)
+		{
+			if (hook.condition(playerIdx)) return 1;
+			else return 2;
+		}
+	}
+	return 0; // 0 = not found, 1 = can summon, 2 = cannot summon
+}
+__declspec(naked) void PatchNormalSummonCondition()
+{
+	__asm
+	{
+	hook:
+		ADD ESP, 0x4
+		PUSH EAX
+		PUSH ESI
+		AND EAX, 0xFFF 
+		PUSH EAX
+		CALL HookManager::Dispatch_NormalSummonCondition
+		CMP AL, 0x0
+		JZ hook_end
+		CMP AL, 0x1
+		JNZ hook_cannot
+	hook_can:
+		POP EAX
+		PUSH 0x005aad71
+		RET
+	hook_cannot:
+		POP EAX
+		MOV EAX, 0x0
+		PUSH 0x005aadb1
+		RET
+	hook_end:
+		POP EAX
+		SUB ESP, 0x4
+		JMP[gNormalSummonTrampoline]
 	}
 }
 void HookManager::Register_Phase(uint32_t phase, Event event)

@@ -1,533 +1,49 @@
 #include <Windows.h>
 
 #include "Utils.h"
+#include "Cards.h"
+#include "GameData.h"
+#include "HookAPI.h"
 
-void GodCards();
-void Slifer();
-void Ra();
+GameData::Duel duel;
 
-Utils::Hook hTribute_1;
-Utils::Hook hTribute_2;
-Utils::Hook hTribute_3;
-Utils::Hook hTribute_4;
+int innerState = 0;
+uint16_t monsterSummoned = 0;
+uint8_t summonZone = 0;
+uint8_t obeliskFirstTribute = 0;
 
-Utils::Hook hSlifer_1;
-Utils::Hook hSlifer_2;
-Utils::Hook hSlifer_3;
-Utils::Hook hSlifer_4;
-
-Utils::Hook hActEffects_1;
-
-Utils::Hook hRa_1;
-Utils::Hook hRa_2;
-Utils::Hook hRa_3;
-
-int combinedRaATK;
-int combinedRaDEF;
-int tributeATK_1;
-int tributeATK_2;
-int tributeATK_3;
-int tributeDEF_1;
-int tributeDEF_2;
-int tributeDEF_3;
-
-uint16_t monsterID;
-
-__declspec(naked) void StatBuff()
+struct Tribute
 {
-    __asm
-    {
-    hook:
-        CMP EAX, 0x778
-        JE hook_ra
-        CMP EAX, 0x777
-        JNE hook_end
-    hook_slifer:
-        MOV AL, byte ptr[ESI + 0xa55d68]
-        AND EAX, 0xff
-        LEA EAX, [EAX + EAX * 0x4]
-        LEA EBP, [EAX + EAX * 0x4]
-        LEA EBP, [EBP + EBP * 0x4]
-        SHL EBP, 0x3
-        MOV dword ptr[ESP + 0x18], EBP
-        MOV EAX, 0x0056df89
-        JMP EAX
-    hook_ra:
-        MOV EAX, combinedRaATK
-        MOV dword ptr[ESP + 0x14], EAX
-        MOV EAX, combinedRaDEF
-        MOV dword ptr[ESP + 0x18], EAX
-        MOV EAX, 0x0056df89
-        JMP EAX
-    hook_end :
-        JMP[hSlifer_1.Trampoline]
-    }
-}
-__declspec(naked) void PatchTrapHoleEffect()
-{
-    __asm
-    {
-    hook:
-		CMP EAX, 0x777
-		JNE hook_end
-        PUSH ESI
-        PUSH EDI
-        MOV EAX, 0x0056f5e0
-        CALL EAX
-        ADD ESP, 0x8
-        XOR EDX, EDX
-        CMP EAX, 0x7D0
-        SETL DL
-        MOV EAX, 0x0058d452
-        JMP EAX
-    hook_end:
-		JMP[hSlifer_2.Trampoline]
-    }
-}
-__declspec(naked) void PatchTrapHoleCondition()
-{
-    __asm
-    {
-    hook:
-        CMP EAX, 0x777
-        JNE hook_end
-        PUSH EDI
-        PUSH ESI
-        MOV EAX, 0x0056f5e0
-        CAll EAX
-        ADD ESP, 0x8
-        XOR EDX, EDX
-        CMP EAX, 0x7D0
-        SETL DL
-        POP EDI
-        POP ESI
-        MOV EAX, EDX
-        POP EBX
-        PUSH 0x00580538
-        RET
-    hook_end:
-		JMP[hSlifer_3.Trampoline]
-    }
+    uint8_t zone;
+    int atk;
+    int def;
+};
+static Tribute tributes[3];
 
-}
-__declspec(naked) void PatchSpellSpeed()
-{
-	__asm
-	{
-	hook:
-		CMP EAX, 0x777
-		JNE hook_end
-        MOV EAX, 0x0057e0a2
-        JMP EAX
-	hook_end :
-		JMP[hSlifer_4.Trampoline]
-	}
-}
+void Start();
 
-__declspec(naked) void GiveGodsActivatableEffect()
-{
-    __asm
-    {
-    hook:
-        CMP EAX, 0x776
-        JE hook_end
-        CMP EAX, 0x777
-        JE hook_end
-        CMP EAX, 0x778
-        JE hook_end
-        JMP [hActEffects_1.Trampoline]
-    hook_end:
-        MOV EAX, 0x0056813b
-        JMP EAX
-    }
-}
-__declspec(naked) void PatchLPCostPayingFunction()
-{
-    __asm
-    {
-    hook:
-        CMP EAX, 0x778
-        JNE hook_end
-        MOV EAX, 0x0057c44b
-        JMP EAX
-    hook_end :
-        JMP[hRa_1.Trampoline]
-    }
-}
-// On normal summon
-__declspec(naked) void CombineStatsForRa()
-{
-    __asm
-    {
-    hook:
-        CMP ECX, 0x456 // IntID
-        JNE hook_end
-        MOV combinedRaATK, 0x0
-        MOV combinedRaDEF, 0x0
+uint32_t __cdecl Effect_Slifer(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Condition_Slifer(unsigned int* param, int param2, int param3);
 
-        MOV EAX, tributeATK_1
-        ADD combinedRaATK, EAX
-        MOV EAX, tributeATK_2
-        ADD combinedRaATK, EAX
-        MOV EAX, tributeATK_3
-        ADD combinedRaATK, EAX
+uint32_t __cdecl Condition_Ra(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Cost_Ra(unsigned int* param, int param2, int param3);
 
-        MOV EAX, tributeDEF_1
-        ADD combinedRaDEF, EAX
-        MOV EAX, tributeDEF_2
-        ADD combinedRaDEF, EAX
-        MOV EAX, tributeDEF_3
-        ADD combinedRaDEF, EAX
-    hook_end :
-        JMP[hRa_2.Trampoline]
-    }
-}
-__declspec(naked) void ResetRaStatsOnSpecialSummon()
-{
-    __asm
-    {
-    hook:
-        AND ECX, 0x0FFF
-        CMP ECX, 0x456 // IntID
-        JNE hook_end
-        CMP BYTE PTR  DS : [0x00a5508c] , 0x24 // Check if the summon type is special summon
-        JNE hook_end
-        MOV combinedRaATK, 0x0
-        MOV combinedRaDEF, 0x0
-    hook_end:
-        JMP[hRa_3.Trampoline]
-    }
-}
-// Save the the ID of the monster about to be tribute summoned (lvl 7 or higher)
-// Modify tribute summon dialog text based on the amount of tribute needed 
-__declspec(naked) void SaveMonsterID()
-{
-    __asm
-    {
-    hook:
-        MOV monsterID, AX
-        CMP AX, 0x776
-        JL hook_2
-        CMP AX, 0x778
-        JG hook_2
-        PUSH ECX
-        MOV ECX, DWORD PTR DS : [0x005f24c0]
-        MOV BYTE PTR DS : [ECX + 0x76], 0x33
-        POP ECX
-        JMP hook_end
-    hook_2:
-        PUSH ECX
-        MOV ECX, DWORD PTR DS : [0x005f24c0]
-        MOV BYTE PTR DS : [ECX + 0x76], 0x32
-        POP ECX
-    hook_end:
-        JMP[hTribute_3.Trampoline]
-    }
-}
-// Save the stats of the tributes when you hover over them
-__declspec(naked) void ModifiedIsMonsterTributable(unsigned int sideIndex, unsigned int playerIdx, unsigned int zoneIdx)
-{
-    __asm
-    {
-    hook:
-        PUSH ESI
-        PUSH EDI
-        MOV EDI, DWORD PTR SS : [ESP + 0x10]
-        MOV ESI, DWORD PTR SS : [ESP + 0x14]
-        MOV EAX, EDI
-        AND EAX, 0x1
-        LEA EDX, DWORD PTR DS : [ESI + ESI * 0x8]
-        SHL EDX, 0x4
-        LEA ECX, DWORD PTR DS : [EAX + EAX * 0x2]
-        LEA ECX, DWORD PTR DS : [ECX + ECX * 0x8]
-        SHL ECX, 0x1
-        SUB ECX, EAX
-        SHL ECX, 0x4
-        ADD ECX, EAX
-        MOV AX, WORD PTR DS : [EDX + ECX * 0x4 + 0xa55d74]
-        AND EAX, 0xFFF
-        PUSH EAX
-        MOV AL, BYTE PTR DS : [0x00a57809] // Check state
-        CMP AL, 0x4
-        JE hook_second
-        CMP AL, 0x5
-        JE hook_third
-    hook_first: // State 0x3
-        MOV EAX, 0x004027b0
-        CALL EAX
-        MOV tributeATK_1, EAX // Store atk of first tribute
-        MOV EAX, 0x00402800
-        CALL EAX
-        MOV tributeDEF_1, EAX // Store def of first tribute
-        JMP hook_rest
-    hook_second: // State 0x4
-        MOV EAX, 0x004027b0
-        CALL EAX
-        MOV tributeATK_2, EAX // Store atk of second tribute
-        MOV EAX, 0x00402800
-        CALL EAX
-        MOV tributeDEF_2, EAX // Store def of second tribute
-        JMP hook_rest
-    hook_third: // State 0x5
-        MOV EAX, 0x004027b0
-        CALL EAX
-        MOV tributeATK_3, EAX // Store atk of third tribute
-        MOV EAX, 0x00402800
-        CALL EAX
-        MOV tributeDEF_3, EAX // Store def of third tribute
-    hook_rest:
-        MOV EAX, 0x004022e0
-        CALL EAX
-        AND EAX, 0xffff
-        ADD ESP, 0x4
-        CMP EAX, 0x781
-        JL hook_end
-        CMP EAX, 0x782
-        JG hook_end
-        POP EDI
-        XOR EAX, EAX
-        POP ESI
-        RET
-    hook_end:
-        MOV ECX, DWORD PTR SS : [ESP + 0xc]
-        PUSH ESI
-        PUSH EDI
-        PUSH ECX
-        MOV EAX, 0x56A140
-        CALL EAX
-        ADD ESP, 0xc
-        POP EDI
-        POP ESI
-        RET
-    }
-}
-__declspec(naked) void AddTributeRequirement()
-{
-    __asm
-    {
-    hook:
-        CMP AX, 0x776
-        JL hook_end
-        CMP AX, 0x778
-        JG hook_end
-        ADD ESP, 0x4
-        PUSH - 0x1
-        PUSH ESI
-        MOV EAX, 0x0056a200
-        CALL EAX
-        ADD ESP, 0x8
-        CMP EAX, 0x3
-        PUSH 0x005aad4f
-        RET
-    hook_end :
-        JMP[hTribute_1.Trampoline]
-    }
-}
-// Modfies unused state 4 so it works like state 3 for god cards
-__declspec(naked) void AdditionalTributeState()
-{
-    __asm
-    {
-    hook:
-        PUSH EAX
-        MOV AX, monsterID
-        CMP AX, 0x776
-        JL hook_end
-        CMP AX, 0x778
-        JG hook_end
-        POP EAX
+uint32_t __cdecl Condition_Obelisk(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Cost_Obelisk(unsigned int* param, int param2, int param3);
 
-        TEST DWORD PTR DS : [0x00a54e54] , 0x102
-        JZ LAB_1
-        MOV EAX, 0x00486c30
-        CALL EAX
-        MOV DL, BYTE PTR DS : [0x00a57808]
-        POP EDI
-        AND EDX, 0xFF
-        POP ESI
-        OR DH, 0x1
-        POP EBP
-        MOV WORD PTR DS : [0x00a57808] , DX
-        XOR EAX, EAX
-        POP EBX
-        ADD ESP, 0x234
-        RET
-    LAB_1 :
-        PUSH 0xF000F0
-        MOV EAX, 0x005aa410
-        CALL EAX
-        ADD ESP, 0x4
-        TEST EAX, EAX
-        JNZ LAB_8
-        MOV EAX, 0x0059eb13
-        JMP EAX 
-    LAB_8:
-        // Check against state 3
-        MOV EAX, DWORD PTR DS : [0x00a55080]
-        MOV ECX, DWORD PTR DS : [0x00a55044]
-        MOV EDX, EAX
-        SHR EDX, 0x1C
-        AND EDX, 0x1
-        CMP ECX, EDX
-        MOV EDX, DWORD PTR DS : [0x00a5504c]
-        JNZ LAB_2
-        SHR EAX, 0x10
-        AND EAX, 0x7
-        CMP EDX, EAX
-        JNZ LAB_2
-        MOV EAX, 0x0059eb13
-        JMP EAX
-    LAB_2 :
-        MOV DX, WORD PTR DS : [0x00a5780a]
-        MOV EAX, DWORD PTR DS : [0x00a5504c]
-        MOV ECX, DWORD PTR DS : [0x00a55044]
-        PUSH EAX
-        SHR EDX, 0x8
-        AND EDX, 0x1
-        PUSH ECX
-        PUSH EDX
-        MOV EAX, OFFSET ModifiedIsMonsterTributable
-        CALL EAX
-        ADD ESP, 0xC
-        TEST EAX, EAX
-        JNZ LAB_3
-        MOV EAX, DWORD PTR SS : [ESP + 0x24c]
-        TEST EAX, EAX
-        JNZ LAB_4
-        MOV EAX, 0x0059eb13
-        JMP EAX
-    LAB_4 :
-        MOV DX, WORD PTR DS : [0x00a5780a]
-        MOV EAX, DWORD PTR DS : [0x00a5504c]
-        MOV ECX, DWORD PTR DS : [0x00a55044]
-        PUSH EAX
-        SHR EDX, 0x8
-        AND EDX, 0x1
-        PUSH ECX
-        PUSH EDX
-        MOV EAX, 0x0056a140
-        CALL EAX
-        ADD ESP, 0xC
-        TEST EAX, EAX
-        JNZ LAB_3
-        MOV EAX, 0x0059eb13
-        JMP EAX
-    LAB_3 :
-        MOV AX, WORD PTR DS : [0x00a5780a]
-        SHR EAX, 0x8
-        AND EAX, 0x1
-        PUSH EAX
-        MOV EAX, 0x0056a000
-        CALL EAX
-        ADD ESP, 0x4
-        TEST EAX, EAX
-        JNZ LAB_5
-        MOV CX, WORD PTR DS : [0x00a5780a]
-        MOV EAX, DWORD PTR DS : [0x00a55044]
-        SHR ECX, 0x8
-        AND ECX, 0x1
-        CMP EAX, ECX
-        JZ LAB_6
-        MOV EAX, 0x0059eb13
-        JMP EAX
-    LAB_6 :
-        MOV EDX, DWORD PTR DS : [0x00a5504c]
-        PUSH EDX
-        PUSH EAX
-        MOV EAX, 0x00569e10
-        CALL EAX
-        ADD ESP, 0x8
-        TEST EAX, EAX
-        JNZ LAB_5
-        MOV EAX, 0x0059eb13
-        JMP EAX
-    LAB_5 :
-        MOV EAX, 0x005aa450
-        CALL EAX
-        TEST EAX, EAX
-        JNZ LAB_7
-        MOV EAX, 0x0059eb13
-        JMP EAX
-    LAB_7 :
-        PUSH 0x1
-        MOV EAX, 0x0044f250
-        CALL EAX
-        MOV EAX, DWORD PTR DS : [0x00a55048]
-        MOV ECX, DWORD PTR DS : [0x00a5504c]
-        MOV EDX, DWORD PTR DS : [0x00a55044]
-        ADD EAX, ECX
-        PUSH EAX
-        PUSH EDX
-        MOV EAX, 0x00486bb0
-        CALL EAX
-        MOV EAX, DWORD PTR DS : [0x00a55044]
-        MOV ECX, DWORD PTR DS : [0x00a5504c]
-        MOV EDX, DWORD PTR DS : [0x00a55080]
-        // Bit packing for summon paramaters, using the unused descriptor (0x8000000)
-        AND EAX, 0x1
-        SHL EAX, 0x1E
 
-        AND ECX, 0x7
-        SHL ECX, 0x16
+bool CanBeSummoned(uint32_t playerIdx);
+bool CanBeTributed(uint8_t playerIdx, uint8_t side, uint8_t col);
+bool CanBeTributedObelisk(uint8_t playerIdx, uint8_t side, uint8_t col);
+void __stdcall ChangeSliferStat(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
+void __stdcall ChangeRaStat(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
+uint32_t __stdcall SummonStates();
 
-        OR  ECX, EAX
-        OR  ECX, 0x08000000
 
-        AND EDX, 0xB63FFFFF
-        ADD ESP, 0xC
-        OR  ECX, EDX
-
-        MOV DWORD PTR DS : [0x00a55080] , ECX
-        MOV EAX, DWORD PTR DS : [0x00a57808]
-        MOV CL, BYTE PTR DS : [0x00a57808]
-        AND EAX, 0xFF00
-        AND ECX, 0xFF
-        ADD EAX, 0x100
-        POP EDI
-        XOR EAX, ECX
-        POP ESI
-        MOV WORD PTR DS : [0x00a57808] , AX
-        POP EBP
-        XOR EAX, EAX
-        POP EBX
-        ADD ESP, 0x234
-
-        PUSH 0x0059e5a5
-        RET
-
-    hook_end:
-        POP EAX
-		JMP[hTribute_2.Trampoline]
-    }
-}
-// Extra check for state 5
-__declspec(naked) void State5CheckAgainstState4()
-{
-    __asm
-    {
-    hook:
-        MOV EAX, DWORD PTR DS: [0x00a55080]
-        MOV ECX, DWORD PTR DS: [0x00a55044]
-        MOV EDX, EAX
-        SHR EDX, 0x1e
-        AND EDX, 0x1
-        CMP ECX, EDX
-        MOV EDX, DWORD PTR DS: [0x00a5504c]
-        JNZ hook_end
-        MOV ECX, EAX
-        SHR ECX, 0x16
-        AND ECX, 0x7
-        CMP EDX, ECX
-        JNZ hook_end
-        MOV EAX, 0x0059eb13
-        JMP EAX
-    hook_end:
-		JMP[hTribute_4.Trampoline]
-    }
-}
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
-    GodCards();
+    Sleep(500);
+    Start();
 
     return 0;
 }
@@ -542,7 +58,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
     return TRUE;
 }
 
-void GodCards()
+void Start()
 {
     // Ignore divine checks
     // ATK
@@ -555,31 +71,370 @@ void GodCards()
     Utils::WriteBytes((void*)0x00402758, "\x90\x90", 2);
     Utils::WriteBytes((void*)0x0040275a, "\xEB\x0D", 2);
 
-	// Implement triple tribute summoning
-    hTribute_1 = Utils::InstallHook((void*)0x005aac59, 7, (void*)AddTributeRequirement);
-	hTribute_2 = Utils::InstallHook((void*)0x0059e5a6, 6, (void*)AdditionalTributeState);
-	hTribute_3 = Utils::InstallHook((void*)0x0059df39, 5, (void*)SaveMonsterID);
-	hTribute_4 = Utils::InstallHook((void*)0x0059e635, 6, (void*)State5CheckAgainstState4);
 
-    Utils::PatchCall(0x0059E485, ModifiedIsMonsterTributable);
-    Utils::PatchCall(0x0059E644, ModifiedIsMonsterTributable);
+    Register_ActivatableEffect(Cards::SLIFER_THE_SKY_DRAGON);
+    Register_ActivatableEffect(Cards::OBELISK_THE_TORMENTOR);
+    Register_ActivatableEffect(Cards::THE_WINGED_DRAGON_OF_RA);
 
-    // Effects
-    //hActEffects_1 = Utils::InstallHook((void*)0x00568042, 5, (void*)GiveGodsActivatableEffect);
+    Register_NormalSummonCondition(Cards::SLIFER_THE_SKY_DRAGON, CanBeSummoned);
+    Register_NormalSummonCondition(Cards::OBELISK_THE_TORMENTOR, CanBeSummoned);
+    Register_NormalSummonCondition(Cards::THE_WINGED_DRAGON_OF_RA, CanBeSummoned);
 
-    Slifer();
-    Ra();
+    Register_InitialSummonState(Cards::SLIFER_THE_SKY_DRAGON, 0x40);
+	Register_InitialSummonState(Cards::OBELISK_THE_TORMENTOR, 0x40);
+	Register_InitialSummonState(Cards::THE_WINGED_DRAGON_OF_RA, 0x40);
+	Register_SummonState(0x40, SummonStates);
+
+	Register_StatChange(Cards::SLIFER_THE_SKY_DRAGON, ChangeSliferStat);
+	Register_StatChange(Cards::THE_WINGED_DRAGON_OF_RA, ChangeRaStat);
+
+    Register_SpellSpeed(Cards::SLIFER_THE_SKY_DRAGON, 2);
+
+    Utils::EffectScript scriptSlifer;
+    scriptSlifer.CardID = Cards::SLIFER_THE_SKY_DRAGON;
+    scriptSlifer.Effect = reinterpret_cast<uintptr_t>(&Effect_Slifer);
+    scriptSlifer.AppliesTo = 0;
+    scriptSlifer.Condition = reinterpret_cast<uintptr_t>(&Condition_Slifer);
+    scriptSlifer.Cost = 0;
+    scriptSlifer.Target = 0;
+
+	Register_EffectScript(scriptSlifer);
+
+    Utils::EffectScript scriptObelisk;
+    scriptObelisk.CardID = Cards::OBELISK_THE_TORMENTOR;
+    scriptObelisk.Effect = 0x00584C40;
+    scriptObelisk.AppliesTo = 0x0057A7F0;
+    scriptObelisk.Condition = reinterpret_cast<uintptr_t>(&Condition_Obelisk);
+    scriptObelisk.Cost = reinterpret_cast<uintptr_t>(&Cost_Obelisk);
+    scriptObelisk.Target = 0;
+
+	Register_EffectScript(scriptObelisk);
+
+    Utils::EffectScript scriptRa;
+    scriptRa.CardID = Cards::THE_WINGED_DRAGON_OF_RA;
+    scriptRa.Effect = 0x00585C10;
+    scriptRa.AppliesTo = 0x0057A880;
+    scriptRa.Condition = reinterpret_cast<uintptr_t>(&Condition_Ra);
+    scriptRa.Cost = reinterpret_cast<uintptr_t>(&Cost_Ra);
+    scriptRa.Target = 0x00596570;
+
+	Register_EffectScript(scriptRa);
+
 }
-void Slifer()
+uint32_t __cdecl Effect_Slifer(unsigned int* param, int param2, int param3)
 {
-    hSlifer_1 = Utils::InstallHook((void*)0x0056e065, 5, (void*)StatBuff);
-	hSlifer_2 = Utils::InstallHook((void*)0x0058d3ff, 5, (void*)PatchTrapHoleEffect);
-	hSlifer_3 = Utils::InstallHook((void*)0x00580508, 5, (void*)PatchTrapHoleCondition);
-	//hSlifer_4 = Utils::InstallHook((void*)0x0057e06f, 5, (void*)PatchSpellSpeed);
+    FUN::Param funParam(param);
+	duel = GameData::GetDuel();
+
+    uint16_t t_zoneIdx = ((uint16_t)param[8] & 0x1e00) >> 9;
+    uint16_t t_playerIdx = (uint16_t)param[8] >> 8 & 1;
+
+    if (funParam.finishedResolving) return 0;
+
+    if (duel.players[t_playerIdx].monsterZones[t_zoneIdx].card.intID == 0) return 0;
+
+    uint8_t x = Utils::ReadUint8((void*)(GameData::BASE_PLAYER_ADDRESS + GameData::PLAYER_OFFSET * t_playerIdx + 0x10 + t_zoneIdx * 0x90 + 0x6));
+    if ((x & 2) == 0) return 0;
+
+    if (FUN::GetCurrentATK(t_playerIdx, t_zoneIdx) < 2000) return 0;
+
+	uint8_t* block = (uint8_t*)param;
+	uint32_t y = FUN::FUN_005777D0(block, t_playerIdx, t_zoneIdx);
+
+    return y & 0xffff0000;
 }
-void Ra()
+uint32_t __cdecl Condition_Slifer(unsigned int* param, int param2, int param3)
 {
-	hRa_1 = Utils::InstallHook((void*)0x0057c3d5, 5, (void*)PatchLPCostPayingFunction);
-	hRa_2 = Utils::InstallHook((void*)0x005ad86d, 8, (void*)CombineStatsForRa);
-	hRa_3 = Utils::InstallHook((void*)0x005AD890, 6, (void*)ResetRaStatsOnSpecialSummon);
+    FUN::Param funParam(param);
+	duel = GameData::GetDuel();
+
+    uint16_t t_zoneIdx = ((uint16_t)param[8] & 0x1e00) >> 9;
+    uint16_t t_playerIdx = (uint16_t)param[8] >> 8 & 1;
+
+    if (((param[1] & 0xfc0) != 0x140) && ((param[1] & 0xfc0) != 0x180)) return 0;
+
+    if ((duel.players[t_playerIdx].monsterZones[t_zoneIdx].card.intID & 0xfff) == 0) return 0;
+
+	uint8_t x = Utils::ReadUint8((void*)(GameData::BASE_PLAYER_ADDRESS + GameData::PLAYER_OFFSET * t_playerIdx + 0x10 + t_zoneIdx * 0x90 + 0x6));
+	if ((x & 2) == 0) return 0;
+
+	if (FUN::FUN_0056C510(t_playerIdx, t_zoneIdx) == 0) return 0;
+
+    if (t_playerIdx == funParam.playerIdx) return 0;
+
+	if (FUN::GetCurrentATK(t_playerIdx, t_zoneIdx) < 2000) return 0;
+
+	return 1;
+}
+uint32_t __cdecl Condition_Obelisk(unsigned int* param, int param2, int param3)
+{
+	FUN::Param funParam(param);
+
+	duel = GameData::GetDuel();
+	GameData::Player player = duel.players[funParam.playerIdx];
+
+    int n = 0;
+	for (size_t i = 0; i < 5; i++)
+	{
+		if (i == funParam.zoneIdx) continue;
+		if (player.monsterZones[i].card.intID != 0) n++;
+	}
+
+	if (n < 2) return 0;
+
+	return 1;
+}
+uint32_t __cdecl Cost_Obelisk(unsigned int* param, int param2, int param3)
+{
+    FUN::Param funParam(param);
+
+    uint8_t sub = GameData::GetEffectSubState();
+
+    switch (sub)
+    {
+        case 0:
+        {
+            FUN::ShowDialog("Select a monster to Tribute.");
+            GameData::SetEffectSubState(1);
+        }break;
+        case 1:
+        {
+            if (FUN::IsFieldSelectionReady(0xf000f0) == 0) return 0;
+
+            uint8_t side = GameData::GetSelectedSide();
+            uint8_t col = GameData::GetSelectedColumn();
+
+            if (!CanBeTributedObelisk(funParam.playerIdx, side, col)) return 0;
+
+            if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
+
+            FUN::MarkZoneAsTributed(side, col);
+
+			obeliskFirstTribute = col;
+            GameData::SetEffectSubState(2);
+        }break;
+        case 2:
+        {
+            if (FUN::IsFieldSelectionReady(0xf000f0) == 0) return 0;
+
+            uint8_t side = GameData::GetSelectedSide();
+            uint8_t col = GameData::GetSelectedColumn();
+
+            if (!CanBeTributedObelisk(funParam.playerIdx, side, col)) return 0;
+
+            if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
+
+            FUN::MarkZoneAsTributed(side, col);
+
+			FUN::TributeSelected(side, obeliskFirstTribute);
+            FUN::TributeSelected(side, col);
+
+			GameData::SetEffectSubState(0);
+			return 1;
+        }
+    }
+
+    return 0;
+}
+uint32_t __cdecl Condition_Ra(unsigned int* param, int param2, int param3)
+{
+    FUN::Param funParam(param);
+
+	duel = GameData::GetDuel();
+	GameData::Player player = duel.players[funParam.playerIdx];
+
+	if (player.lifePoints <= 1000) return 0;
+
+    return 1;
+}
+uint32_t __cdecl Cost_Ra(unsigned int* param, int param2, int param3)
+{
+    FUN::Param funParam(param);
+
+    FUN::PayLifePoints(funParam.playerIdx, 1000);
+
+    return 1;
+}
+bool CanBeSummoned(uint32_t playerIdx)
+{
+	if (FUN::CanPlayerSummon(playerIdx) == 0) return false;
+	if (FUN::NumOfEmptyValidSummonZones(playerIdx) == 0) return false;
+	if (FUN::NumOfTributableMonsters(playerIdx, 0xffffffff) < 3) return false;
+
+	return true;
+}
+bool CanBeTributed(uint8_t playerIdx, uint8_t side, uint8_t col)
+{
+    duel = GameData::GetDuel();
+
+    if (side != playerIdx) return false;
+    if (col > 4) return false;
+    if (duel.players[playerIdx].monsterZones[col].card.intID == 0) return false;
+
+    return true;
+}
+bool CanBeTributedObelisk(uint8_t playerIdx, uint8_t side, uint8_t col)
+{
+	duel = GameData::GetDuel();
+    GameData::Player player = duel.players[playerIdx];
+
+    if (side != playerIdx) return false;
+    if (col > 4) return false;
+    if (player.monsterZones[col].card.intID == 0) return false;
+	if (FUN::IsMonsterTributable(side, playerIdx, col) == 0) return false;
+
+    return true;
+}
+uint32_t __stdcall SummonStates()
+{
+    switch (innerState)
+    {
+        case 0:
+        {
+            FUN::ShowDialog("You must tribute @33@0 monsters to summon this monster. Do you wish to @2Summon@0?");
+            FUN::ShowDialogOptions(1, 0);
+            innerState = 1;
+        }break;
+        case 1:
+        {
+            if (Utils::ReadUint8((void*)0x00a558b4) == 0)
+            {
+                innerState = 0;
+                return 1;
+            }
+            innerState = 2;
+        }break;
+        case 2:
+        {
+            if (FUN::IsFieldSelectionReady(0xf000f0) == 0) return 0;
+
+            uint8_t side = GameData::GetSelectedSide();
+            uint8_t col = GameData::GetSelectedColumn();
+
+            if (!CanBeTributed(1, side, col)) return 0;
+
+            if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
+
+            FUN::MarkZoneAsTributed(side, col);
+
+			duel = GameData::GetDuel();
+
+			tributes[0].zone = col;
+			tributes[0].atk = FUN::GetCurrentATK(side, col);
+			tributes[0].def = FUN::GetCurrentDEF(side, col);
+
+            innerState = 3;
+        }break;
+        case 3:
+        {
+            if (FUN::IsFieldSelectionReady(0xf000f0) == 0) return 0;
+
+            uint8_t side = GameData::GetSelectedSide();
+            uint8_t col = GameData::GetSelectedColumn();
+
+            if (col == tributes[0].zone) return 0;
+            if (!CanBeTributed(1, side, col)) return 0;
+
+            if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
+
+            FUN::MarkZoneAsTributed(side, col);
+
+            duel = GameData::GetDuel();
+
+            tributes[1].zone = col;
+            tributes[1].atk = FUN::GetCurrentATK(side, col);
+            tributes[1].def = FUN::GetCurrentDEF(side, col);
+
+            innerState = 4;
+        }break;
+        case 4:
+        {
+            if (FUN::IsFieldSelectionReady(0xf000f0) == 0) return 0;
+
+            uint8_t side = GameData::GetSelectedSide();
+            uint8_t col = GameData::GetSelectedColumn();
+
+            if (col == tributes[0].zone) return 0;
+            if (col == tributes[1].zone) return 0;
+            if (!CanBeTributed(1, side, col)) return 0;
+
+            if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
+
+            FUN::MarkZoneAsTributed(side, col);
+
+            duel = GameData::GetDuel();
+
+            tributes[2].zone = col;
+            tributes[2].atk = FUN::GetCurrentATK(side, col);
+            tributes[2].def = FUN::GetCurrentDEF(side, col);
+
+            FUN::TributeSelected(side, tributes[0].zone);
+			FUN::TributeSelected(side, tributes[1].zone);
+            FUN::TributeSelected(side, tributes[2].zone);
+
+            innerState = 5;
+        }break;
+        case 5:
+        {
+            uint16_t sel = GameData::GetSelectedSoFar();
+            GameData::SetSelectedSoFar(sel & 0xff00);
+
+            uint32_t handIdx = Utils::ReadUint8((void*)0x00a5780c);
+            uint32_t zone = FUN::GetSummonZone(1);
+            uint16_t choice = (Utils::ReadUint8((void*)0x00a57804) >> 3) & 1;
+			uint8_t set = choice == 0 ? 1 : 0;
+
+            monsterSummoned = GameData::GetCardUsed();
+			summonZone = zone;
+
+            FUN::NormalSummon(1, handIdx, zone, 0, set);
+            //uint32_t x = Utils::ReadUint8((void*)0x00a57804);
+            //Utils::WriteUint32((void*)0x00a57804, x & 0xfffffffd);
+
+            innerState = 6;
+        }break;
+        case 6:
+        {
+			uint16_t id = FUN::GetCardID(monsterSummoned);
+            if (id == Cards::THE_WINGED_DRAGON_OF_RA)
+            {
+                // Write atk buff
+				int atkBuff = tributes[0].atk + tributes[1].atk + tributes[2].atk;
+                atkBuff = atkBuff / 50;
+				if (atkBuff > 255) atkBuff = 255;
+                Utils::WriteUint8((void*)(GameData::BASE_PLAYER_ADDRESS + 1 * GameData::PLAYER_OFFSET + 0x10 + 0x90 *  summonZone + 0x48), (uint8_t)atkBuff);
+				// Write def buff
+				int defBuff = tributes[0].def + tributes[1].def + tributes[2].def;
+				defBuff = defBuff / 50;
+				if (defBuff > 255) defBuff = 255;
+				Utils::WriteUint8((void*)(GameData::BASE_PLAYER_ADDRESS + 1 * GameData::PLAYER_OFFSET + 0x10 + 0x90 * summonZone + 0x49), (uint8_t)defBuff);
+            }
+			innerState = 0;
+            return 1;
+        }
+
+    }
+
+    return 0;
+}
+void __stdcall ChangeSliferStat(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx)
+{
+	duel = GameData::GetDuel();
+	GameData::Player player = duel.players[playerIdx];
+
+    // Modify stats
+    // 0x20 = ATK, 0x24 = DEF
+    Utils::WriteInt32((void*)(statAddress + 0x20), player.cardsInHand * 1000);
+    Utils::WriteInt32((void*)(statAddress + 0x24), player.cardsInHand * 1000);
+
+}
+void __stdcall ChangeRaStat(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx)
+{
+	uint8_t atkBuff = Utils::ReadUint8((void*)(GameData::BASE_PLAYER_ADDRESS + playerIdx * GameData::PLAYER_OFFSET + 0x10 + 0x90 * zoneIdx + 0x48));
+	uint8_t defBuff = Utils::ReadUint8((void*)(GameData::BASE_PLAYER_ADDRESS + playerIdx * GameData::PLAYER_OFFSET + 0x10 + 0x90 * zoneIdx + 0x49));
+
+    // Modify stats
+    // 0x20 = ATK, 0x24 = DEF
+    Utils::WriteInt32((void*)(statAddress + 0x20), atkBuff * 50);
+    Utils::WriteInt32((void*)(statAddress + 0x24), defBuff * 50);
 }

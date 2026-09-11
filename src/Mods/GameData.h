@@ -296,6 +296,11 @@ namespace GameData
     {
         return Utils::ReadUint8((void*)0x00a558b4);
     }
+    // Returns the intID of the card last used/summoned
+    uint16_t GetCardUsed()
+    {
+		return Utils::ReadUint16((void*)0x00a57802) & 0xfff;
+    }
     uint8_t GetSelectedSide()
     {
         return Utils::ReadUint8((void*)0x000a55044);

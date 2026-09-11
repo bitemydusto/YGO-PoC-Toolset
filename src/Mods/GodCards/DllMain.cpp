@@ -34,7 +34,7 @@ uint32_t __cdecl Cost_Obelisk(unsigned int* param, int param2, int param3);
 
 bool CanBeSummoned(uint32_t playerIdx);
 bool CanBeTributed(uint8_t playerIdx, uint8_t side, uint8_t col);
-bool CanBeTributedObelisk(uint8_t playerIdx, uint8_t side, uint8_t col);
+bool CanBeTributedObelisk(uint8_t playerIdx, uint8_t zoneIdx, uint8_t selSide, uint8_t selCol);
 void __stdcall ChangeSliferStat(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 void __stdcall ChangeRaStat(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 uint32_t __stdcall SummonStates();
@@ -136,7 +136,7 @@ uint32_t __cdecl Effect_Slifer(unsigned int* param, int param2, int param3)
     uint8_t x = Utils::ReadUint8((void*)(GameData::BASE_PLAYER_ADDRESS + GameData::PLAYER_OFFSET * t_playerIdx + 0x10 + t_zoneIdx * 0x90 + 0x6));
     if ((x & 2) == 0) return 0;
 
-    if (FUN::GetCurrentATK(t_playerIdx, t_zoneIdx) < 2000) return 0;
+    if (FUN::GetCurrentATK(t_playerIdx, t_zoneIdx) > 2000) return 0;
 
 	uint8_t* block = (uint8_t*)param;
 	uint32_t y = FUN::FUN_005777D0(block, t_playerIdx, t_zoneIdx);
@@ -150,8 +150,9 @@ uint32_t __cdecl Condition_Slifer(unsigned int* param, int param2, int param3)
 
     uint16_t t_zoneIdx = ((uint16_t)param[8] & 0x1e00) >> 9;
     uint16_t t_playerIdx = (uint16_t)param[8] >> 8 & 1;
+	uint16_t* block = (uint16_t*)param;
 
-    if (((param[1] & 0xfc0) != 0x140) && ((param[1] & 0xfc0) != 0x180)) return 0;
+    if (((block[1] & 0xfc0) != 0x140) && ((block[1] & 0xfc0) != 0x180)) return 0;
 
     if ((duel.players[t_playerIdx].monsterZones[t_zoneIdx].card.intID & 0xfff) == 0) return 0;
 
@@ -162,7 +163,7 @@ uint32_t __cdecl Condition_Slifer(unsigned int* param, int param2, int param3)
 
     if (t_playerIdx == funParam.playerIdx) return 0;
 
-	if (FUN::GetCurrentATK(t_playerIdx, t_zoneIdx) < 2000) return 0;
+	if (FUN::GetCurrentATK(t_playerIdx, t_zoneIdx) > 2000) return 0;
 
 	return 1;
 }
@@ -204,7 +205,7 @@ uint32_t __cdecl Cost_Obelisk(unsigned int* param, int param2, int param3)
             uint8_t side = GameData::GetSelectedSide();
             uint8_t col = GameData::GetSelectedColumn();
 
-            if (!CanBeTributedObelisk(funParam.playerIdx, side, col)) return 0;
+            if (!CanBeTributedObelisk(funParam.playerIdx, funParam.zoneIdx, side, col)) return 0;
 
             if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
 
@@ -220,7 +221,8 @@ uint32_t __cdecl Cost_Obelisk(unsigned int* param, int param2, int param3)
             uint8_t side = GameData::GetSelectedSide();
             uint8_t col = GameData::GetSelectedColumn();
 
-            if (!CanBeTributedObelisk(funParam.playerIdx, side, col)) return 0;
+            if (!CanBeTributedObelisk(funParam.playerIdx, funParam.zoneIdx, side, col)) return 0;
+			if (col == obeliskFirstTribute) return 0;
 
             if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
 
@@ -273,15 +275,16 @@ bool CanBeTributed(uint8_t playerIdx, uint8_t side, uint8_t col)
 
     return true;
 }
-bool CanBeTributedObelisk(uint8_t playerIdx, uint8_t side, uint8_t col)
+bool CanBeTributedObelisk(uint8_t playerIdx, uint8_t zoneIdx, uint8_t selSide, uint8_t selCol)
 {
 	duel = GameData::GetDuel();
     GameData::Player player = duel.players[playerIdx];
 
-    if (side != playerIdx) return false;
-    if (col > 4) return false;
-    if (player.monsterZones[col].card.intID == 0) return false;
-	if (FUN::IsMonsterTributable(side, playerIdx, col) == 0) return false;
+    if (selSide != playerIdx) return false;
+	if (selCol == zoneIdx) return false;
+    if (selCol > 4) return false;
+    if (player.monsterZones[selCol].card.intID == 0) return false;
+	if (FUN::IsMonsterTributable(selSide, playerIdx, selCol) == 0) return false;
 
     return true;
 }
@@ -388,8 +391,6 @@ uint32_t __stdcall SummonStates()
 			summonZone = zone;
 
             FUN::NormalSummon(1, handIdx, zone, 0, set);
-            //uint32_t x = Utils::ReadUint8((void*)0x00a57804);
-            //Utils::WriteUint32((void*)0x00a57804, x & 0xfffffffd);
 
             innerState = 6;
         }break;
@@ -409,6 +410,10 @@ uint32_t __stdcall SummonStates()
 				if (defBuff > 255) defBuff = 255;
 				Utils::WriteUint8((void*)(GameData::BASE_PLAYER_ADDRESS + 1 * GameData::PLAYER_OFFSET + 0x10 + 0x90 * summonZone + 0x49), (uint8_t)defBuff);
             }
+            uint32_t x = Utils::ReadUint8((void*)0x00a57804);
+            Utils::WriteUint32((void*)0x00a57804, x & 0xfffffffd);
+			FUN::FUN_00579880(1, 0x11, 1); // Set already normal summoned this turn flag
+
 			innerState = 0;
             return 1;
         }

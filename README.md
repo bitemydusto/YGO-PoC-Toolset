@@ -16,6 +16,7 @@ Projects:
 	* A .NET MAUI client for PoCTools
 	* Allows you to view the cards (including unused ones) and edit their values (names, descriptions, properties etc.)
 	* Allows you to view your card collection, and edit how many copies of each card you have (no registry editing needed)
+ 	* Allows you to import/export existing modifications to the library
    	
 	![Editor](assets/card_editor.PNG)
 * PoCModLoader

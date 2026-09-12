@@ -79,6 +79,7 @@ void PatchSpecialSummonCondition();
 void PatchNormalSummonCondition();
 void PatchPhase();
 void PatchStatChange();
+void PatchStatCHange2();
 void PatchAfterDamageCalculation();
 void PatchNormalSummonTrigger();
 void PatchSpecialSummonTrigger();
@@ -124,6 +125,9 @@ public:
 
 	static void Register_StatChange(uint16_t id, StatChange statChange);
 	static bool __stdcall Dispatch_StatChange(uint16_t id, uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
+
+	static void Regigster_StatChangeEffect(uint16_t effectId, StatChange statChange);
+	static bool __stdcall Dispatch_StatChangeEffect(uint16_t effectId, uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 
 	static void Register_AfterDamageCalculation(Event event);
 	static void __stdcall Dispatch_AfterDamageCalculation();
@@ -175,6 +179,7 @@ private:
 	static inline std::vector<SpecialSummonHook> normalSummonHooks;
 	static inline std::vector<PhaseHook> phaseHooks;
 	static inline std::vector<StatChangeHook> statChangeHooks;
+	static inline std::vector<StatChangeHook> statChangeHooks2;
 	static inline std::vector<Event> afterDamageCalculationHooks;
 	static inline std::vector<NormalSummonTriggerHook> normalSummonTriggerHooks;
 	static inline std::vector<SpecialSummonTriggerHook> specialSummonTriggerHooks;
@@ -206,6 +211,7 @@ private:
 	static inline Utils::Hook hNormalSummonCondition;
 	static inline Utils::Hook hPhase;
 	static inline Utils::Hook hStatChange;
+	static inline Utils::Hook hStatChange2;
 	static inline Utils::Hook hAfterDamageCalculation;
 	static inline Utils::Hook hNormalSummonTrigger;
 	static inline Utils::Hook hSpecialSummonTrigger; static inline Utils::Hook hSpecialSummonTrigger2;

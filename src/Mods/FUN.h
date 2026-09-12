@@ -173,6 +173,9 @@ namespace FUN
 	using GetCurrentDEF_t = uint32_t(__cdecl*)(unsigned int playerIdx, unsigned int zoneIdx);
 	inline GetCurrentDEF_t GetCurrentDEF = reinterpret_cast<GetCurrentDEF_t>(0x0056f600);
 
+	using AddEffectEntityToZone_t = void(__cdecl*)(unsigned int packedCard, unsigned int effectID, uint16_t effect);
+	inline AddEffectEntityToZone_t AddEffectEntityToZone = reinterpret_cast<AddEffectEntityToZone_t>(0x0056ab60);
+
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);
 	using FUN_591C90_t = uint32_t(__cdecl*)(uint32_t player, uint32_t packed);
 	using FUN_568580_t = int(__cdecl*)(uint32_t cardIntId);
@@ -211,6 +214,10 @@ namespace FUN
 
 
 	// Wrapers
+	void W_AddEffectEntityToZone(uint32_t playerIdx, uint32_t zoneIdx, uint32_t effectID, uint16_t effect)
+	{
+		FUN::AddEffectEntityToZone((zoneIdx << 8) | playerIdx, effectID, effect);
+	}
 	void W_MoveCard(uint32_t cardDword, uint8_t _src, uint8_t _dest)
 	{
 		uint8_t owner = (cardDword >> 12) & 1;

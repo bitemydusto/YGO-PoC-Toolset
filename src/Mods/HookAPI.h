@@ -33,6 +33,7 @@ extern "C"
 	MOD_API void Register_NormalSummonCondition(uint16_t id, Condition condition);
     MOD_API void Register_Phase(uint32_t phase, Event event);
 	MOD_API void Register_StatChange(uint16_t id, StatChange statChange);
+	MOD_API void Register_StatChangeEffect(uint16_t effectId, StatChange statChange);
 	MOD_API void Register_AfterDamageCalculation(Event event);
     MOD_API void Register_NormalSummonTrigger(uint16_t id);
 	MOD_API void Register_SpecialSummonTrigger(uint16_t id);

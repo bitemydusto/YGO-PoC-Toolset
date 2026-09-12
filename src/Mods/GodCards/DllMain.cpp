@@ -37,6 +37,7 @@ bool CanBeTributed(uint8_t playerIdx, uint8_t side, uint8_t col);
 bool CanBeTributedObelisk(uint8_t playerIdx, uint8_t zoneIdx, uint8_t selSide, uint8_t selCol);
 void __stdcall ChangeSliferStat(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 void __stdcall ChangeRaStat(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
+void __stdcall SliferStatRefuce(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 uint32_t __stdcall SummonStates();
 
 
@@ -87,6 +88,7 @@ void Start()
 
 	Register_StatChange(Cards::SLIFER_THE_SKY_DRAGON, ChangeSliferStat);
 	Register_StatChange(Cards::THE_WINGED_DRAGON_OF_RA, ChangeRaStat);
+	Register_StatChangeEffect(Cards::SLIFER_THE_SKY_DRAGON, SliferStatRefuce);
 
     Register_SpellSpeed(Cards::SLIFER_THE_SKY_DRAGON, 2);
 
@@ -126,32 +128,48 @@ uint32_t __cdecl Effect_Slifer(unsigned int* param, int param2, int param3)
     FUN::Param funParam(param);
 	duel = GameData::GetDuel();
 
-    uint16_t t_zoneIdx = ((uint16_t)param[8] & 0x1e00) >> 9;
-    uint16_t t_playerIdx = (uint16_t)param[8] >> 8 & 1;
+    uint16_t* block = (uint16_t*)param;
+
+    uint16_t t_zoneIdx = (block[8] >> 9) & 0xf;
+    uint16_t t_playerIdx = (block[8] >> 8) & 1;
 
     if (funParam.finishedResolving) return 0;
 
+	if (t_zoneIdx > 4) return 0;
     if (duel.players[t_playerIdx].monsterZones[t_zoneIdx].card.intID == 0) return 0;
 
     uint8_t x = Utils::ReadUint8((void*)(GameData::BASE_PLAYER_ADDRESS + GameData::PLAYER_OFFSET * t_playerIdx + 0x10 + t_zoneIdx * 0x90 + 0x6));
     if ((x & 2) == 0) return 0;
 
-    if (FUN::GetCurrentATK(t_playerIdx, t_zoneIdx) > 2000) return 0;
+    if (FUN::GetCurrentATK(t_playerIdx, t_zoneIdx) <= 2000)
+    {
+        uint8_t* block8 = (uint8_t*)param;
+        uint32_t y = FUN::FUN_005777D0(block8, t_playerIdx, t_zoneIdx);
 
-	uint8_t* block = (uint8_t*)param;
-	uint32_t y = FUN::FUN_005777D0(block, t_playerIdx, t_zoneIdx);
+        return y & 0xffff0000;
 
-    return y & 0xffff0000;
+    }
+    else
+    {
+		uint16_t packedEffectEntity = 0xb | (0 << 8);
+
+        uint16_t effectID = FUN::GetCardIntID(Cards::SLIFER_THE_SKY_DRAGON);
+		FUN::W_AddEffectEntityToZone(t_playerIdx, t_zoneIdx, effectID, packedEffectEntity);
+    }
+
+    return 0;
 }
 uint32_t __cdecl Condition_Slifer(unsigned int* param, int param2, int param3)
 {
     FUN::Param funParam(param);
 	duel = GameData::GetDuel();
 
-    uint16_t t_zoneIdx = ((uint16_t)param[8] & 0x1e00) >> 9;
-    uint16_t t_playerIdx = (uint16_t)param[8] >> 8 & 1;
-	uint16_t* block = (uint16_t*)param;
+    uint16_t* block = (uint16_t*)param;
 
+    uint16_t t_zoneIdx = (block[8] >> 9) & 0xf;
+    uint16_t t_playerIdx = (block[8] >> 8) & 1;
+
+	if (t_zoneIdx > 4) return 0;
     if (((block[1] & 0xfc0) != 0x140) && ((block[1] & 0xfc0) != 0x180)) return 0;
 
     if ((duel.players[t_playerIdx].monsterZones[t_zoneIdx].card.intID & 0xfff) == 0) return 0;
@@ -163,7 +181,7 @@ uint32_t __cdecl Condition_Slifer(unsigned int* param, int param2, int param3)
 
     if (t_playerIdx == funParam.playerIdx) return 0;
 
-	if (FUN::GetCurrentATK(t_playerIdx, t_zoneIdx) > 2000) return 0;
+	//if (FUN::GetCurrentATK(t_playerIdx, t_zoneIdx) > 2000) return 0;
 
 	return 1;
 }
@@ -432,6 +450,16 @@ void __stdcall ChangeSliferStat(uint32_t statAddress, uint32_t playerIdx, uint32
     Utils::WriteInt32((void*)(statAddress + 0x20), player.cardsInHand * 1000);
     Utils::WriteInt32((void*)(statAddress + 0x24), player.cardsInHand * 1000);
 
+}
+void __stdcall SliferStatRefuce(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx)
+{
+	duel = GameData::GetDuel();
+	GameData::Player player = duel.players[playerIdx];
+	// Modify stats
+	// 0x20 = ATK, 0x24 = DEF
+	uint32_t currentATK = Utils::ReadUint32((void*)(statAddress + 0x20));
+
+	Utils::WriteInt32((void*)(statAddress + 0x20), currentATK - 2000);
 }
 void __stdcall ChangeRaStat(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx)
 {

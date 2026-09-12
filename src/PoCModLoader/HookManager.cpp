@@ -10,6 +10,7 @@ namespace
 	void* gNormalSummonTrampoline = nullptr;
 	void* gPhaseTrampoline = nullptr;
 	void* gStatChangeTrampoline = nullptr;
+	void* gStatChangeTrampoline2 = nullptr;
 	void* gAfterDamageCalculationTrampoline = nullptr;
 	void* gNormalSummonTriggerTrampoline = nullptr;
 	void* gSpecialSummonTriggerTrampoline = nullptr; void* gSpecialSummonTriggerTrampoline2 = nullptr;
@@ -45,6 +46,9 @@ void HookManager::InstallHooks()
 
 	hStatChange = Utils::InstallHook((void*)0x0056dde9, 5, PatchStatChange);
 	gStatChangeTrampoline = hStatChange.Trampoline;
+
+	hStatChange2 = Utils::InstallHook((void*)0x0056e77a, 5, PatchStatCHange2);
+	gStatChangeTrampoline2 = hStatChange2.Trampoline;
 
 	hAfterDamageCalculation = Utils::InstallHook((void*)0x00407aae, 5, PatchAfterDamageCalculation);
 	gAfterDamageCalculationTrampoline = hAfterDamageCalculation.Trampoline;
@@ -451,6 +455,47 @@ __declspec(naked) void PatchStatChange()
 		JMP EAX
 	hook_end :
 		JMP[gStatChangeTrampoline]
+	}
+}
+void HookManager::Regigster_StatChangeEffect(uint16_t effectId, StatChange statChange)
+{
+	// Check if the effect ID is already registered
+	for (const auto& hook : statChangeHooks2)
+	{
+		if (hook.cardID == effectId) return;
+	}
+	statChangeHooks2.push_back({ effectId, statChange });
+}
+bool __stdcall HookManager::Dispatch_StatChangeEffect(uint16_t effectId, uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx)
+{
+	for (const auto& hook : statChangeHooks2)
+	{
+		if (hook.cardID == effectId)
+		{
+			hook.statChange(statAddress, playerIdx, zoneIdx);
+			return true;
+		}
+	}
+	return false;
+}
+__declspec(naked) void PatchStatCHange2()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH DWORD PTR DS : [ESP + 0x4C]
+		PUSH DWORD PTR DS : [ESP + 0x4C]
+		PUSH ESP
+		PUSH EAX
+		CALL HookManager::Dispatch_StatChangeEffect
+		TEST AL, AL
+		POP EAX
+		JZ hook_end
+		MOV EAX, 0x0056f083
+		JMP EAX
+	hook_end :
+		JMP[gStatChangeTrampoline2]
 	}
 }
 void HookManager::Register_AfterDamageCalculation(Event event)

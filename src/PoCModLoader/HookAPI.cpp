@@ -44,6 +44,10 @@ extern "C"
 	{
 		HookManager::Register_StatChange(id, statChange);
 	}
+	void Register_StatChangeEffect(uint16_t effectId, StatChange statChange)
+	{
+		HookManager::Regigster_StatChangeEffect(effectId, statChange);
+	}
 	void Register_AfterDamageCalculation(Event event)
 	{
 		HookManager::Register_AfterDamageCalculation(event);

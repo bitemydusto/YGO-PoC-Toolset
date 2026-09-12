@@ -27,7 +27,7 @@ namespace GameData
             return FUN::GetMonsterType(intID);
         }
     };
-    struct EffectEntry
+    struct EffectEntity
     {
         uint8_t type;
         uint8_t value;
@@ -37,7 +37,7 @@ namespace GameData
         Card card;
         uint16_t effectCount;
         uint16_t effectIDs[32];
-        EffectEntry effectEntries[32];
+        EffectEntity effectEntries[32];
         uint32_t stateFlags;
     };
     struct SpellTrapZone

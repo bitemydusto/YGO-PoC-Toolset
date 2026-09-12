@@ -4,6 +4,8 @@
 #include "GameData.h"
 #include "HookAPI.h"
 
+GameData::Duel duel;
+
 unsigned int cedDamage;
 int innerState = 0;
 
@@ -160,7 +162,8 @@ uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3)
 uint32_t __cdecl Condition_BLS(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
-	GameData::Player player = GameData::GetDuel().players[funParam.playerIdx];
+	duel = GameData::GetDuel();
+	GameData::Player player = duel.players[funParam.playerIdx];
 
 	if (FUN::IsCardOnSideOfField(funParam.playerIdx ^ 0x1, 0x5E7) > 0) return 0;
 
@@ -179,8 +182,8 @@ uint32_t __cdecl Condition_BLS(unsigned int* param, int param2, int param3)
 uint32_t __cdecl Cost_BLS(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
-
-	GameData::Player player = GameData::GetDuel().players[funParam.playerIdx];
+	duel = GameData::GetDuel();
+	GameData::Player player = duel.players[funParam.playerIdx];
 
 	if (funParam.zoneIdx > 4) return 0;
 	// Make it unable to attack this turn
@@ -194,10 +197,10 @@ uint32_t __cdecl Cost_BLS(unsigned int* param, int param2, int param3)
 uint32_t __cdecl Effect_DMOC(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
-
+	duel = GameData::GetDuel();
 	if (funParam.finishedResolving) return 0;
 
-	GameData::Player player = GameData::GetDuel().players[funParam.playerIdx];
+	GameData::Player player = duel.players[funParam.playerIdx];
 
 	uint16_t intId = funParam.outerTargets[0] & 0xFFF;
 
@@ -210,8 +213,8 @@ uint32_t __cdecl Effect_DMOC(unsigned int* param, int param2, int param3)
 uint32_t __cdecl Condition_DMOC(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
-
-	GameData::Player player = GameData::GetDuel().players[funParam.playerIdx];
+	duel = GameData::GetDuel();
+	GameData::Player player = duel.players[funParam.playerIdx];
 
 	int spells = 0;
 	for (size_t i = 0; i < player.cardsInGrave; i++)
@@ -311,7 +314,7 @@ uint32_t __cdecl Effect_CED(unsigned int* param, int param2, int param3)
 	uint8_t state = GameData::GetEffectState();
 	uint8_t playerIdx = funParam.playerIdx;
 	uint8_t opp = playerIdx ^ 0x1;
-	GameData::Duel duel = GameData::GetDuel();
+	duel = GameData::GetDuel();
 
 
 	switch (state)
@@ -368,8 +371,8 @@ uint32_t __cdecl Effect_CED(unsigned int* param, int param2, int param3)
 uint32_t __cdecl Condition_CED(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
-
-	GameData::Player player = GameData::GetDuel().players[funParam.playerIdx];
+	duel = GameData::GetDuel();
+	GameData::Player player = duel.players[funParam.playerIdx];
 
 	if (player.lifePoints <= 1000) return 0;
 
@@ -378,8 +381,8 @@ uint32_t __cdecl Condition_CED(unsigned int* param, int param2, int param3)
 uint32_t __cdecl Cost_CED(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
-
-	GameData::Player player = GameData::GetDuel().players[funParam.playerIdx];
+	duel = GameData::GetDuel();
+	GameData::Player player = duel.players[funParam.playerIdx];
 	FUN::PayLifePoints(funParam.playerIdx, 1000);
 	return 1;
 }
@@ -412,8 +415,8 @@ uint32_t __cdecl Effect_PS(unsigned int* param, int param2, int param3)
 uint32_t __cdecl Condition_PS(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
-
-	GameData::Player player = GameData::GetDuel().players[funParam.playerIdx];
+	duel = GameData::GetDuel();
+	GameData::Player player = duel.players[funParam.playerIdx];
 
 	if (player.cardsInBanish < 2) return 0;
 	if (FUN::IsCardOnTheField(0x7B) == 0 && FUN::IsCardOnField(0x1BD) == 0) return 0;
@@ -500,7 +503,8 @@ void __stdcall BLS_DoubleAttack()
 	uint8_t attackerIdx = battleResult.StateFlags & 0x1;
 	if (battleResult.sides[attackerIdx].IntID == 0x05 && (battleResult.sides[attackerIdx ^ 0x1].ResultFlags & 0x10) != 0)
 	{
-		GameData::Player attacker = GameData::GetDuel().players[attackerIdx];
+		duel = GameData::GetDuel();
+		GameData::Player attacker = duel.players[attackerIdx];
 		uint8_t zoneIdx = (battleResult.StateFlags >> 8) & 7;
 		if (zoneIdx > 4) return;
 		if ((attacker.monsterZones[zoneIdx].effectIDs[31] & 0x1) == 0)
@@ -535,8 +539,8 @@ void __stdcall DMOC_BanishOnKill()
 bool CanBeSummoned(uint32_t playerIdx)
 {
 	if (FUN::IsCardOnSideOfField(playerIdx ^ 0x1, 0x5E7) > 0) return false;
-
-	GameData::Player player = GameData::GetDuel().players[playerIdx];
+	duel = GameData::GetDuel();
+	GameData::Player player = duel.players[playerIdx];
 
 	int numOfLight = 0;
 	int numOfDark = 0;
@@ -673,8 +677,8 @@ uint32_t __stdcall SummonStates()
 void __stdcall LoadSelectionListDark()
 {
 	std::vector<uint32_t> darkCards;
-
-	GameData::Player player = GameData::GetDuel().players[1];
+	duel = GameData::GetDuel();
+	GameData::Player player = duel.players[1];
 	for (size_t i = 0; i < player.cardsInGrave; i++)
 	{
 		if (player.grave[i].GetType() < 0x15)
@@ -692,7 +696,8 @@ void __stdcall LoadSelectionListDark()
 void __stdcall LoadSelectionListBanished()
 {
 	std::vector<uint32_t> banishedCards;
-	GameData::Player player = GameData::GetDuel().players[1];
+	duel = GameData::GetDuel();
+	GameData::Player player = duel.players[1];
 
 	for (size_t i = 0; i < player.cardsInBanish; i++)
 	{

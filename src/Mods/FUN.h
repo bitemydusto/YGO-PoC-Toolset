@@ -196,7 +196,8 @@ namespace FUN
 
 
 	// SelectionType:
-	// 3 = effect selection
+	// 2 = 2-way effect selection
+	// 3 = 3-way effect selection
 	// 4 = card type
 	// 5 = attribute
 	// 6 = atk/def position

@@ -12,7 +12,7 @@ uint16_t monsterSummoned = 0;
 uint8_t summonZone = 0;
 uint8_t obeliskFirstTribute = 0;
 uint8_t raEffectChoice = 0;
-uint32_t raLP_paid = 0;
+uint32_t raLifePaid = 0;
 
 struct Tribute
 {
@@ -177,7 +177,7 @@ uint32_t __cdecl Condition_Slifer(unsigned int* param, int param2, int param3)
     uint16_t t_playerIdx = (block[8] >> 8) & 1;
 
 	if (t_zoneIdx > 4) return 0;
-    if (((block[1] & 0xfc0) != 0x140) && ((block[1] & 0xfc0) != 0x180)) return 0;
+    if (((block[1] & 0xfc0) != 0x140) && ((block[1] & 0xfc0) != 0x180)) return 0; // Normal/Flip summon response window
 
     if ((duel.players[t_playerIdx].monsterZones[t_zoneIdx].card.intID & 0xfff) == 0) return 0;
 
@@ -187,8 +187,6 @@ uint32_t __cdecl Condition_Slifer(unsigned int* param, int param2, int param3)
 	if (FUN::FUN_0056C510(t_playerIdx, t_zoneIdx) == 0) return 0;
 
     if (t_playerIdx == funParam.playerIdx) return 0;
-
-	//if (FUN::GetCurrentATK(t_playerIdx, t_zoneIdx) > 2000) return 0;
 
 	return 1;
 }
@@ -220,7 +218,7 @@ uint32_t __cdecl Cost_Obelisk(unsigned int* param, int param2, int param3)
     {
         case 0:
         {
-            FUN::ShowDialog("Select a monster to Tribute.");
+            FUN::ShowDialog("Select @32@0 monsters to Tribute.");
             GameData::SetEffectSubState(1);
         }break;
         case 1:
@@ -275,7 +273,7 @@ uint32_t __cdecl Effect_Ra(unsigned int* param, int param2, int param3)
 
         if (funParam.finishedResolving) return 0;
 
-		uint16_t atkBuff = (uint16_t)raLP_paid;
+		uint16_t atkBuff = (uint16_t)raLifePaid;
 
         Utils::WriteUint16((void*)(GameData::BASE_PLAYER_ADDRESS + funParam.playerIdx * GameData::PLAYER_OFFSET + 0x10 + 0x90 * funParam.zoneIdx + 0x46), atkBuff);
 
@@ -320,7 +318,7 @@ uint32_t __cdecl Cost_Ra(unsigned int* param, int param2, int param3)
                     "  Destroy (pay 1000 LP)\n"
                     "  ATK boost (pay LP to 1)\n"
                 );
-                FUN::SetupSelector(2, 0xffffffff);
+                FUN::SetupSelector(2, -1);
                 FUN::InitiateSelector();
                 GameData::SetEffectSubState(1);
             }
@@ -328,7 +326,7 @@ uint32_t __cdecl Cost_Ra(unsigned int* param, int param2, int param3)
 	    }break;
 	    case 1:
 	    {
-            raEffectChoice = Utils::ReadUint8((void*)0x00a558b4);
+			raEffectChoice = GameData::GetDialogResult();
 
             if (raEffectChoice == 0)
             {
@@ -337,8 +335,8 @@ uint32_t __cdecl Cost_Ra(unsigned int* param, int param2, int param3)
             }
             else
             {
-				raLP_paid = duel.players[funParam.playerIdx].lifePoints - 1;
-				FUN::PayLifePoints(funParam.playerIdx, raLP_paid);
+				raLifePaid = duel.players[funParam.playerIdx].lifePoints - 1;
+				FUN::PayLifePoints(funParam.playerIdx, raLifePaid);
             }
 		    GameData::SetEffectSubState(0);
 
@@ -348,8 +346,8 @@ uint32_t __cdecl Cost_Ra(unsigned int* param, int param2, int param3)
         {
             raEffectChoice = 1;
 
-            raLP_paid = duel.players[funParam.playerIdx].lifePoints - 1;
-            FUN::PayLifePoints(funParam.playerIdx, raLP_paid);
+            raLifePaid = duel.players[funParam.playerIdx].lifePoints - 1;
+            FUN::PayLifePoints(funParam.playerIdx, raLifePaid);
 
             GameData::SetEffectSubState(0);
 
@@ -416,7 +414,7 @@ uint32_t __stdcall SummonStates()
         }break;
         case 1:
         {
-            if (Utils::ReadUint8((void*)0x00a558b4) == 0)
+            if (GameData::GetDialogResult() == 0)
             {
                 innerState = 0;
                 return 1;

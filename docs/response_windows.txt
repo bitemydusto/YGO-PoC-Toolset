@@ -1,0 +1,10 @@
+Stored in the 2nd word of the condition param
+Value = (word & 0xFC0) >> 6
+
+0x5,0x6: normal/flip summon (unknown order)
+0x7: special summon
+0x20, 0x21, 0x22: summon attempt, spell/trap activation (unknown order)
+
+For effect response, check if param2 is not null and check for the following:
+
+(param2[1] & 0x3E) > 0x14 and (param2[1] & 0x3000) != 0 where param2 is ushort*

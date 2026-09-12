@@ -11,6 +11,8 @@ int innerState = 0;
 uint16_t monsterSummoned = 0;
 uint8_t summonZone = 0;
 uint8_t obeliskFirstTribute = 0;
+uint8_t raEffectChoice = 0;
+uint32_t raLP_paid = 0;
 
 struct Tribute
 {
@@ -25,8 +27,10 @@ void Start();
 uint32_t __cdecl Effect_Slifer(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Condition_Slifer(unsigned int* param, int param2, int param3);
 
+uint32_t __cdecl Effect_Ra(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Condition_Ra(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Cost_Ra(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Target_Ra(unsigned int* param, int param2, int param3);
 
 uint32_t __cdecl Condition_Obelisk(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Cost_Obelisk(unsigned int* param, int param2, int param3);
@@ -39,6 +43,9 @@ void __stdcall ChangeSliferStat(uint32_t statAddress, uint32_t playerIdx, uint32
 void __stdcall ChangeRaStat(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 void __stdcall SliferStatRefuce(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 uint32_t __stdcall SummonStates();
+
+bool raCondition1(uint8_t playerIdx);
+bool raCondition2(uint8_t playerIdx);
 
 
 DWORD WINAPI MainThread(LPVOID lpParam)
@@ -114,11 +121,11 @@ void Start()
 
     Utils::EffectScript scriptRa;
     scriptRa.CardID = Cards::THE_WINGED_DRAGON_OF_RA;
-    scriptRa.Effect = 0x00585C10;
+    scriptRa.Effect = reinterpret_cast<uintptr_t>(&Effect_Ra);
     scriptRa.AppliesTo = 0x0057A880;
     scriptRa.Condition = reinterpret_cast<uintptr_t>(&Condition_Ra);
     scriptRa.Cost = reinterpret_cast<uintptr_t>(&Cost_Ra);
-    scriptRa.Target = 0x00596570;
+    scriptRa.Target = reinterpret_cast<uintptr_t>(&Target_Ra);
 
 	Register_EffectScript(scriptRa);
 
@@ -256,24 +263,101 @@ uint32_t __cdecl Cost_Obelisk(unsigned int* param, int param2, int param3)
 
     return 0;
 }
+uint32_t __cdecl Effect_Ra(unsigned int* param, int param2, int param3)
+{
+	if (raEffectChoice == 0)
+	{
+		return FUN::DestroyEffect(param, param2, param3);
+	}
+    else
+    {
+		FUN::Param funParam(param);
+
+        if (funParam.finishedResolving) return 0;
+
+		uint16_t atkBuff = (uint16_t)raLP_paid;
+
+        Utils::WriteUint16((void*)(GameData::BASE_PLAYER_ADDRESS + funParam.playerIdx * GameData::PLAYER_OFFSET + 0x10 + 0x90 * funParam.zoneIdx + 0x46), atkBuff);
+
+        return 0;
+    }
+}
 uint32_t __cdecl Condition_Ra(unsigned int* param, int param2, int param3)
 {
     FUN::Param funParam(param);
 
-	duel = GameData::GetDuel();
-	GameData::Player player = duel.players[funParam.playerIdx];
-
-	if (player.lifePoints <= 1000) return 0;
+	if (!raCondition1(funParam.playerIdx) && !raCondition2(funParam.playerIdx)) return 0;
 
     return 1;
+}
+uint32_t __cdecl Target_Ra(unsigned int* param, int param2, int param3)
+{
+	if (raEffectChoice == 0)
+	{
+		return FUN::TargetMonster(param, param2, param3);
+	}
+	else
+	{
+		return 1;
+	}
 }
 uint32_t __cdecl Cost_Ra(unsigned int* param, int param2, int param3)
 {
     FUN::Param funParam(param);
+    uint8_t sub = GameData::GetEffectSubState();
 
-    FUN::PayLifePoints(funParam.playerIdx, 1000);
+	switch (sub)
+	{
+	    case 0:
+	    {
+			raEffectChoice = 0;
 
-    return 1;
+            if (raCondition1(funParam.playerIdx) && raCondition2(funParam.playerIdx))
+            {
+                FUN::ShowDialog(
+                    "Activate which effect?\n"
+                    "\n"
+                    "  Destroy (pay 1000 LP)\n"
+                    "  ATK boost (pay LP to 1)\n"
+                );
+                FUN::SetupSelector(2, 0xffffffff);
+                FUN::InitiateSelector();
+                GameData::SetEffectSubState(1);
+            }
+            else GameData::SetEffectSubState(2);
+	    }break;
+	    case 1:
+	    {
+            raEffectChoice = Utils::ReadUint8((void*)0x00a558b4);
+
+            if (raEffectChoice == 0)
+            {
+                FUN::PayLifePoints(funParam.playerIdx, 1000);
+
+            }
+            else
+            {
+				raLP_paid = duel.players[funParam.playerIdx].lifePoints - 1;
+				FUN::PayLifePoints(funParam.playerIdx, raLP_paid);
+            }
+		    GameData::SetEffectSubState(0);
+
+            return 1;
+	    }
+        case 2:
+        {
+            raEffectChoice = 1;
+
+            raLP_paid = duel.players[funParam.playerIdx].lifePoints - 1;
+            FUN::PayLifePoints(funParam.playerIdx, raLP_paid);
+
+            GameData::SetEffectSubState(0);
+
+            return 1;
+        }
+	}
+
+    return 0;
 }
 bool CanBeSummoned(uint32_t playerIdx)
 {
@@ -305,6 +389,20 @@ bool CanBeTributedObelisk(uint8_t playerIdx, uint8_t zoneIdx, uint8_t selSide, u
 	if (FUN::IsMonsterTributable(selSide, playerIdx, selCol) == 0) return false;
 
     return true;
+}
+bool raCondition1(uint8_t playerIdx)
+{
+	duel = GameData::GetDuel();
+	GameData::Player player = duel.players[playerIdx];
+	if (player.lifePoints <= 1000) return false;
+	return true;
+}
+bool raCondition2(uint8_t playerIdx)
+{
+	duel = GameData::GetDuel();
+	GameData::Player player = duel.players[playerIdx];
+	if (player.lifePoints <= 1) return false;
+	return true;
 }
 uint32_t __stdcall SummonStates()
 {
@@ -465,9 +563,10 @@ void __stdcall ChangeRaStat(uint32_t statAddress, uint32_t playerIdx, uint32_t z
 {
 	uint8_t atkBuff = Utils::ReadUint8((void*)(GameData::BASE_PLAYER_ADDRESS + playerIdx * GameData::PLAYER_OFFSET + 0x10 + 0x90 * zoneIdx + 0x48));
 	uint8_t defBuff = Utils::ReadUint8((void*)(GameData::BASE_PLAYER_ADDRESS + playerIdx * GameData::PLAYER_OFFSET + 0x10 + 0x90 * zoneIdx + 0x49));
+	uint16_t lpBuff = Utils::ReadUint16((void*)(GameData::BASE_PLAYER_ADDRESS + playerIdx * GameData::PLAYER_OFFSET + 0x10 + 0x90 * zoneIdx + 0x46));
 
     // Modify stats
     // 0x20 = ATK, 0x24 = DEF
-    Utils::WriteInt32((void*)(statAddress + 0x20), atkBuff * 50);
+    Utils::WriteInt32((void*)(statAddress + 0x20), atkBuff * 50 + lpBuff);
     Utils::WriteInt32((void*)(statAddress + 0x24), defBuff * 50);
 }

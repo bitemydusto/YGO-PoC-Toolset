@@ -196,6 +196,7 @@ namespace FUN
 
 
 	// SelectionType:
+	// 3 = effect selection
 	// 4 = card type
 	// 5 = attribute
 	// 6 = atk/def position
@@ -295,6 +296,13 @@ namespace FUN
 		if ((packed & 0x4000) == 0) return false;
 		return FUN_00569E10(player, packed & 0xFFF) != 0;
 	}
+
+	// Effects
+	using DestroyEffect_t = uint32_t(__cdecl*)(unsigned int* param, int param2, int param3);
+	inline DestroyEffect_t DestroyEffect = reinterpret_cast<DestroyEffect_t>(0x00585C10);
+
+	using TargetMonster_t = uint32_t(__cdecl*)(unsigned int* param, int param2, int param3);
+	inline TargetMonster_t TargetMonster = reinterpret_cast<TargetMonster_t>(0x00596570);
 
 	// Helper structs
 	struct FieldMaskGenerator

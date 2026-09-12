@@ -177,7 +177,9 @@ uint32_t __cdecl Condition_Slifer(unsigned int* param, int param2, int param3)
     uint16_t t_playerIdx = (block[8] >> 8) & 1;
 
 	if (t_zoneIdx > 4) return 0;
-    if (((block[1] & 0xfc0) != 0x140) && ((block[1] & 0xfc0) != 0x180)) return 0; // Normal/Flip summon response window
+
+	uint16_t rWindow = (block[1] & 0xfc0) >> 6;
+    if (rWindow != 5 && rWindow != 6 && rWindow != 7) return 0; // Normal/Flip/Special summon response window
 
     if ((duel.players[t_playerIdx].monsterZones[t_zoneIdx].card.intID & 0xfff) == 0) return 0;
 

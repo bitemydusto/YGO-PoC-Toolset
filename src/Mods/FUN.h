@@ -184,6 +184,7 @@ namespace FUN
 	using FUN_56c510_t = bool(__cdecl*)(unsigned int playerIdx, int zoneIdx);
 	using FUN_5777d0_t = uint32_t(__cdecl*)(uint8_t* block, unsigned int playerIdx, unsigned int zoneIdx);
 	using FUN_579880_t = void(__cdecl*)(unsigned int playerIdx, unsigned int param2, unsigned int param3);
+	using FUN_5b91e0_t = void(__cdecl*)(unsigned int param1, unsigned int param2, unsigned int param3, unsigned int param4);
 
 	static FUN_591A00_t  FUN_00591A00 = (FUN_591A00_t)0x00591A00;
 	static FUN_591C90_t  FUN_00591C90 = (FUN_591C90_t)0x00591C90;
@@ -193,6 +194,7 @@ namespace FUN
 	static FUN_56c510_t  FUN_0056C510 = (FUN_56c510_t)0x0056C510;
 	static FUN_5777d0_t  FUN_005777D0 = (FUN_5777d0_t)0x005777D0;
 	static FUN_579880_t  FUN_00579880 = (FUN_579880_t)0x00579880;
+	static FUN_5b91e0_t  FUN_005b91e0 = (FUN_5b91e0_t)0x005b91e0;
 
 
 	// SelectionType:

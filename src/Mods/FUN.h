@@ -143,7 +143,7 @@ namespace FUN
 	using TributeSelected_t = uint32_t(__cdecl*)(unsigned int side, unsigned int col);
 	inline TributeSelected_t TributeSelected = reinterpret_cast<TributeSelected_t>(0x00577a80);
 
-	using IsMonsterTributable_t = uint32_t(__cdecl*)(unsigned int sideIdx, unsigned int playerIdx, unsigned int zoneIdx);
+	using IsMonsterTributable_t = uint32_t(__cdecl*)(unsigned int playerIdx, unsigned int sideIdx, unsigned int zoneIdx);
 	inline IsMonsterTributable_t IsMonsterTributable = reinterpret_cast<IsMonsterTributable_t>(0x0056a0d0);
 
 	using CopyCard_t = void(__cdecl*)(void* dest, void* src);

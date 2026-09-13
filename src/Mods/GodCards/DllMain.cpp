@@ -16,6 +16,7 @@ uint32_t raLifePaid = 0;
 
 struct Tribute
 {
+    uint8_t side;
     uint8_t zone;
     int atk;
     int def;
@@ -368,7 +369,7 @@ bool CanBeSummoned(uint32_t playerIdx)
 }
 bool CanBeTributed(uint8_t playerIdx, uint8_t side, uint8_t col)
 {
-    if (FUN::IsMonsterTributable(side, playerIdx, col) == 0) return false;
+    if (FUN::IsMonsterTributable(playerIdx, side, col) == 0) return false;
     if (FUN::NumOfEmptyValidSummonZones(playerIdx) == 0)
     {
 		if (side != playerIdx) return false;
@@ -386,7 +387,7 @@ bool CanBeTributedObelisk(uint8_t playerIdx, uint8_t zoneIdx, uint8_t selSide, u
 	if (selCol == zoneIdx) return false;
     if (selCol > 4) return false;
     if (player.monsterZones[selCol].card.intID == 0) return false;
-	if (FUN::IsMonsterTributable(selSide, playerIdx, selCol) == 0) return false;
+	if (FUN::IsMonsterTributable(playerIdx, selSide, selCol) == 0) return false;
 
     return true;
 }
@@ -438,6 +439,7 @@ uint32_t __stdcall SummonStates()
 
 			duel = GameData::GetDuel();
 
+			tributes[0].side = side;
 			tributes[0].zone = col;
 			tributes[0].atk = FUN::GetCurrentATK(side, col);
 			tributes[0].def = FUN::GetCurrentDEF(side, col);
@@ -451,7 +453,7 @@ uint32_t __stdcall SummonStates()
             uint8_t side = GameData::GetSelectedSide();
             uint8_t col = GameData::GetSelectedColumn();
 
-            if (col == tributes[0].zone) return 0;
+            if (col == tributes[0].zone && tributes[0].side == side) return 0;
             if (!CanBeTributed(1, side, col)) return 0;
 
             if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
@@ -459,7 +461,8 @@ uint32_t __stdcall SummonStates()
             FUN::MarkZoneAsTributed(side, col);
 
             duel = GameData::GetDuel();
-
+            
+            tributes[1].side = side;
             tributes[1].zone = col;
             tributes[1].atk = FUN::GetCurrentATK(side, col);
             tributes[1].def = FUN::GetCurrentDEF(side, col);
@@ -473,8 +476,8 @@ uint32_t __stdcall SummonStates()
             uint8_t side = GameData::GetSelectedSide();
             uint8_t col = GameData::GetSelectedColumn();
 
-            if (col == tributes[0].zone) return 0;
-            if (col == tributes[1].zone) return 0;
+            if (col == tributes[0].zone && tributes[0].side == side) return 0;
+            if (col == tributes[1].zone && tributes[1].side == side) return 0;
             if (!CanBeTributed(1, side, col)) return 0;
 
             if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
@@ -483,13 +486,14 @@ uint32_t __stdcall SummonStates()
 
             duel = GameData::GetDuel();
 
+			tributes[2].side = side;
             tributes[2].zone = col;
             tributes[2].atk = FUN::GetCurrentATK(side, col);
             tributes[2].def = FUN::GetCurrentDEF(side, col);
 
-            FUN::TributeSelected(side, tributes[0].zone);
-			FUN::TributeSelected(side, tributes[1].zone);
-            FUN::TributeSelected(side, tributes[2].zone);
+            FUN::TributeSelected(tributes[0].side, tributes[0].zone);
+			FUN::TributeSelected(tributes[1].side, tributes[1].zone);
+            FUN::TributeSelected(tributes[2].side, tributes[2].zone);
 
             innerState = 5;
         }break;

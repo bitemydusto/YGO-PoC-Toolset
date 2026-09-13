@@ -362,18 +362,18 @@ uint32_t __cdecl Cost_Ra(unsigned int* param, int param2, int param3)
 bool CanBeSummoned(uint32_t playerIdx)
 {
 	if (FUN::CanPlayerSummon(playerIdx) == 0) return false;
-	if (FUN::NumOfEmptyValidSummonZones(playerIdx) == 0) return false;
 	if (FUN::NumOfTributableMonsters(playerIdx, 0xffffffff) < 3) return false;
 
 	return true;
 }
 bool CanBeTributed(uint8_t playerIdx, uint8_t side, uint8_t col)
 {
-    duel = GameData::GetDuel();
-
-    if (side != playerIdx) return false;
-    if (col > 4) return false;
-    if (duel.players[playerIdx].monsterZones[col].card.intID == 0) return false;
+    if (FUN::IsMonsterTributable(side, playerIdx, col) == 0) return false;
+    if (FUN::NumOfEmptyValidSummonZones(playerIdx) == 0)
+    {
+		if (side != playerIdx) return false;
+		if (FUN::IsZoneValid(side, col) == 0) return false;
+    }
 
     return true;
 }

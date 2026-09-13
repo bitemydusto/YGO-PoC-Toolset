@@ -176,6 +176,9 @@ namespace FUN
 	using AddEffectEntityToZone_t = void(__cdecl*)(unsigned int packedCard, unsigned int effectID, uint16_t effect);
 	inline AddEffectEntityToZone_t AddEffectEntityToZone = reinterpret_cast<AddEffectEntityToZone_t>(0x0056ab60);
 
+	using IsZoneValid_t = uint32_t(__cdecl*)(unsigned int side, unsigned int zoneIdx);
+	inline IsZoneValid_t IsZoneValid = reinterpret_cast<IsZoneValid_t>(0x00569e10);
+
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);
 	using FUN_591C90_t = uint32_t(__cdecl*)(uint32_t player, uint32_t packed);
 	using FUN_568580_t = int(__cdecl*)(uint32_t cardIntId);

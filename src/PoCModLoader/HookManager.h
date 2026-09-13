@@ -94,6 +94,7 @@ void PatchActivatableEffect();
 void PatchFlipMonster();
 void PatchSpellSpeed();
 void PatchHasEffectInHand();
+void PatchHasEffectInHand2();
 void PatchCanBeRevived();
 
 class HookManager
@@ -222,5 +223,6 @@ private:
 	static inline Utils::Hook hSelectionListPopulation;
 	static inline Utils::Hook hSpellSpeed;
 	static inline Utils::Hook hHasEffectInHand;
+	static inline Utils::Hook hHasEffectInHand2;
 	static inline Utils::Hook hCanBeRevived;
 };

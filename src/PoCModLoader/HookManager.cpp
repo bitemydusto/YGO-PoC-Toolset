@@ -21,6 +21,7 @@ namespace
 	void* gSelectionListPopulationTrampoline = nullptr;
 	void* gSpellSpeedTrampoline = nullptr;
 	void* gHasEffectInHandTrampoline = nullptr;
+	void* gHasEffectInHandTrampoline2 = nullptr;
 	void* gCanBeRevivedTrampoline = nullptr;
 }
 
@@ -81,6 +82,9 @@ void HookManager::InstallHooks()
 
 	hHasEffectInHand = Utils::InstallHook((void*)0x005682e2, 5, PatchHasEffectInHand);
 	gHasEffectInHandTrampoline = hHasEffectInHand.Trampoline;
+
+	hHasEffectInHand2 = Utils::InstallHook((void*)0x005b8e10, 5, PatchHasEffectInHand2);
+	gHasEffectInHandTrampoline2 = hHasEffectInHand2.Trampoline;
 
 	hCanBeRevived = Utils::InstallHook((void*)0x00568bd8, 5, PatchCanBeRevived);
 	gCanBeRevivedTrampoline = hCanBeRevived.Trampoline;
@@ -953,6 +957,23 @@ __declspec(naked) void PatchHasEffectInHand()
 		RET
 	hook_end :
 		JMP[gHasEffectInHandTrampoline]
+	}
+}
+__declspec(naked) void PatchHasEffectInHand2()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH EAX
+		CALL HookManager::Dispatch_HasEffectInHand
+		TEST AL, AL
+		POP EAX
+		JZ hook_end
+		PUSH 0x005b8e1b
+		RET
+	hook_end :
+		JMP[gHasEffectInHandTrampoline2]
 	}
 }
 void HookManager::Register_UnRevivable(uint16_t cardID)

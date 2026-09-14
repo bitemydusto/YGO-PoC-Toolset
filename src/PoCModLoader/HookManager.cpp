@@ -1,4 +1,5 @@
 #include "HookManager.h"
+#include "GameData.h"
 #include "FUN.h"
 
 namespace

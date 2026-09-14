@@ -2,7 +2,6 @@
 
 #include "Utils.h"
 #include "PatchLoader.h"
-#include "GameData.h"
 #include <algorithm>
 
 

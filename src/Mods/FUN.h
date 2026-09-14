@@ -179,6 +179,12 @@ namespace FUN
 	using IsZoneValid_t = uint32_t(__cdecl*)(unsigned int side, unsigned int zoneIdx);
 	inline IsZoneValid_t IsZoneValid = reinterpret_cast<IsZoneValid_t>(0x00569e10);
 
+	using ChangeMonsterPosition_t = void(__cdecl*)(uint8_t* block, unsigned int playerIdx, unsigned int zoneIdx, unsigned int set, unsigned int param5);
+	inline ChangeMonsterPosition_t ChangeMonsterPosition = reinterpret_cast<ChangeMonsterPosition_t>(0x00575130);
+
+	using FUN_00574ec0_t = void(__cdecl*)(unsigned int playerIdx, unsigned int zoneIdx, int param3, unsigned int effectIntID);
+	inline FUN_00574ec0_t FUN_00574ec0 = reinterpret_cast<FUN_00574ec0_t>(0x00574ec0);
+
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);
 	using FUN_591C90_t = uint32_t(__cdecl*)(uint32_t player, uint32_t packed);
 	using FUN_568580_t = int(__cdecl*)(uint32_t cardIntId);

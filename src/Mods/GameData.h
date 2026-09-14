@@ -13,8 +13,6 @@ namespace GameData
     const uint32_t SELECTION_LIST_ADDRESS = 0x00A582A4;
 	const uint32_t EFFECT_SCRIPT_ADDRESS = 0x005ed0a8;
 
-    void LoadCardZone(uint32_t address, CardZone& zone);
-
     struct Card
     {
         uint32_t fullValue;
@@ -80,7 +78,26 @@ namespace GameData
     {
         Player players[2];
     };
+    void LoadCardZone(uint32_t address, CardZone& zone)
+    {
+        Card card;
+        card.intID = Utils::ReadUint32((void*)(address)) & 0xFFF;
+        card.fullValue = Utils::ReadUint32((void*)(address));
 
+        zone.card = card;
+        zone.status = Utils::ReadUint16((void*)(address + 0x6));
+        zone.effectCount = Utils::ReadUint16((void*)(address + 0xa));
+        for (size_t k = 0; k < 32; k++)
+        {
+            zone.effectIDs[k] = Utils::ReadUint16((void*)(address + 0xc + (k * 2)));
+        }
+        for (size_t k = 0; k < 32; k++)
+        {
+            zone.effectEntries[k].type = Utils::ReadUint8((void*)(address + 0x4c + (k * 2)));
+            zone.effectEntries[k].value = Utils::ReadUint8((void*)(address + 0x4d + (k * 2)));
+        }
+        zone.stateFlags = Utils::ReadUint32((void*)(address + 0x8c));
+    }
     Duel GetDuel()
     {
         Duel duel;
@@ -181,26 +198,6 @@ namespace GameData
         }
 
         return duel;
-    }
-    void LoadCardZone(uint32_t address, CardZone& zone)
-    {
-        Card card;
-        card.intID = Utils::ReadUint32((void*)(address)) & 0xFFF;
-        card.fullValue = Utils::ReadUint32((void*)(address));
-
-        zone.card = card;
-        zone.status = Utils::ReadUint16((void*)(address + 0x6));
-        zone.effectCount = Utils::ReadUint16((void*)(address + 0xa));
-        for (size_t k = 0; k < 32; k++)
-        {
-            zone.effectIDs[k] = Utils::ReadUint16((void*)(address + 0xc + (k * 2)));
-        }
-        for (size_t k = 0; k < 32; k++)
-        {
-            zone.effectEntries[k].type = Utils::ReadUint8((void*)(address + 0x4c + (k * 2)));
-            zone.effectEntries[k].value = Utils::ReadUint8((void*)(address + 0x4d + (k * 2)));
-        }
-        zone.stateFlags = Utils::ReadUint32((void*)(address + 0x8c));
     }
 
 

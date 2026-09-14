@@ -32,7 +32,8 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
 }
 void Start()
 {
-    Register_ActivatableEffect(TSUKUYOMI);
+	Register_NormalSummonTrigger(TSUKUYOMI);
+	Register_FlipMonster(TSUKUYOMI);
     Register_UnRevivable(TSUKUYOMI);
 	Register_SpiritMonster(TSUKUYOMI);
 

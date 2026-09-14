@@ -44,6 +44,8 @@ void __stdcall ChangeSliferStat(uint32_t statAddress, uint32_t playerIdx, uint32
 void __stdcall ChangeRaStat(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 void __stdcall SliferStatRefuce(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 uint32_t __stdcall SummonStates();
+void __stdcall OnSpecialSummon(uint32_t playerIdx, uint32_t summonParam);
+void __stdcall EndPhase();
 
 bool raCondition1(uint8_t playerIdx);
 bool raCondition2(uint8_t playerIdx);
@@ -99,6 +101,12 @@ void Start()
 	Register_StatChangeEffect(Cards::SLIFER_THE_SKY_DRAGON, SliferStatRefuce);
 
     Register_SpellSpeed(Cards::SLIFER_THE_SKY_DRAGON, 2);
+
+	Register_CustomSpecialSummonTrigger(Cards::SLIFER_THE_SKY_DRAGON, OnSpecialSummon);
+	Register_CustomSpecialSummonTrigger(Cards::OBELISK_THE_TORMENTOR, OnSpecialSummon);
+	Register_CustomSpecialSummonTrigger(Cards::THE_WINGED_DRAGON_OF_RA, OnSpecialSummon);
+
+	Register_Phase(5, EndPhase);
 
     Utils::EffectScript scriptSlifer;
     scriptSlifer.CardID = Cards::SLIFER_THE_SKY_DRAGON;
@@ -573,4 +581,37 @@ void __stdcall ChangeRaStat(uint32_t statAddress, uint32_t playerIdx, uint32_t z
     // 0x20 = ATK, 0x24 = DEF
     Utils::WriteInt32((void*)(statAddress + 0x20), atkBuff * 50 + lpBuff);
     Utils::WriteInt32((void*)(statAddress + 0x24), defBuff * 50);
+}
+void __stdcall OnSpecialSummon(uint32_t playerIdx, uint32_t summonParam)
+{
+    Utils::WriteUint8((void*)(GameData::BASE_PLAYER_ADDRESS + playerIdx * GameData::PLAYER_OFFSET + 0x10 + 0x90 * summonZone + 0x45), 1);
+}
+void __stdcall EndPhase()
+{
+	duel = GameData::GetDuel();
+
+	FUN::FieldMaskGenerator maskGen;
+	for (size_t i = 0; i < 2; i++)
+	{
+		for (size_t j = 0; j < 5; j++)
+		{
+			uint16_t intID = duel.players[i].monsterZones[j].card.intID;
+            if (intID != 0)
+            {
+                uint16_t cardID = FUN::GetCardID(intID);
+                if (cardID == Cards::SLIFER_THE_SKY_DRAGON ||
+                    cardID == Cards::OBELISK_THE_TORMENTOR ||
+                    cardID == Cards::THE_WINGED_DRAGON_OF_RA)
+                {
+					uint8_t ssFlag = Utils::ReadUint8((void*)(GameData::BASE_PLAYER_ADDRESS + i * GameData::PLAYER_OFFSET + 0x10 + 0x90 * j + 0x45));
+                    if (ssFlag == 1)
+                    {
+						maskGen.zones[i][j] = true;
+                    }
+                }
+            }
+		}
+	}
+    uint8_t block[32] = {};
+    FUN::SendCardFromField(block, maskGen.GenerateMask(), 0xe, 2);
 }

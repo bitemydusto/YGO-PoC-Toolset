@@ -68,9 +68,9 @@ extern "C"
 	{
 		HookManager::Register_BanishOnLeavingField(id);
 	}
-	void Register_InitialSummonState(uint16_t cardIntID, uint8_t stateCode)
+	void Register_InitialSummonState(uint16_t cardIntID, uint8_t stateCode, bool useDefaultNS)
 	{
-		HookManager::Register_InitialSummonState(cardIntID, stateCode);
+		HookManager::Register_InitialSummonState(cardIntID, stateCode, useDefaultNS);
 	}
 	void Register_SummonState(uint8_t stateCode, State state)
 	{

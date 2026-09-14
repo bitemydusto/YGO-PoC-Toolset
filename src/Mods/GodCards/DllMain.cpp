@@ -89,9 +89,9 @@ void Start()
     Register_NormalSummonCondition(Cards::OBELISK_THE_TORMENTOR, CanBeSummoned);
     Register_NormalSummonCondition(Cards::THE_WINGED_DRAGON_OF_RA, CanBeSummoned);
 
-    Register_InitialSummonState(Cards::SLIFER_THE_SKY_DRAGON, 0x40);
-	Register_InitialSummonState(Cards::OBELISK_THE_TORMENTOR, 0x40);
-	Register_InitialSummonState(Cards::THE_WINGED_DRAGON_OF_RA, 0x40);
+    Register_InitialSummonState(Cards::SLIFER_THE_SKY_DRAGON, 0x40, false);
+	Register_InitialSummonState(Cards::OBELISK_THE_TORMENTOR, 0x40, false);
+	Register_InitialSummonState(Cards::THE_WINGED_DRAGON_OF_RA, 0x40, false);
 	Register_SummonState(0x40, SummonStates);
 
 	Register_StatChange(Cards::SLIFER_THE_SKY_DRAGON, ChangeSliferStat);

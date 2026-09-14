@@ -51,6 +51,7 @@ struct InitialSummonStateHook
 {
 	uint16_t cardIntID;
 	uint8_t stateCode;
+	bool useDefaultNS;
 };
 struct SummonStateHook
 {
@@ -145,8 +146,8 @@ public:
 	static void Register_BanishOnLeavingField(uint16_t id);
 	static bool __stdcall Dispatch_BanishOnLeavingField(uint16_t id);
 
-	static void Register_InitialSummonState(uint16_t cardIntID, uint8_t stateCode);
-	static uint8_t __stdcall Dispatch_InitialSummonState(uint16_t cardIntID);
+	static void Register_InitialSummonState(uint16_t cardIntID, uint8_t stateCode, bool useDefaultNS);
+	static uint8_t __stdcall Dispatch_InitialSummonState(uint16_t cardIntID, uint32_t summonType);
 
 	static void Register_SummonState(uint8_t stateCode, State state);
 	static uint8_t __stdcall Dispatch_SummonState(uint8_t stateCode);

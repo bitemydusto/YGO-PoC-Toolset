@@ -79,9 +79,9 @@ void Chaos()
 
 	Register_BanishOnLeavingField(0x10A);
 
-	Register_InitialSummonState(0x7B, 0x39);
-	Register_InitialSummonState(0x1BD, 0x39);
-	Register_InitialSummonState(0x27F, 0x39);
+	Register_InitialSummonState(0x7B, 0x39, false);
+	Register_InitialSummonState(0x1BD, 0x39, false);
+	Register_InitialSummonState(0x27F, 0x39, false);
 	Register_SummonState(0x39, SummonStates);
 
 	Register_SelectionListPopulation(0x7B, LoadSelectionListDark);

@@ -41,7 +41,7 @@ void Start()
 {
 	Register_InherentSpecialSummon(LAVA_GOLEM, true);
 	Register_SpecialSummonCondition(LAVA_GOLEM, SummonCondition);
-	Register_InitialSummonState(LAVA_GOLEM, 0x38);
+	Register_InitialSummonState(LAVA_GOLEM, 0x38, false);
 	Register_SummonState(0x38, SummonStates);
 	Register_Phase(1, StandbyPhase);
 	Register_Phase(5, EndPhase);

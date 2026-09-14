@@ -705,21 +705,22 @@ __declspec(naked) void PatchBanishOnLeavingField()
 		JMP[gBanishOnLeavingFieldTrampoline]
 	}
 }
-void HookManager::Register_InitialSummonState(uint16_t cardIntID, uint8_t state)
+void HookManager::Register_InitialSummonState(uint16_t cardIntID, uint8_t state, bool useDefaultNS)
 {
 	// Check if the card ID is already registered
 	for (const auto& hook : initialSummonStateHooks)
 	{
 		if (hook.cardIntID == cardIntID) return;
 	}
-	initialSummonStateHooks.push_back({ cardIntID, state });
+	initialSummonStateHooks.push_back({ cardIntID, state, useDefaultNS });
 }
-uint8_t __stdcall HookManager::Dispatch_InitialSummonState(uint16_t cardIntID)
+uint8_t __stdcall HookManager::Dispatch_InitialSummonState(uint16_t cardIntID, uint32_t summonType)
 {
 	for (const auto& hook : initialSummonStateHooks)
 	{
 		if (hook.cardIntID == cardIntID)
 		{
+			if (summonType == 0 && hook.useDefaultNS) return 0;
 			return hook.stateCode;
 		}
 	}
@@ -731,6 +732,7 @@ __declspec(naked) void PatchInitialSummonState()
 	{
 	hook:
 		PUSH EAX
+		PUSH DWORD PTR DS : [ESP + 0x250]
 		PUSH EAX
 		CALL HookManager::Dispatch_InitialSummonState
 		TEST AL, AL
@@ -759,7 +761,7 @@ void HookManager::Register_SummonState(uint8_t stateCode, State state)
 	{
 		if (hook.stateCode == stateCode) return;
 	}
-	summonStateHooks.push_back({ stateCode, state });
+	summonStateHooks.push_back({ stateCode, state});
 }
 uint8_t __stdcall HookManager::Dispatch_SummonState(uint8_t stateCode)
 {

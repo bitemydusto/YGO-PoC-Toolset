@@ -119,7 +119,7 @@ namespace FUN
 	using BanishCardFromGrave_t = void(__cdecl*)(unsigned int playerIdx, unsigned int* cardDword);
 	inline BanishCardFromGrave_t BanishCardFromGrave = reinterpret_cast<BanishCardFromGrave_t>(0x00575f30);
 
-	using SpecialSummonFromHand_t = void(__cdecl*)(unsigned int param1, unsigned int param2, unsigned int param3, unsigned int param4, unsigned int param5);
+	using SpecialSummonFromHand_t = void(__cdecl*)(unsigned int playerIdx, unsigned int handIdx, unsigned int desZone, unsigned int PackTributes, unsigned int pos);
 	inline SpecialSummonFromHand_t SpecialSummonFromHand = reinterpret_cast<SpecialSummonFromHand_t>(0x005adbc0);
 
 	using SpecialSummon_t = void(__cdecl*)(unsigned int player, unsigned int* cardPtr, unsigned int posSelectorType, unsigned int flags, unsigned int srcLoc, unsigned int param6);

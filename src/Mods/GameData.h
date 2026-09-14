@@ -13,6 +13,8 @@ namespace GameData
     const uint32_t SELECTION_LIST_ADDRESS = 0x00A582A4;
 	const uint32_t EFFECT_SCRIPT_ADDRESS = 0x005ed0a8;
 
+    void LoadCardZone(uint32_t address, CardZone& zone);
+
     struct Card
     {
         uint32_t fullValue;
@@ -112,68 +114,20 @@ namespace GameData
             // Monster
             for (size_t j = 0; j < 5; j++)
             {
-                Card card;
-                card.intID = Utils::ReadUint32((void*)(address)) & 0xFFF;
-                card.fullValue = Utils::ReadUint32((void*)(address));
-
-                player.monsterZones[j].card = card;
-                player.monsterZones[j].status = Utils::ReadUint16((void*)(address + 0x6));
-                player.monsterZones[j].effectCount = Utils::ReadUint16((void*)(address + 0xa));
-                for (size_t k = 0; k < 32; k++)
-                {
-                    player.monsterZones[j].effectIDs[k] = Utils::ReadUint16((void*)(address + 0xc + (k * 2)));
-                }
-                for (size_t k = 0; k < 32; k++)
-                {
-                    player.monsterZones[j].effectEntries[k].type = Utils::ReadUint8((void*)(address + 0x4c + (k * 2)));
-                    player.monsterZones[j].effectEntries[k].value = Utils::ReadUint8((void*)(address + 0x4d + (k * 2)));
-                }
-                player.monsterZones[j].stateFlags = Utils::ReadUint32((void*)(address + 0x8c));
+				LoadCardZone(address, player.monsterZones[j]);
 
                 address += 0x90;
             }
 			// Spell/Trap
             for (size_t j = 0; j < 5; j++)
             {
-                Card card;
-                card.intID = Utils::ReadUint32((void*)(address)) & 0xFFF;
-                card.fullValue = Utils::ReadUint32((void*)(address));
-
-                player.spellTrapZones[j].card = card;
-                player.spellTrapZones[j].status = Utils::ReadUint16((void*)(address + 0x6));
-                player.spellTrapZones[j].effectCount = Utils::ReadUint16((void*)(address + 0xa));
-                for (size_t k = 0; k < 32; k++)
-                {
-                    player.spellTrapZones[j].effectIDs[k] = Utils::ReadUint16((void*)(address + 0xc + (k * 2)));
-                }
-                for (size_t k = 0; k < 32; k++)
-                {
-                    player.spellTrapZones[j].effectEntries[k].type = Utils::ReadUint8((void*)(address + 0x4c + (k * 2)));
-                    player.spellTrapZones[j].effectEntries[k].value = Utils::ReadUint8((void*)(address + 0x4d + (k * 2)));
-                }
-                player.spellTrapZones[j].stateFlags = Utils::ReadUint32((void*)(address + 0x8c));
+				LoadCardZone(address, player.spellTrapZones[j]);
 
                 address += 0x90;
             }
 			// Field Spell
-            Card fieldSpell;
-            fieldSpell.intID = Utils::ReadUint32((void*)(address)) & 0xFFF;
-            fieldSpell.fullValue = Utils::ReadUint32((void*)(address));
-
-			player.fieldSpell = fieldSpell;
-            player.fieldSpellZone.card = fieldSpell;
-            player.fieldSpellZone.status = Utils::ReadUint16((void*)(address + 0x6));
-            player.fieldSpellZone.effectCount = Utils::ReadUint16((void*)(address + 0xa));
-            for (size_t k = 0; k < 32; k++)
-            {
-                player.fieldSpellZone.effectIDs[k] = Utils::ReadUint16((void*)(address + 0xc + (k * 2)));
-            }
-            for (size_t k = 0; k < 32; k++)
-            {
-                player.fieldSpellZone.effectEntries[k].type = Utils::ReadUint8((void*)(address + 0x4c + (k * 2)));
-                player.fieldSpellZone.effectEntries[k].value = Utils::ReadUint8((void*)(address + 0x4d + (k * 2)));
-            }
-            player.fieldSpellZone.stateFlags = Utils::ReadUint32((void*)(address + 0x8c));
+			LoadCardZone(address, player.fieldSpellZone);
+			player.fieldSpell = player.fieldSpellZone.card;
 
 			// Hand, Deck, Extra, Grave, Banish
             address = BASE_PLAYER_ADDRESS + (i * PLAYER_OFFSET) + 0x6d0;
@@ -228,6 +182,27 @@ namespace GameData
 
         return duel;
     }
+    void LoadCardZone(uint32_t address, CardZone& zone)
+    {
+        Card card;
+        card.intID = Utils::ReadUint32((void*)(address)) & 0xFFF;
+        card.fullValue = Utils::ReadUint32((void*)(address));
+
+        zone.card = card;
+        zone.status = Utils::ReadUint16((void*)(address + 0x6));
+        zone.effectCount = Utils::ReadUint16((void*)(address + 0xa));
+        for (size_t k = 0; k < 32; k++)
+        {
+            zone.effectIDs[k] = Utils::ReadUint16((void*)(address + 0xc + (k * 2)));
+        }
+        for (size_t k = 0; k < 32; k++)
+        {
+            zone.effectEntries[k].type = Utils::ReadUint8((void*)(address + 0x4c + (k * 2)));
+            zone.effectEntries[k].value = Utils::ReadUint8((void*)(address + 0x4d + (k * 2)));
+        }
+        zone.stateFlags = Utils::ReadUint32((void*)(address + 0x8c));
+    }
+
 
     void ChangeSelectionList(std::vector<uint32_t> items, uint8_t loc)
     {

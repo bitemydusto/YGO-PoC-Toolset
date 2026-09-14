@@ -34,6 +34,7 @@ void Start()
 {
     Register_ActivatableEffect(TSUKUYOMI);
     Register_UnRevivable(TSUKUYOMI);
+	Register_SpiritMonster(TSUKUYOMI);
 
     Utils::EffectScript script;
     script.CardID = TSUKUYOMI;

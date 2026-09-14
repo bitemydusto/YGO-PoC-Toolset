@@ -173,10 +173,10 @@ void __stdcall ReturnSpiritsToHand()
 			uint16_t cardIntID = duel.players[i].monsterZones[j].card.intID;
 			if (cardIntID != 0 && duel.players[i].monsterZones[j].IsFaceUp())
 			{
-				uint16_t id = FUN::GetCardID(cardIntID);
+				uint16_t cardID = FUN::GetCardID(cardIntID);
 				for (const auto& id : HookManager::spiritMonsters)
 				{
-					if (id == cardIntID)
+					if (id == cardID)
 					{
 						maskGen.zones[i][j] = true;
 					}

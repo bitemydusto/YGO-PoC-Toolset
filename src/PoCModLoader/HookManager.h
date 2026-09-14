@@ -34,9 +34,19 @@ struct NormalSummonTriggerHook
 {
 	uint16_t cardID;
 };
+struct NormalSummonCustomTriggerHook
+{
+	uint16_t cardID;
+	Event1 event;
+};
 struct SpecialSummonTriggerHook
 {
 	uint16_t cardID;
+};
+struct SpecialSummonCustomTriggerHook
+{
+	uint16_t cardID;
+	Event1 event;
 };
 struct OnSentToGraveTriggerHook
 {
@@ -138,10 +148,12 @@ public:
 	static void __stdcall Dispatch_AfterDamageCalculation();
 
 	static void Register_NormalSummonTrigger(uint16_t id);
-	static bool __stdcall Dispatch_NormalSummonTrigger(uint16_t id);
+	static void Register_NormalSummonTrigger(uint16_t id, Event1 event);
+	static bool __stdcall Dispatch_NormalSummonTrigger(uint16_t id, uint32_t summonParam);
 
 	static void Register_SpecialSummonTrigger(uint16_t id);
-	static bool __stdcall Dispatch_SpecialSummonTrigger(uint16_t id);
+	static void Register_SpecialSummonTrigger(uint16_t id, Event1 event);
+	static bool __stdcall Dispatch_SpecialSummonTrigger(uint16_t id, uint32_t summonParam);
 
 	static void Register_OnSentToGraveTrigger(uint16_t id, Event1 event);
 	static bool __stdcall Dispatch_OnSentToGraveTrigger(uint16_t id, uint32_t playerIdx, uint32_t zoneIdx);
@@ -189,7 +201,9 @@ private:
 	static inline std::vector<StatChangeHook> statChangeHooks2;
 	static inline std::vector<Event> afterDamageCalculationHooks;
 	static inline std::vector<NormalSummonTriggerHook> normalSummonTriggerHooks;
+	static inline std::vector<NormalSummonCustomTriggerHook> normalSummonCustomTriggerHooks;
 	static inline std::vector<SpecialSummonTriggerHook> specialSummonTriggerHooks;
+	static inline std::vector<SpecialSummonCustomTriggerHook> specialSummonCustomTriggerHooks;
 	static inline std::vector<OnSentToGraveTriggerHook> onSentToGraveTriggerHooks;
 	static inline std::vector<BanishOnLeavingFieldHook> banishOnLeavingFieldHooks;
 	static inline std::vector<InitialSummonStateHook> initialSummonStateHooks;

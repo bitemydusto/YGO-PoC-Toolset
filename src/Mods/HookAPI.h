@@ -37,7 +37,9 @@ extern "C"
 	MOD_API void Register_StatChangeEffect(uint16_t effectId, StatChange statChange);
 	MOD_API void Register_AfterDamageCalculation(Event event);
     MOD_API void Register_NormalSummonTrigger(uint16_t id);
+	MOD_API void Register_CustomNormalSummonTrigger(uint16_t id, Event1 event);
 	MOD_API void Register_SpecialSummonTrigger(uint16_t id);
+	MOD_API void Register_CustomSpecialSummonTrigger(uint16_t id, Event1 event);
 	MOD_API void Register_OnSentToGraveTrigger(uint16_t id, Event1 event);
 	MOD_API void Register_BanishOnLeavingField(uint16_t id);
 	MOD_API void Register_InitialSummonState(uint16_t cardIntID, uint8_t stateCode, bool useDefaultNS);

@@ -572,16 +572,35 @@ void HookManager::Register_NormalSummonTrigger(uint16_t id)
 	}
 	normalSummonTriggerHooks.push_back({ id });
 }
-bool __stdcall HookManager::Dispatch_NormalSummonTrigger(uint16_t id)
+void HookManager::Register_NormalSummonTrigger(uint16_t id, Event1 event)
 {
+	// Check if the card ID is already registered
+	for (const auto& hook : normalSummonTriggerHooks)
+	{
+		if (hook.cardID == id) return;
+	}
+	normalSummonCustomTriggerHooks.push_back({ id, event });
+}
+bool __stdcall HookManager::Dispatch_NormalSummonTrigger(uint16_t id, uint32_t summonParam)
+{
+	bool triggerEffect = false;
 	for (const auto& hook : normalSummonTriggerHooks)
 	{
 		if (hook.cardID == id)
 		{
-			return true;
+			triggerEffect = true;
 		}
 	}
-	return false;
+	for (const auto& hook : normalSummonCustomTriggerHooks)
+	{
+		if (hook.cardID == id)
+		{
+			uint32_t playerIdx = summonParam & 1;
+			uint32_t zoneIdx = (summonParam >> 1) & 0x1F;
+			hook.event(playerIdx, zoneIdx);
+		}
+	}
+	return triggerEffect;
 }
 __declspec(naked) void PatchNormalSummonTrigger()
 {
@@ -589,6 +608,7 @@ __declspec(naked) void PatchNormalSummonTrigger()
 	{
 	hook:
 		PUSH EAX
+		PUSH DWORD PTR DS : [0x00a55080]
 		PUSH EAX
 		CALL HookManager::Dispatch_NormalSummonTrigger
 		TEST AL, AL
@@ -610,16 +630,35 @@ void HookManager::Register_SpecialSummonTrigger(uint16_t id)
 	}
 	specialSummonTriggerHooks.push_back({ id });
 }
-bool __stdcall HookManager::Dispatch_SpecialSummonTrigger(uint16_t id)
+void HookManager::Register_SpecialSummonTrigger(uint16_t id, Event1 event)
 {
+	// Check if the card ID is already registered
+	for (const auto& hook : specialSummonTriggerHooks)
+	{
+		if (hook.cardID == id) return;
+	}
+	specialSummonCustomTriggerHooks.push_back({ id, event });
+}
+bool __stdcall HookManager::Dispatch_SpecialSummonTrigger(uint16_t id, uint32_t summonParam)
+{
+	bool triggerEffect = false;
 	for (const auto& hook : specialSummonTriggerHooks)
 	{
 		if (hook.cardID == id)
 		{
-			return true;
+			triggerEffect = true;
 		}
 	}
-	return false;
+	for (const auto& hook : specialSummonCustomTriggerHooks)
+	{
+		if (hook.cardID == id)
+		{
+			uint32_t playerIdx = summonParam & 1;
+			uint32_t zoneIdx = (summonParam >> 1) & 0x1F;
+			hook.event(playerIdx, zoneIdx);
+		}
+	}
+	return triggerEffect;
 }
 __declspec(naked) void PatchSpecialSummonTrigger()
 {
@@ -627,6 +666,7 @@ __declspec(naked) void PatchSpecialSummonTrigger()
 	{
 	hook:
 		PUSH EAX
+		PUSH DWORD PTR DS : [0x00a55080]
 		PUSH EAX
 		CALL HookManager::Dispatch_SpecialSummonTrigger
 		TEST AL, AL
@@ -645,6 +685,7 @@ __declspec(naked) void PatchSpecialSummonTrigger2()
 	{
 	hook:
 		PUSH EAX
+		PUSH DWORD PTR DS : [0x00a55080]
 		PUSH EAX
 		CALL HookManager::Dispatch_SpecialSummonTrigger
 		TEST AL, AL

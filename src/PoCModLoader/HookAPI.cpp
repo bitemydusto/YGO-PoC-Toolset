@@ -61,9 +61,17 @@ extern "C"
 	{
 		HookManager::Register_NormalSummonTrigger(id);
 	}
+	void Register_CustomNormalSummonTrigger(uint16_t id, Event1 event)
+	{
+		HookManager::Register_NormalSummonTrigger(id, event);
+	}
 	void Register_SpecialSummonTrigger(uint16_t id)
 	{
 		HookManager::Register_SpecialSummonTrigger(id);
+	}
+	void Register_CustomSpecialSummonTrigger(uint16_t id, Event1 event)
+	{
+		HookManager::Register_SpecialSummonTrigger(id, event);
 	}
 	void Register_OnSentToGraveTrigger(uint16_t id, Event1 event)
 	{

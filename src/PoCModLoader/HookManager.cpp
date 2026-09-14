@@ -179,6 +179,7 @@ void __stdcall ReturnSpiritsToHand()
 					if (id == cardID)
 					{
 						maskGen.zones[i][j] = true;
+						FUN::FlashCardPortrait(j, cardIntID, 0);
 					}
 				}
 				
@@ -436,14 +437,23 @@ __declspec(naked) void PatchNormalSummonCondition()
 }
 void HookManager::Register_Phase(uint32_t phase, Event event)
 {
-	phaseHooks.push_back({ phase, event });
+	phaseHooks.push_back({ phase, event, false });
 }
 void __stdcall HookManager::Dispatch_Phase(uint32_t phase)
 {
-	for (const auto& hook : phaseHooks)
+	if (phase == 0)
 	{
-		if (hook.phase == phase)
+		for (auto& hook : phaseHooks)
 		{
+			hook.resolved = false;
+		}
+	}
+
+	for (auto& hook : phaseHooks)
+	{
+		if (hook.phase == phase && !hook.resolved)
+		{
+			hook.resolved = true;
 			hook.event();
 		}
 	}

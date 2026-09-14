@@ -24,6 +24,7 @@ struct PhaseHook
 {
 	uint32_t phase;
 	Event event;
+	bool resolved;
 };
 struct StatChangeHook
 {
@@ -180,6 +181,7 @@ public:
 	static bool __stdcall Dispatch_UnRevivable(uint16_t cardIntID);
 
 	static inline std::vector<uint16_t> spiritMonsters;
+	static inline std::vector<PhaseHook> phaseHooks;
 private:
 	static int __cdecl M_GetEffectScriptIndex(uint32_t cardID);
 	static uint32_t __cdecl M_GetNumOfFusionReqs(uint32_t cardIntID);
@@ -196,7 +198,6 @@ private:
 	static inline std::vector<uint16_t> inherentSpecialSummons;
 	static inline std::vector<SpecialSummonHook> specialSummonHooks;
 	static inline std::vector<SpecialSummonHook> normalSummonHooks;
-	static inline std::vector<PhaseHook> phaseHooks;
 	static inline std::vector<StatChangeHook> statChangeHooks;
 	static inline std::vector<StatChangeHook> statChangeHooks2;
 	static inline std::vector<Event> afterDamageCalculationHooks;

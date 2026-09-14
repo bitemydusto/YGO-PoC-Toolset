@@ -44,7 +44,7 @@ void __stdcall ChangeSliferStat(uint32_t statAddress, uint32_t playerIdx, uint32
 void __stdcall ChangeRaStat(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 void __stdcall SliferStatRefuce(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 uint32_t __stdcall SummonStates();
-void __stdcall OnSpecialSummon(uint32_t playerIdx, uint32_t summonParam);
+void __stdcall OnSpecialSummon(uint32_t playerIdx, uint32_t zoneIdx);
 void __stdcall EndPhase();
 
 bool raCondition1(uint8_t playerIdx);
@@ -582,9 +582,9 @@ void __stdcall ChangeRaStat(uint32_t statAddress, uint32_t playerIdx, uint32_t z
     Utils::WriteInt32((void*)(statAddress + 0x20), atkBuff * 50 + lpBuff);
     Utils::WriteInt32((void*)(statAddress + 0x24), defBuff * 50);
 }
-void __stdcall OnSpecialSummon(uint32_t playerIdx, uint32_t summonParam)
+void __stdcall OnSpecialSummon(uint32_t playerIdx, uint32_t zoneIdx)
 {
-    Utils::WriteUint8((void*)(GameData::BASE_PLAYER_ADDRESS + playerIdx * GameData::PLAYER_OFFSET + 0x10 + 0x90 * summonZone + 0x45), 1);
+    Utils::WriteUint8((void*)(GameData::BASE_PLAYER_ADDRESS + playerIdx * GameData::PLAYER_OFFSET + 0x10 + 0x90 * zoneIdx + 0x45), 1);
 }
 void __stdcall EndPhase()
 {
@@ -607,6 +607,7 @@ void __stdcall EndPhase()
                     if (ssFlag == 1)
                     {
 						maskGen.zones[i][j] = true;
+						FUN::FlashCardPortrait(j, intID, 0);
                     }
                 }
             }

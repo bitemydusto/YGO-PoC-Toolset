@@ -35,10 +35,20 @@ namespace GameData
     struct MonsterZone
     {
         Card card;
+        uint16_t status;
         uint16_t effectCount;
         uint16_t effectIDs[32];
         EffectEntity effectEntries[32];
         uint32_t stateFlags;
+
+		bool IsFaceUp()
+		{
+			return (status & 2) != 0;
+		}
+		bool InAttackPosition()
+		{
+			return (status & 1) == 0;
+		}
     };
     struct SpellTrapZone
     {
@@ -109,6 +119,7 @@ namespace GameData
                 card.fullValue = Utils::ReadUint32((void*)(address));
 
                 player.monsterZones[j].card = card;
+                player.monsterZones[j].status = Utils::ReadUint16((void*)(address + 0x6));
                 player.monsterZones[j].effectCount = Utils::ReadUint16((void*)(address + 0xa));
                 for (size_t k = 0; k < 32; k++)
                 {

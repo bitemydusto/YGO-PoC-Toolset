@@ -121,6 +121,8 @@ void HookManager::InstallHooks()
 		Register_Fusion3(fusion3);
 	}
 
+	Register_Phase(5, ReturnSpiritsToHand);
+
 	EffectScript* arrayStart = effectScripts;
 	Utils::WriteUint32((void*)0x5ed0a8, (uint32_t)arrayStart);
 	hCardEffectSctript1 = Utils::InstallHook((void*)0x0059dc13, 7, PatchCardEffectScript1);
@@ -158,6 +160,34 @@ void HookManager::InstallHooks()
 	Utils::PatchCall(0x0059c190, M_CanFuse);
 
 }
+void __stdcall ReturnSpiritsToHand()
+{
+	GameData::Duel duel = GameData::GetDuel();
+
+	FUN::FieldMaskGenerator maskGen;
+	for (size_t i = 0; i < 2; i++)
+	{
+		for (size_t j = 0; j < 5; j++)
+		{
+			uint16_t cardIntID = duel.players[i].monsterZones[j].card.intID;
+			if (cardIntID != 0 && duel.players[i].monsterZones[j].IsFaceUp())
+			{
+				uint16_t id = FUN::GetCardID(cardIntID);
+				for (const auto& id : HookManager::spiritMonsters)
+				{
+					if (id == cardIntID)
+					{
+						maskGen.zones[i][j] = true;
+					}
+				}
+				
+			}
+		}
+	}
+
+	uint8_t block[32] = {};
+	FUN::SendCardFromField(block, maskGen.GenerateMask(), 0xb, 0);
+}
 void HookManager::Register_EffectScript(EffectScript script)
 {
 	uint16_t index = FUN::GetCardIntID(script.CardID);
@@ -185,6 +215,15 @@ void HookManager::Register_Fusion3(Fusion3 fusion)
 	fusionRecipes3[index].Materials[0] = fusion.Materials[0];
 	fusionRecipes3[index].Materials[1] = fusion.Materials[1];
 	fusionRecipes3[index].Materials[2] = fusion.Materials[2];
+}
+void HookManager::Register_SpiritMonster(uint16_t cardID)
+{
+	// Check if the card ID is already registered
+	for (const auto& id : spiritMonsters)
+	{
+		if (id == cardID) return;
+	}
+	spiritMonsters.push_back(cardID);
 }
 void HookManager::Register_FlipMonster(uint16_t cardID)
 {

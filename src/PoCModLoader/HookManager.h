@@ -2,6 +2,7 @@
 
 #include "Utils.h"
 #include "PatchLoader.h"
+#include "GameData.h"
 #include <algorithm>
 
 
@@ -98,6 +99,8 @@ void PatchHasEffectInHand();
 void PatchHasEffectInHand2();
 void PatchCanBeRevived();
 
+void __stdcall ReturnSpiritsToHand();
+
 class HookManager
 {
 public:
@@ -106,6 +109,7 @@ public:
 	static void Register_EffectScript(EffectScript script);
 	static void Register_Fusion2(Fusion2 fusion);
 	static void Register_Fusion3(Fusion3 fusion);
+	static void Register_SpiritMonster(uint16_t cardID);
 
 	static void Register_FlipMonster(uint16_t cardID);
 	static bool __stdcall Dispatch_FlipMonster(uint16_t cardID);
@@ -164,6 +168,7 @@ public:
 	static void Register_UnRevivable(uint16_t cardID);
 	static bool __stdcall Dispatch_UnRevivable(uint16_t cardIntID);
 
+	static inline std::vector<uint16_t> spiritMonsters;
 private:
 	static int __cdecl M_GetEffectScriptIndex(uint32_t cardID);
 	static uint32_t __cdecl M_GetNumOfFusionReqs(uint32_t cardIntID);
@@ -173,6 +178,7 @@ private:
 	static inline EffectScript effectScripts[4096];
 	static inline Fusion2 fusionRecipes2[4096];
 	static inline Fusion3 fusionRecipes3[4096];
+
 
 	static inline std::vector<uint16_t> flipMonsters;
 	static inline std::vector<uint16_t> activatableEffects;

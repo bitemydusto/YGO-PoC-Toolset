@@ -25,6 +25,7 @@ extern "C"
 	MOD_API void Register_EffectScript(EffectScript script);
 	MOD_API void Register_Fusion2(Fusion2 fusion);
 	MOD_API void Register_Fusion3(Fusion3 fusion);
+	MOD_API void Register_SpiritMonster(uint16_t cardID);
 
 	MOD_API void Register_FlipMonster(uint16_t cardID);
 	MOD_API void Register_ActivatableEffect(uint16_t cardID);

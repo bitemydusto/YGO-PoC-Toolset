@@ -15,6 +15,11 @@ extern "C"
 	{
 		HookManager::Register_Fusion3(fusion);
 	}
+	void Register_SpiritMonster(uint16_t cardID)
+	{
+		HookManager::Register_SpiritMonster(cardID);
+	}
+
 
 	void Register_FlipMonster(uint16_t cardID)
 	{

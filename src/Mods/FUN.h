@@ -80,6 +80,9 @@ namespace FUN
 	using InitiateSelectionList_t = void(__cdecl*)(unsigned int playerIdx, unsigned int param2, unsigned int cardID, unsigned int param4);
 	inline InitiateSelectionList_t InitiateSelectionList = reinterpret_cast<InitiateSelectionList_t>(0x0040c990);
 
+	using PopulateSelectionList_t = void(__cdecl*)(unsigned int playerIdx, unsigned int cardID, unsigned int param3);
+	inline PopulateSelectionList_t PopulateSelectionList = reinterpret_cast<PopulateSelectionList_t>(0x00599d70);
+
 	using GetSelectionListCount_t = uint32_t(__cdecl*)();
 	inline GetSelectionListCount_t GetSelectionListCount = reinterpret_cast<GetSelectionListCount_t>(0x0040cb30);
 

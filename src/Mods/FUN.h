@@ -176,7 +176,7 @@ namespace FUN
 	using GetCurrentDEF_t = uint32_t(__cdecl*)(unsigned int playerIdx, unsigned int zoneIdx);
 	inline GetCurrentDEF_t GetCurrentDEF = reinterpret_cast<GetCurrentDEF_t>(0x0056f600);
 
-	using AddEffectEntityToZone_t = void(__cdecl*)(unsigned int packedCard, unsigned int effectID, uint16_t effect);
+	using AddEffectEntityToZone_t = void(__cdecl*)(unsigned int packedCard, unsigned int effectIntID, uint16_t effect);
 	inline AddEffectEntityToZone_t AddEffectEntityToZone = reinterpret_cast<AddEffectEntityToZone_t>(0x0056ab60);
 
 	using IsZoneValid_t = uint32_t(__cdecl*)(unsigned int side, unsigned int zoneIdx);
@@ -193,6 +193,9 @@ namespace FUN
 
 	using FlashCardPortrait_t = void(__cdecl*)(unsigned int zoneIdx, unsigned int cardIntID, unsigned int param3);
 	inline FlashCardPortrait_t FlashCardPortrait = reinterpret_cast<FlashCardPortrait_t>(0x005782e0);
+
+	using HasEffectEntiry_t = int(__cdecl*)(unsigned int sideIdx, unsigned int zoneIdx, unsigned int effectID);
+	inline HasEffectEntiry_t HasEffectEntiry = reinterpret_cast<HasEffectEntiry_t>(0x0056da20);
 
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);
 	using FUN_591C90_t = uint32_t(__cdecl*)(uint32_t player, uint32_t packed);
@@ -236,9 +239,9 @@ namespace FUN
 
 
 	// Wrapers
-	void W_AddEffectEntityToZone(uint32_t playerIdx, uint32_t zoneIdx, uint32_t effectID, uint16_t effect)
+	void W_AddEffectEntityToZone(uint32_t playerIdx, uint32_t zoneIdx, uint32_t effectIntID, uint16_t effect)
 	{
-		FUN::AddEffectEntityToZone((zoneIdx << 8) | playerIdx, effectID, effect);
+		FUN::AddEffectEntityToZone((zoneIdx << 8) | playerIdx, effectIntID, effect);
 	}
 	void W_MoveCard(uint32_t cardDword, uint8_t _src, uint8_t _dest)
 	{

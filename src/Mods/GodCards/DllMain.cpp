@@ -42,7 +42,7 @@ bool CanBeTributed(uint8_t playerIdx, uint8_t side, uint8_t col);
 bool CanBeTributedObelisk(uint8_t playerIdx, uint8_t zoneIdx, uint8_t selSide, uint8_t selCol);
 void __stdcall ChangeSliferStat(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 void __stdcall ChangeRaStat(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
-void __stdcall SliferStatRefuce(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
+void __stdcall SliferStatReduce(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 uint32_t __stdcall SummonStates();
 void __stdcall OnSpecialSummon(uint32_t playerIdx, uint32_t zoneIdx);
 void __stdcall EndPhase();
@@ -98,7 +98,7 @@ void Start()
 
 	Register_StatChange(Cards::SLIFER_THE_SKY_DRAGON, ChangeSliferStat);
 	Register_StatChange(Cards::THE_WINGED_DRAGON_OF_RA, ChangeRaStat);
-	Register_StatChangeEffect(Cards::SLIFER_THE_SKY_DRAGON, SliferStatRefuce);
+	Register_StatChangeEffect(Cards::SLIFER_THE_SKY_DRAGON, SliferStatReduce);
 
     Register_SpellSpeed(Cards::SLIFER_THE_SKY_DRAGON, 2);
 
@@ -561,7 +561,7 @@ void __stdcall ChangeSliferStat(uint32_t statAddress, uint32_t playerIdx, uint32
     Utils::WriteInt32((void*)(statAddress + 0x24), player.cardsInHand * 1000);
 
 }
-void __stdcall SliferStatRefuce(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx)
+void __stdcall SliferStatReduce(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx)
 {
 	duel = GameData::GetDuel();
 	GameData::Player player = duel.players[playerIdx];

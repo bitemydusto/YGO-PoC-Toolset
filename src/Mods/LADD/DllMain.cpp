@@ -141,10 +141,8 @@ uint32_t __cdecl Cost_LADD(unsigned int* param, int param2, int param3)
     FUN::Param funParam(param);
 
 	if (funParam.location == 0xe) return 1;
-    uint8_t count = Utils::ReadUint8((void*)(GameData::BASE_PLAYER_ADDRESS + funParam.playerIdx * GameData::PLAYER_OFFSET + 0x10 + 0x90 * funParam.zoneIdx + 0x49));
-
-    count++;
-	Utils::WriteUint8((void*)(GameData::BASE_PLAYER_ADDRESS + funParam.playerIdx * GameData::PLAYER_OFFSET + 0x10 + 0x90 * funParam.zoneIdx + 0x49), count);
+    
+	FUN::W_AddEffectEntityToZone(funParam.playerIdx, funParam.zoneIdx, FUN::GetCardIntID(LADD), 0xb | (0 << 8));
 
     return 1;
 }
@@ -223,7 +221,8 @@ uint32_t __cdecl Cost_Target(unsigned int* param, int param2, int param3)
 }
 void __stdcall StatChange_LADD(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx)
 {
-    uint8_t count = Utils::ReadUint8((void*)(GameData::BASE_PLAYER_ADDRESS + playerIdx * GameData::PLAYER_OFFSET + 0x10 + 0x90 * zoneIdx + 0x49));
+	int count = FUN::HasEffectEntiry(playerIdx, zoneIdx, LADD);
+	if (count == 0) return;
 
     // Modify stats
     // 0x20 = ATK, 0x24 = DEF

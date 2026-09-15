@@ -178,7 +178,7 @@ uint32_t __cdecl Cost_Target(unsigned int* param, int param2, int param3)
         }
         case 2:
         {
-			FUN::InitiateSelectionList(funParam.playerIdx, 6, Cards::MONSTER_REBORN, 0);
+			FUN::InitiateSelectionList(funParam.playerIdx, 6, Cards::PREMATURE_BURIAL, 0);
 
 			GameData::SetEffectSubState(3);
 			return 0;

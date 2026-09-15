@@ -185,9 +185,11 @@ namespace FUN
 	using ChangeMonsterPosition_t = void(__cdecl*)(uint8_t* block, unsigned int playerIdx, unsigned int zoneIdx, unsigned int set, unsigned int param5);
 	inline ChangeMonsterPosition_t ChangeMonsterPosition = reinterpret_cast<ChangeMonsterPosition_t>(0x00575130);
 
-	// Sets monster without changing position
-	using FUN_00574ec0_t = void(__cdecl*)(unsigned int playerIdx, unsigned int zoneIdx, int param3, unsigned int effectIntID);
-	inline FUN_00574ec0_t FUN_00574ec0 = reinterpret_cast<FUN_00574ec0_t>(0x00574ec0);
+	using FUN_ToggleMonsterPosition_t = uint32_t(__cdecl*)(unsigned int playerIdx, unsigned int zoneIdx, unsigned int toggleSet, unsigned int param4, unsigned int param5);
+	inline FUN_ToggleMonsterPosition_t FUN_ToggleMonsterPosition = reinterpret_cast<FUN_ToggleMonsterPosition_t>(0x00575160);
+
+	using FUN_ToggleFaceUp_t = void(__cdecl*)(unsigned int playerIdx, unsigned int zoneIdx, int param3, unsigned int effectIntID);
+	inline FUN_ToggleFaceUp_t FUN_ToggleFaceUp = reinterpret_cast<FUN_ToggleFaceUp_t>(0x00574ec0);
 
 	using FlashCardPortrait_t = void(__cdecl*)(unsigned int zoneIdx, unsigned int cardIntID, unsigned int param3);
 	inline FlashCardPortrait_t FlashCardPortrait = reinterpret_cast<FlashCardPortrait_t>(0x005782e0);

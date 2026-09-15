@@ -1,22 +1,6 @@
-#include <Windows.h>
-#include <cstdio>
-#include <iostream>
-#include <thread>
-#include <vector>
-#include <string>
-#include <sstream>
+#include "Debugger.h"
 
-using Fn0 = uint32_t(__cdecl*)();
-using Fn1 = uint32_t(__cdecl*)(uint32_t);
-using Fn2 = uint32_t(__cdecl*)(uint32_t, uint32_t);
-using Fn3 = uint32_t(__cdecl*)(uint32_t, uint32_t, uint32_t);
-using Fn4 = uint32_t(__cdecl*)(uint32_t, uint32_t, uint32_t, uint32_t);
-using Fn5 = uint32_t(__cdecl*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
-using Fn6 = uint32_t(__cdecl*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
-
-void Start();
-
-uint32_t CallFunction(uintptr_t address, const std::vector<uint32_t>& args);
+GameData::Duel duel;
 
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
@@ -106,7 +90,6 @@ void Start()
             std::cout << "call <address> [arg0] [arg1] ... [arg5]\n";
             continue;
         }
-
         if (command != "call")
         {
             std::cout << "Unknown command. Type 'help' for usage.\n";

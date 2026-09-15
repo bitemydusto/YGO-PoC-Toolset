@@ -60,6 +60,11 @@ uint32_t __cdecl Effect_TSUKUYOMI(unsigned int* param, int param2, int param3)
 
     if (GameData::GetDuel().players[side].monsterZones[zone].card.intID == 0) return 0;
 
-	FUN::ChangeMonsterPosition(funParam.block, side, zone, 1, 0);
+	duel = GameData::GetDuel();
+    if (duel.players[side].monsterZones[zone].InAttackPosition())
+    {
+		FUN::FUN_ToggleMonsterPosition(side, zone, 1, 0, 0);
+    }
+	else FUN::FUN_ToggleFaceUp(side, zone, 0, 0);
 	return 0;
 }

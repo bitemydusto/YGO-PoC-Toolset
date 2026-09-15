@@ -15,7 +15,7 @@ namespace
 	void* gAfterDamageCalculationTrampoline = nullptr;
 	void* gNormalSummonTriggerTrampoline = nullptr;
 	void* gSpecialSummonTriggerTrampoline = nullptr; void* gSpecialSummonTriggerTrampoline2 = nullptr;
-	void* gOnSentToGraveTriggerTrampoline = nullptr;
+	void* gOnSentToGraveTriggerTrampoline = nullptr; void* gOnSentToGraveTriggerTrampoline2 = nullptr;
 	void* gBanishOnLeavingFieldTrampoline = nullptr;
 	void* gInitialSummonStateTrampoline = nullptr;
 	void* gSummonStateTrampoline = nullptr;
@@ -65,6 +65,8 @@ void HookManager::InstallHooks()
 
 	hOnSentToGraveTrigger = Utils::InstallHook((void*)0x00576f26, 5, PatchOnSentToGraveTrigger);
 	gOnSentToGraveTriggerTrampoline = hOnSentToGraveTrigger.Trampoline;
+	hOnSentToGraveTrigger2 = Utils::InstallHook((void*)0x00577d4b, 5, PatchOnSentToGraveTrigger2);
+	gOnSentToGraveTriggerTrampoline2 = hOnSentToGraveTrigger2.Trampoline;
 
 	hBanishOnLeavingField = Utils::InstallHook((void*)0x00576b58, 7, PatchBanishOnLeavingField);
 	gBanishOnLeavingFieldTrampoline = hBanishOnLeavingField.Trampoline;
@@ -754,6 +756,26 @@ __declspec(naked) void PatchOnSentToGraveTrigger()
 		RET
 	hook_end :
 		JMP[gOnSentToGraveTriggerTrampoline]
+	}
+}
+__declspec(naked) void PatchOnSentToGraveTrigger2()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH DWORD PTR DS : [ESP + 0x18]
+		PUSH EDI
+		PUSH EAX
+		CALL HookManager::Dispatch_OnSentToGraveTrigger
+		TEST AL, AL
+		POP EAX
+		JZ hook_end
+
+		PUSH 0x00577e19
+		RET
+	hook_end :
+		JMP[gOnSentToGraveTriggerTrampoline2]
 	}
 }
 void HookManager::Register_BanishOnLeavingField(uint16_t id)

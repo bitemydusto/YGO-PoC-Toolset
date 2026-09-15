@@ -97,6 +97,7 @@ void PatchNormalSummonTrigger();
 void PatchSpecialSummonTrigger();
 void PatchSpecialSummonTrigger2();
 void PatchOnSentToGraveTrigger();
+void PatchOnSentToGraveTrigger2();
 void PatchBanishOnLeavingField();
 void PatchInitialSummonState();
 void PatchSummonState();
@@ -237,7 +238,7 @@ private:
 	static inline Utils::Hook hAfterDamageCalculation;
 	static inline Utils::Hook hNormalSummonTrigger;
 	static inline Utils::Hook hSpecialSummonTrigger; static inline Utils::Hook hSpecialSummonTrigger2;
-	static inline Utils::Hook hOnSentToGraveTrigger;
+	static inline Utils::Hook hOnSentToGraveTrigger; static inline Utils::Hook hOnSentToGraveTrigger2;
 	static inline Utils::Hook hBanishOnLeavingField;
 	static inline Utils::Hook hInitialSummonState;
 	static inline Utils::Hook hSummonState;

@@ -122,11 +122,13 @@ uint32_t __cdecl Condition_LADD(unsigned int* param, int param2, int param3)
 
     uint16_t* target = (uint16_t*)param2;
 
-    if (0x14 < (target[1] & 0x3e)) return 0;
+    //Checks for location, it's not needed here
+    //if (0x14 < (target[1] & 0x3e)) return 0;
 
-    if ((target[1] & 0x3000) != 0) return 0;
+	uint16_t tCardID = FUN::GetCardID(target[0] & 0xFFF);
 
-	if (FUN::GetCardID(target[0] & 0xfff) == LADD || FUN::GetCardID(target[0] & 0xfff) == Cards::SPIRITUALISM) return 0;
+	if (FUN::GetSpellSpeed(tCardID) > 2) return 0;
+	if (tCardID == LADD || tCardID == Cards::SPIRITUALISM) return 0;
 
 	int atk = FUN::GetCurrentATK(funParam.playerIdx, funParam.zoneIdx);
 	int def = FUN::GetCurrentDEF(funParam.playerIdx, funParam.zoneIdx);

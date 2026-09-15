@@ -7,4 +7,9 @@ Value = (word & 0xFC0) >> 6
 
 For effect response, check if param2 is not null and check for the following:
 
-(param2[1] & 0x3E) > 0x14 and (param2[1] & 0x3000) != 0 where param2 is ushort*
+-Location (param2[1] & 0x3E)
+  -field: <= 0x14
+  -hand:  0x16
+
+-Status (higher bits of param2[1], e.g. param2[1 & 0x3000)
+  

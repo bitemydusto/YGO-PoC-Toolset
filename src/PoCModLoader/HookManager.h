@@ -6,6 +6,7 @@
 
 
 using Condition = bool(*)(uint32_t playerIdx);
+using ScriptFUN = uint32_t(__cdecl*)(unsigned int* param, int param2, int param3);
 using Event = void(__stdcall*)();
 using Event1 = void(__stdcall*)(uint32_t playerIdx, uint32_t zoneIdx);
 using State = uint32_t(__stdcall*)();
@@ -74,6 +75,16 @@ struct SelectionListPopulationHook
 	uint16_t cardID;
 	Event event;
 };
+struct ResponeHook
+{
+	uint16_t cardID;
+	ScriptFUN condition;
+};
+struct CanBeSpecialSummonedByEffectHook
+{
+	uint16_t cardID;
+	bool canBeSpecialSummoned;
+};
 
 void PatchCardEffectScript1();
 void PatchCardEffectScript2();
@@ -109,6 +120,8 @@ void PatchSpellSpeed();
 void PatchHasEffectInHand();
 void PatchHasEffectInHand2();
 void PatchCanBeRevived();
+void PatchResponse();
+void PatchCanBeSpecialSummonedByEffect();
 
 void __stdcall ReturnSpiritsToHand();
 
@@ -181,6 +194,12 @@ public:
 	static void Register_UnRevivable(uint16_t cardID);
 	static bool __stdcall Dispatch_UnRevivable(uint16_t cardIntID);
 
+	static void Register_MandatoryResponse(uint16_t cardID, ScriptFUN condition);
+	static void __stdcall Dispatch_MandatoryResponse(uint32_t cardDword);
+
+	static void Register_CanBeSpecialSummoned(uint16_t cardID, bool canBeSpecialSummoned);
+	static uint32_t __stdcall Dispatch_CanBeSpecialSummoned(uint16_t cardID);
+
 	static inline std::vector<uint16_t> spiritMonsters;
 	static inline std::vector<PhaseHook> phaseHooks;
 private:
@@ -195,6 +214,7 @@ private:
 
 
 	static inline std::vector<uint16_t> flipMonsters;
+	static inline std::vector<ResponeHook> mandatoryResponses;
 	static inline std::vector<uint16_t> activatableEffects;
 	static inline std::vector<uint16_t> inherentSpecialSummons;
 	static inline std::vector<SpecialSummonHook> specialSummonHooks;
@@ -214,6 +234,7 @@ private:
 	static inline std::vector<SpellSpeedHook> spellSpeedHooks;
 	static inline std::vector<uint16_t> hasEffectInHandHooks;
 	static inline std::vector<uint16_t> unRevivableHooks;
+	static inline std::vector<CanBeSpecialSummonedByEffectHook> canBeSpecialSummonedByEffectHooks;
 
 	static inline Utils::Hook hCardEffectSctript1;
 	static inline Utils::Hook hCardEffectSctript2;
@@ -247,4 +268,6 @@ private:
 	static inline Utils::Hook hHasEffectInHand;
 	static inline Utils::Hook hHasEffectInHand2;
 	static inline Utils::Hook hCanBeRevived;
+	static inline Utils::Hook hResponse;
+	static inline Utils::Hook hCanBeSpecialSummonedByEffect;
 };

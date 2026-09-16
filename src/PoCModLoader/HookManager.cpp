@@ -24,6 +24,8 @@ namespace
 	void* gHasEffectInHandTrampoline = nullptr;
 	void* gHasEffectInHandTrampoline2 = nullptr;
 	void* gCanBeRevivedTrampoline = nullptr;
+	void* gResponseTrampoline = nullptr;
+	void* gCanBeSpecialSummonedByEffectTrampoline = nullptr;
 }
 
 void HookManager::InstallHooks()
@@ -91,6 +93,12 @@ void HookManager::InstallHooks()
 
 	hCanBeRevived = Utils::InstallHook((void*)0x00568bd8, 5, PatchCanBeRevived);
 	gCanBeRevivedTrampoline = hCanBeRevived.Trampoline;
+
+	hCanBeSpecialSummonedByEffect = Utils::InstallHook((void*)0x00570ac1, 5, PatchCanBeSpecialSummonedByEffect);
+	gCanBeSpecialSummonedByEffectTrampoline = hCanBeSpecialSummonedByEffect.Trampoline;
+
+	//hResponse = Utils::InstallHook((void*)0x005bab25, 6, PatchResponse);
+	//gResponseTrampoline = hResponse.Trampoline;
 
 
 	PatchLoader::LoadPatches();
@@ -228,6 +236,7 @@ void HookManager::Register_SpiritMonster(uint16_t cardID)
 		if (id == cardID) return;
 	}
 	spiritMonsters.push_back(cardID);
+	Register_CanBeSpecialSummoned(cardID, false);
 }
 void HookManager::Register_FlipMonster(uint16_t cardID)
 {
@@ -267,6 +276,52 @@ __declspec(naked) void PatchFlipMonster()
 		JMP[gFlipMonsterTrampoline]
 	}
 }
+void HookManager::Register_CanBeSpecialSummoned(uint16_t cardID, bool canBeSpecialSummoned)
+{
+	// Check if the card ID is already registered
+	for (const auto& item : canBeSpecialSummonedByEffectHooks)
+	{
+		if (item.cardID == cardID) return;
+	}
+	canBeSpecialSummonedByEffectHooks.push_back({ cardID, canBeSpecialSummoned });
+}
+uint32_t __stdcall HookManager::Dispatch_CanBeSpecialSummoned(uint16_t cardIntID)
+{
+	uint16_t cardID = FUN::GetCardID(cardIntID);
+	for (const auto& item : canBeSpecialSummonedByEffectHooks)
+	{
+		if (item.cardID == cardID)
+		{
+			if (item.canBeSpecialSummoned)
+			{
+				return 1; // Can be special summoned
+			}
+			else
+			{
+				return 0; // Cannot be special summoned
+			}
+		}
+	}
+	return 2; // Not found
+}
+__declspec(naked) void PatchCanBeSpecialSummonedByEffect()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH DWORD PTR DS : [ESP + 0x10]
+		CALL HookManager::Dispatch_CanBeSpecialSummoned
+		CMP EAX, 0x2
+		JE hook_end
+		ADD ESP, 0x4
+		PUSH 0x00570af9
+		RET
+	hook_end :
+		POP EAX
+		JMP[gCanBeSpecialSummonedByEffectTrampoline]
+	}
+}
 void HookManager::Register_ActivatableEffect(uint16_t cardID)
 {
 	// Check if the card ID is already registered
@@ -303,6 +358,50 @@ __declspec(naked) void PatchActivatableEffect()
 		RET
 	hook_end :
 		JMP[gActivatableEffectTrampoline]
+	}
+}
+void HookManager::Register_MandatoryResponse(uint16_t cardID, ScriptFUN condition)
+{
+	// Check if the card ID is already registered
+	for (const auto& item : mandatoryResponses)
+	{
+		if (item.cardID == cardID) return;
+	}
+	mandatoryResponses.push_back({ cardID, condition });
+}
+void __stdcall HookManager::Dispatch_MandatoryResponse(uint32_t cardDword)
+{
+	GameData::Duel duel = GameData::GetDuel();
+
+	for (size_t i = 0; i < 2; i++)
+	{
+		for (size_t j = 0; j < 5; j++)
+		{
+			uint16_t cardIntID = duel.players[i].monsterZones[j].card.intID;
+			if (cardIntID != 0 && duel.players[i].monsterZones[j].IsFaceUp())
+			{
+				uint16_t cardID = FUN::GetCardID(cardIntID);
+				for (const auto& item : mandatoryResponses)
+				{
+					if (item.cardID == cardID)
+					{
+						
+					}
+				}
+			}
+		}
+	}
+}
+__declspec(naked) void PatchResponse()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH DWORD PTR DS : [ESP + 4]
+		CALL HookManager::Dispatch_MandatoryResponse
+	hook_end :
+		JMP[gResponseTrampoline]
 	}
 }
 void HookManager::Register_InherentSpecialSummon(uint16_t cardID, bool firstOnly)

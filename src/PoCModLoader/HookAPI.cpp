@@ -105,4 +105,8 @@ extern "C"
 	{
 		HookManager::Register_UnRevivable(cardID);
 	}
+	void Register_CanBeSpecialSummoned(uint16_t cardID, bool canBeSpecialSummoned)
+	{
+		HookManager::Register_CanBeSpecialSummoned(cardID, canBeSpecialSummoned);
+	}
 }

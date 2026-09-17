@@ -1388,8 +1388,9 @@ __declspec(naked) void PatchCardEffectScript11()
 	}
 }
 // Fusion reqs
-uint32_t __cdecl HookManager::M_GetNumOfFusionReqs(uint32_t cardIntID)
+uint32_t __cdecl HookManager::M_GetNumOfFusionReqs(uint32_t _cardIntID)
 {
+	uint16_t cardIntID = _cardIntID & 0xFFF;
 	uint16_t cardID = FUN::GetCardID(cardIntID & 0xFFF);
 	if (fusionRecipes2[cardIntID].Result == cardID)
 	{
@@ -1401,8 +1402,9 @@ uint32_t __cdecl HookManager::M_GetNumOfFusionReqs(uint32_t cardIntID)
 	}
 	return 0;
 }
-int __cdecl HookManager::M_GetFusionMaterial(uint32_t cardIntID, uint32_t materialIndex)
+int __cdecl HookManager::M_GetFusionMaterial(uint32_t _cardIntID, uint32_t materialIndex)
 {
+	uint16_t cardIntID = _cardIntID & 0xFFF;
 	uint16_t cardID = FUN::GetCardID(cardIntID & 0xFFF);
 	if (fusionRecipes2[cardIntID].Result == cardID)
 	{
@@ -1414,8 +1416,9 @@ int __cdecl HookManager::M_GetFusionMaterial(uint32_t cardIntID, uint32_t materi
 	}
 	return 0;
 }
-int __cdecl HookManager::M_CanFuse(uint32_t player, uint32_t fusionIntId, uint16_t* out)
+int __cdecl HookManager::M_CanFuse(uint32_t player, uint32_t _fusionIntId, uint16_t* out)
 {
+	uint32_t fusionIntId = _fusionIntId & 0xFFF;
 	player &= 1;
 
 	if (FUN::GetMonsterType(fusionIntId) >= 0x15) return 0;

@@ -26,3 +26,4 @@ uint32_t CallFunction(uintptr_t address, const std::vector<uint32_t>& args);
 
 void MillCommand(uint32_t playerIdx, uint32_t amount);
 void DrawCommand(uint32_t playerIdx, uint32_t amount);
+void AddCommand(uint16_t cardID);

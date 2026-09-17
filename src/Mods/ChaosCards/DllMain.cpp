@@ -285,7 +285,7 @@ uint32_t __cdecl Target_DMOC(unsigned int* param, int param2, int param3)
 
 		// Highlight / reveal
 		FUN::QueueFX(sideBit | 0xDF, cardId, inst, 0);
-		FUN::QueueFX(sideBit | 0x08, owner, 0x0E, 0);
+		FUN::QueueFX(sideBit | 0x08, owner, Location::GRAVE, 0);
 
 		// Store targets
 		FUN::FUN_00592a40((int)param, (uint16_t)dword);
@@ -396,12 +396,12 @@ uint32_t __cdecl Effect_PS(unsigned int* param, int param2, int param3)
 	{
 		case 0x80:
 		{
-			FUN::W_MoveCard(funParam.outerTargets[0], 0x0F, 0x0B);
+			FUN::W_MoveCard(funParam.outerTargets[0], Location::BANISHED, Location::HAND);
 			return 0x7f;
 		}
 		case 0x7f:
 		{
-			FUN::W_MoveCard(funParam.outerTargets[1], 0x0F, 0x0B);
+			FUN::W_MoveCard(funParam.outerTargets[1], Location::BANISHED, Location::HAND);
 			return 0;
 		}
 	}
@@ -469,7 +469,7 @@ uint32_t __cdecl Target_PS(unsigned int* param, int param2, int param3)
 						uint32_t inst = owner + ((dword >> 24) & 0x7F) * 2;
 
 						FUN::QueueFX(sideBit | 0xDF, cardId, inst, 0);
-						FUN::QueueFX(sideBit | 0x08, owner, 0x0F, 0);
+						FUN::QueueFX(sideBit | 0x08, owner, Location::BANISHED, 0);
 
 						// One card dword = two target halfwords
 						FUN::FUN_00592a40((int)param, (uint16_t)dword);

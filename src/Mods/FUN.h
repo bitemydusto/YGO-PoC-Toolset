@@ -1,6 +1,19 @@
 #pragma once
 
+#include "Location.h"
 #include <cstdint>
+
+// 0-4: Monster Zones
+// 5-9: Spell/Trap Zones
+enum Location : uint8_t
+{
+	FIELDZONE = 0xA,
+	HAND = 0xB,
+	EXTRA = 0xC,
+	DECK = 0xD,
+	GRAVE = 0xE,
+	BANISHED = 0xF
+};
 
 namespace FUN
 {
@@ -263,7 +276,7 @@ namespace FUN
 		FUN::IssueCommand(0x8E, src, dest, 0);
 
 	}
-	void W_HighlightAndStoreTarget(unsigned int param, unsigned int* entry)
+	void W_HighlightAndStoreTarget(unsigned int param, unsigned int* entry, Location location)
 	{
 		uint32_t dword = *entry;
 		uint8_t  owner = (dword >> 12) & 1;
@@ -274,7 +287,7 @@ namespace FUN
 
 		// Highlight / reveal
 		FUN::QueueFX(sideBit | 0xDF, cardId, inst, 0);
-		FUN::QueueFX(sideBit | 0x08, owner, 0x0E, 0);
+		FUN::QueueFX(sideBit | 0x08, owner, location, 0);
 
 		// Store targets
 		FUN::FUN_00592a40((int)param, (uint16_t)dword);

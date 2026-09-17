@@ -165,14 +165,15 @@ namespace Editor.ViewModel
                             {
                                 found = true;
 
+                                cardInfo.ATK = import.ATK.ToString();
+                                cardInfo.DEF = import.DEF.ToString();
+
                                 cardInfo.Name = import.Name;
                                 cardInfo.Level = import.Level;
                                 cardInfo.Attribute = import.Attribute;
                                 cardInfo.Type = import.Type;
                                 cardInfo.SubType = import.SubType;
                                 cardInfo.SpellTrapType = import.SpellTrap;
-                                cardInfo.ATK = import.ATK.ToString();
-                                cardInfo.DEF = import.DEF.ToString();
                                 cardInfo.VersionYugi = import.Yugi;
                                 cardInfo.VersionKaiba = import.Kaiba;
                                 cardInfo.VersionJoey = import.Joey;

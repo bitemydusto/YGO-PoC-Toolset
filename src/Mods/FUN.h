@@ -228,6 +228,9 @@ namespace FUN
 	//using CanBeRevived_t = uint32_t(__cdecl*)(unsigned int playerIdx, unsigned int graveIdx);
 	//inline CanBeRevived_t CanBeRevived = reinterpret_cast<CanBeRevived_t>(0x00599d40);
 
+	using DiscardRandomCard_t = void(__cdecl*)(unsigned int playerIdx, unsigned int param2, unsigned int amount);
+	inline DiscardRandomCard_t DiscardRandomCard = reinterpret_cast<DiscardRandomCard_t>(0x005bcec0);
+
 	using GainLP_t = void(__cdecl*)(unsigned int playerIdx, unsigned int amount);
 	inline GainLP_t GainLP = reinterpret_cast<GainLP_t>(0x00578740);
 

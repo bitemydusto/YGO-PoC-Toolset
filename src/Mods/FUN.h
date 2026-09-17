@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Location.h"
 #include <cstdint>
 
 // 0-4: Monster Zones
@@ -216,6 +215,25 @@ namespace FUN
 	using MillCards_t = void(__cdecl*)(unsigned int playerIdx, unsigned int amount, int fxFlag);
 	inline MillCards_t MillCards = reinterpret_cast<MillCards_t>(0x00578b00);
 
+	using CanBeSummonedByEffect_t = uint32_t(__cdecl*)(unsigned int playerIdx, unsigned int cardIntID);
+	inline CanBeSummonedByEffect_t CanBeSummonedByEffect = reinterpret_cast<CanBeSummonedByEffect_t>(0x00570ac0);
+
+	// Returns the index of the card in the spell/trap zone if it is face up, otherwise returns -1
+	using IsCardFaceUpInSpellTrapZones_t = int(__cdecl*)(unsigned int playerIdx, unsigned int cardID);
+	inline IsCardFaceUpInSpellTrapZones_t IsCardFaceUpInSpellTrapZones = reinterpret_cast<IsCardFaceUpInSpellTrapZones_t>(0x00569720);
+
+	using CanBeRevived_t = uint32_t(__cdecl*)(unsigned int* cardDWORD);
+	inline CanBeRevived_t CanBeRevived = reinterpret_cast<CanBeRevived_t>(0x00568bd0);
+
+	//using CanBeRevived_t = uint32_t(__cdecl*)(unsigned int playerIdx, unsigned int graveIdx);
+	//inline CanBeRevived_t CanBeRevived = reinterpret_cast<CanBeRevived_t>(0x00599d40);
+
+	using GainLP_t = void(__cdecl*)(unsigned int playerIdx, unsigned int amount);
+	inline GainLP_t GainLP = reinterpret_cast<GainLP_t>(0x00578740);
+
+	using GetRNG_t = int(__cdecl*)(int maxValue);
+	inline GetRNG_t GetRNG = reinterpret_cast<GetRNG_t>(0x005bde20);
+
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);
 	using FUN_591C90_t = uint32_t(__cdecl*)(uint32_t player, uint32_t packed);
 	using FUN_568580_t = int(__cdecl*)(uint32_t cardIntId);
@@ -261,6 +279,20 @@ namespace FUN
 	void W_AddEffectEntityToZone(uint32_t playerIdx, uint32_t zoneIdx, uint32_t effectIntID, uint16_t effect)
 	{
 		FUN::AddEffectEntityToZone((zoneIdx << 8) | playerIdx, effectIntID, effect);
+	}
+	uint32_t W_RollDice(uint16_t* param, uint8_t diceCmd)
+	{
+		int roll = FUN::GetRNG(6) + 1;
+		FUN::QueueFX((param[1] << 15) | diceCmd, roll, (param[1] >> 1) & 0x1F, 0);
+
+		return roll;
+	}
+	uint32_t W_RollDice(uint32_t playerIdx, uint32_t sideIdx, uint8_t diceCmd)
+	{
+		int roll = FUN::GetRNG(6) + 1;
+		FUN::QueueFX((sideIdx << 15) | diceCmd, roll, (playerIdx >> 1) & 0x1F, 0);
+
+		return roll;
 	}
 	void W_MoveCard(uint32_t cardDword, uint8_t _src, uint8_t _dest)
 	{

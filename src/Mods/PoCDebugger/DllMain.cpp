@@ -91,8 +91,23 @@ void Start()
 			std::cout << "mill <player> <amount>\n";
 			std::cout << "draw <player> <amount>\n";
             std::cout << "add <cardID>\n";
+            std::cout << "roll <player> <side> <diceCmd>\n";
             continue;
         }
+		if (command == "roll")
+		{
+			uint32_t playerIdx, sideIdx;
+			std::string diceCmdString;
+			if (!(ss >> playerIdx >> sideIdx >> diceCmdString))
+			{
+				std::cout << "Usage: roll <player> <side> <diceCmd>\n";
+				continue;
+			}
+			uint8_t diceCmd = static_cast<uint8_t>(std::stoull(diceCmdString, nullptr, 0));
+			uint32_t result = FUN::W_RollDice(playerIdx, sideIdx, diceCmd);
+			std::cout << "Rolled: " << result << "\n";
+			continue;
+		}
 		if (command == "add")
 		{
 			std::string cardIDString;

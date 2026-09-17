@@ -26,6 +26,10 @@ namespace GameData
         {
             return FUN::GetMonsterType(intID);
         }
+		bool WasProperlySummoned()
+		{
+			return (fullValue >> 0xe & 1) != 0;
+		}
     };
     struct EffectEntity
     {

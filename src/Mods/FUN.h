@@ -98,8 +98,8 @@ namespace FUN
 	using FUN_00592a40_t = void(__cdecl*)(int block, uint16_t value);
 	inline FUN_00592a40_t FUN_00592a40 = reinterpret_cast<FUN_00592a40_t>(0x00592a40);
 
-	using HighLightCard_t = void(__cdecl*)(uint32_t param1, uint32_t param2, uint32_t param3, uint32_t param4);
-	inline HighLightCard_t HighLightCard = reinterpret_cast<HighLightCard_t>(0x005b91e0);
+	using QueueFX_t = void(__cdecl*)(uint32_t param1, uint32_t param2, uint32_t param3, uint32_t param4);
+	inline QueueFX_t QueueFX = reinterpret_cast<QueueFX_t>(0x005b91e0);
 
 	using AddTargetedCardToHand_t = void(__cdecl*)(uint8_t* block, unsigned int playerIdx, unsigned int* param3);
 	inline AddTargetedCardToHand_t AddTargetedCardToHand = reinterpret_cast<AddTargetedCardToHand_t>(0x00575ca0);
@@ -197,6 +197,12 @@ namespace FUN
 	using HasEffectEntiry_t = int(__cdecl*)(unsigned int sideIdx, unsigned int zoneIdx, unsigned int effectID);
 	inline HasEffectEntiry_t HasEffectEntiry = reinterpret_cast<HasEffectEntiry_t>(0x0056da20);
 
+	using GetInstIndexInGrave_t = int(__cdecl*)(unsigned int playerIdx, int inst);
+	inline GetInstIndexInGrave_t GetInstIndexInGrave = reinterpret_cast<GetInstIndexInGrave_t>(0x00568ad0);
+
+	using MillCards_t = void(__cdecl*)(unsigned int playerIdx, unsigned int amount, int fxFlag);
+	inline MillCards_t MillCards = reinterpret_cast<MillCards_t>(0x00578b00);
+
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);
 	using FUN_591C90_t = uint32_t(__cdecl*)(uint32_t player, uint32_t packed);
 	using FUN_568580_t = int(__cdecl*)(uint32_t cardIntId);
@@ -256,6 +262,23 @@ namespace FUN
 		// CMD 0x8E = move
 		FUN::IssueCommand(0x8E, src, dest, 0);
 
+	}
+	void W_HighlightAndStoreTarget(unsigned int param, unsigned int* entry)
+	{
+		uint32_t dword = *entry;
+		uint8_t  owner = (dword >> 12) & 1;
+		uint32_t inst = owner + ((dword >> 24) & 0x7F) * 2;
+		uint32_t sideBit = owner ? 0x8000u : 0;
+
+		uint32_t cardId = FUN::GetCardID(dword & 0xFFF);
+
+		// Highlight / reveal
+		FUN::QueueFX(sideBit | 0xDF, cardId, inst, 0);
+		FUN::QueueFX(sideBit | 0x08, owner, 0x0E, 0);
+
+		// Store targets
+		FUN::FUN_00592a40((int)param, (uint16_t)dword);
+		FUN::FUN_00592a40((int)param, (uint16_t)(dword >> 16));
 	}
 	void W_SS_HandToOpp(uint32_t handPlayer,int handIndex, uint32_t destZone, uint32_t extra,int posArg)
 	{

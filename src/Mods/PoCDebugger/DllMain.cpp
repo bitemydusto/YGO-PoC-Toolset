@@ -88,8 +88,32 @@ void Start()
         if (command == "help")
         {
             std::cout << "call <address> [arg0] [arg1] ... [arg5]\n";
+			std::cout << "mill <player> <amount>\n";
+			std::cout << "draw <player> <amount>\n";
             continue;
         }
+        if (command == "mill")
+        {
+			uint32_t playerIdx, amount;
+			if (!(ss >> playerIdx >> amount))
+			{
+				std::cout << "Usage: mill <player> <amount>\n";
+				continue;
+			}
+			MillCommand(playerIdx, amount);
+			continue;
+		}
+		if (command == "draw")
+		{
+			uint32_t playerIdx, amount;
+			if (!(ss >> playerIdx >> amount))
+			{
+				std::cout << "Usage: draw <player> <amount>\n";
+				continue;
+			}
+			DrawCommand(playerIdx, amount);
+			continue;
+		}
         if (command != "call")
         {
             std::cout << "Unknown command. Type 'help' for usage.\n";
@@ -121,4 +145,12 @@ void Start()
             << std::dec
             << " (" << result << ")\n";
     }
+}
+void MillCommand(uint32_t playerIdx, uint32_t amount)
+{
+	FUN::MillCards(playerIdx, amount, 1);
+}
+void DrawCommand(uint32_t playerIdx, uint32_t amount)
+{
+	FUN::DrawCards(playerIdx, amount);
 }

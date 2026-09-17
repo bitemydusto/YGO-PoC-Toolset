@@ -87,7 +87,6 @@ void Chaos()
 	Register_SelectionListPopulation(0x7B, LoadSelectionListDark);
 	Register_SelectionListPopulation(0x252, LoadSelectionListBanished);
 
-
 	Utils::EffectScript scriptBLS;
 	scriptBLS.CardID = 0x7B;
 	scriptBLS.Effect = reinterpret_cast<uintptr_t>(&Effect_BLS);
@@ -95,7 +94,6 @@ void Chaos()
 	scriptBLS.Condition = reinterpret_cast<uintptr_t>(&Condition_BLS);
 	scriptBLS.Cost = reinterpret_cast<uintptr_t>(&Cost_BLS);
 	scriptBLS.Target = 0x00596570;
-
 	Register_EffectScript(scriptBLS);
 
 
@@ -106,7 +104,6 @@ void Chaos()
 	scriptCED.Condition = reinterpret_cast<uintptr_t>(&Condition_CED);
 	scriptCED.Cost = reinterpret_cast<uintptr_t>(&Cost_CED);
 	scriptCED.Target = 0;
-
 	Register_EffectScript(scriptCED);
 
 	Utils::EffectScript scriptDMOC;
@@ -116,7 +113,6 @@ void Chaos()
 	scriptDMOC.Condition = reinterpret_cast<uintptr_t>(&Condition_DMOC);
 	scriptDMOC.Cost = 0;
 	scriptDMOC.Target = reinterpret_cast<uintptr_t>(&Target_DMOC);
-
 	Register_EffectScript(scriptDMOC);
 
 	Utils::EffectScript scriptCS;
@@ -126,7 +122,6 @@ void Chaos()
 	scriptCS.Condition = reinterpret_cast<uintptr_t>(&Condition_BLS);
 	scriptCS.Cost = reinterpret_cast<uintptr_t>(&Cost_BLS);
 	scriptCS.Target = 0x00595250;
-
 	Register_EffectScript(scriptCS);
 
 	Utils::EffectScript scriptPS;
@@ -136,7 +131,6 @@ void Chaos()
 	scriptPS.Condition = reinterpret_cast<uintptr_t>(&Condition_PS);
 	scriptPS.Cost = 0;
 	scriptPS.Target = reinterpret_cast<uintptr_t>(&Target_PS);
-
 	Register_EffectScript(scriptPS);
 }
 uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3)
@@ -197,14 +191,16 @@ uint32_t __cdecl Cost_BLS(unsigned int* param, int param2, int param3)
 uint32_t __cdecl Effect_DMOC(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
-	duel = GameData::GetDuel();
 	if (funParam.finishedResolving) return 0;
 
-	GameData::Player player = duel.players[funParam.playerIdx];
+	if (funParam.targetCount == 0) return 0;
 
-	uint16_t intId = funParam.outerTargets[0] & 0xFFF;
+	uint32_t dword = funParam.outerTargets[0];
+	if ((dword & 0xfff) == 0) return 0;
 
-	if (intId == 0) return 0;
+	uint32_t inst = ((dword >> 12) & 1) + ((dword >> 24) & 0x7F) * 2;
+	
+	if (FUN::GetInstIndexInGrave(funParam.playerIdx, inst) < 0) return 0;
 
 	FUN::AddTargetedCardToHand(funParam.block, funParam.playerIdx, &funParam.outerTargets[0]);
 
@@ -285,11 +281,11 @@ uint32_t __cdecl Target_DMOC(unsigned int* param, int param2, int param3)
 		uint32_t inst = owner + ((dword >> 24) & 0x7F) * 2;
 		uint32_t sideBit = owner ? 0x8000u : 0;
 
-		uint32_t cardId = FUN::GetCardID(dword & 0xFFF); // match your GetCardID arity
+		uint32_t cardId = FUN::GetCardID(dword & 0xFFF);
 
 		// Highlight / reveal
-		FUN::HighLightCard(sideBit | 0xDF, cardId, 0, 0);
-		FUN::HighLightCard(sideBit | 0x08, owner, 0x0E, 0);  // 0x0E = GY
+		FUN::QueueFX(sideBit | 0xDF, cardId, inst, 0);
+		FUN::QueueFX(sideBit | 0x08, owner, 0x0E, 0);
 
 		// Store targets
 		FUN::FUN_00592a40((int)param, (uint16_t)dword);
@@ -470,9 +466,10 @@ uint32_t __cdecl Target_PS(unsigned int* param, int param2, int param3)
 						uint8_t  owner = (dword >> 12) & 1;
 						uint32_t sideBit = owner ? 0x8000u : 0;
 						uint32_t cardId = FUN::GetCardID(dword & 0xFFF);
+						uint32_t inst = owner + ((dword >> 24) & 0x7F) * 2;
 
-						FUN::HighLightCard(sideBit | 0xDF, cardId, 0, 0);
-						FUN::HighLightCard(sideBit | 0x08, owner, 0x0F, 0);
+						FUN::QueueFX(sideBit | 0xDF, cardId, inst, 0);
+						FUN::QueueFX(sideBit | 0x08, owner, 0x0F, 0);
 
 						// One card dword = two target halfwords
 						FUN::FUN_00592a40((int)param, (uint16_t)dword);

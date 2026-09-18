@@ -315,14 +315,14 @@ namespace FUN
 			0
 		);
 	}
-	void W_PutCardFromFieldToDeck(uint32_t playerIdx, uint32_t sideIdx, uint32_t zoneIdx, bool top)
+	void W_PutCardFromFieldToDeck(uint32_t sideIdx, uint32_t zoneIdx, bool top)
 	{
-		uint32_t* cardDword = (uint32_t*)Utils::ReadUint32((void*)(GameData::BASE_PLAYER_ADDRESS + playerIdx * GameData::PLAYER_OFFSET + 0x10 + zoneIdx * 0x90));
+		uint32_t* cardDword = (uint32_t*)Utils::ReadUint32((void*)(GameData::BASE_PLAYER_ADDRESS + sideIdx * GameData::PLAYER_OFFSET + 0x10 + zoneIdx * 0x90));
 
 		byte x = (byte)(*cardDword >> 0xc);
 		FUN::QueueFX(
 			0x8e,
-			((((uint16_t)(char)(*cardDword >> 0x18) * 2 + (x & 1)) << 8) | (uint8_t)(char)playerIdx) & 0xff01 | 0x16,
+			((((uint16_t)(char)(*cardDword >> 0x18) * 2 + (x & 1)) << 8) | (uint8_t)(char)sideIdx) & 0xff01 | 0x16,
 			((((uint16_t)(top == 0)) << 8) | (uint8_t)x) & 0xff01 | 0x1a,
 			0
 		);

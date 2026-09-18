@@ -317,7 +317,7 @@ namespace FUN
 	}
 	void W_PutCardFromFieldToDeck(uint32_t sideIdx, uint32_t zoneIdx, bool top)
 	{
-		uint32_t* cardDword = (uint32_t*)Utils::ReadUint32((void*)(GameData::BASE_PLAYER_ADDRESS + sideIdx * GameData::PLAYER_OFFSET + 0x10 + zoneIdx * 0x90));
+		uint32_t* cardDword = (uint32_t*)(GameData::BASE_PLAYER_ADDRESS + sideIdx * GameData::PLAYER_OFFSET + 0x10 + zoneIdx * 0x90);
 
 		byte x = (byte)(*cardDword >> 0xc);
 		FUN::QueueFX(

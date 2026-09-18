@@ -16,7 +16,7 @@ void Start();
 uint32_t __cdecl Effect_LADD(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Condition_LADD(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Cost_LADD(unsigned int* param, int param2, int param3);
-uint32_t __cdecl Cost_Target(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Target_LADD(unsigned int* param, int param2, int param3);
 
 void __stdcall StatChange_LADD(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 
@@ -53,7 +53,7 @@ void Start()
     script.AppliesTo = 0;
     script.Condition = reinterpret_cast<uintptr_t>(&Condition_LADD);
     script.Cost = reinterpret_cast<uintptr_t>(&Cost_LADD);
-    script.Target = reinterpret_cast<uintptr_t>(&Cost_Target);
+    script.Target = reinterpret_cast<uintptr_t>(&Target_LADD);
 
     Register_EffectScript(script);
 
@@ -148,7 +148,7 @@ uint32_t __cdecl Cost_LADD(unsigned int* param, int param2, int param3)
 
     return 1;
 }
-uint32_t __cdecl Cost_Target(unsigned int* param, int param2, int param3)
+uint32_t __cdecl Target_LADD(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
 	if (funParam.location != 0xe) return 1;
@@ -204,12 +204,12 @@ uint32_t __cdecl Cost_Target(unsigned int* param, int param2, int param3)
             uint32_t cardId = FUN::GetCardID(dword & 0xFFF); // match your GetCardID arity
 
             // Highlight / reveal
-            FUN::HighLightCard(sideBit | 0xDF, cardId, 0, 0);
-            FUN::HighLightCard(sideBit | 0x08, owner, 0x0E, 0);  // 0x0E = GY
+            FUN::QueueFX(sideBit | 0xDF, cardId, inst, 0);
+            FUN::QueueFX(sideBit | 0x08, owner, 0x0E, 0);  // 0x0E = GY
 
             // Store targets
-            FUN::FUN_00592a40((int)param, (uint16_t)dword);
-            FUN::FUN_00592a40((int)param, (uint16_t)(dword >> 16));
+            FUN::StoreTarget((int)param, (uint16_t)dword);
+            FUN::StoreTarget((int)param, (uint16_t)(dword >> 16));
 
             GameData::SetEffectSubState(0);
             return 1;

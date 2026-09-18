@@ -288,8 +288,8 @@ uint32_t __cdecl Target_DMOC(unsigned int* param, int param2, int param3)
 		FUN::QueueFX(sideBit | 0x08, owner, Location::GRAVE, 0);
 
 		// Store targets
-		FUN::FUN_00592a40((int)param, (uint16_t)dword);
-		FUN::FUN_00592a40((int)param, (uint16_t)(dword >> 16));
+		FUN::StoreTarget((int)param, (uint16_t)dword);
+		FUN::StoreTarget((int)param, (uint16_t)(dword >> 16));
 
 		GameData::SetEffectSubState(0);
 		return 1;
@@ -472,8 +472,8 @@ uint32_t __cdecl Target_PS(unsigned int* param, int param2, int param3)
 						FUN::QueueFX(sideBit | 0x08, owner, Location::BANISHED, 0);
 
 						// One card dword = two target halfwords
-						FUN::FUN_00592a40((int)param, (uint16_t)dword);
-						FUN::FUN_00592a40((int)param, (uint16_t)(dword >> 16));
+						FUN::StoreTarget((int)param, (uint16_t)dword);
+						FUN::StoreTarget((int)param, (uint16_t)(dword >> 16));
 					}
 				}
 			}

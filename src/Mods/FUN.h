@@ -243,6 +243,9 @@ namespace FUN
 	using DisCardSelectedHandIndex_t = void(__cdecl*)(unsigned int playerIdx, unsigned int handIdx, unsigned int param3);
 	inline DisCardSelectedHandIndex_t DisCardSelectedHandIndex = reinterpret_cast<DisCardSelectedHandIndex_t>(0x005758c0);
 
+	using MarkCardForFusion_t = void(__cdecl*)(unsigned int playerIdx, Location location, unsigned int selectedColumn);
+	inline MarkCardForFusion_t MarkCardForFusion = reinterpret_cast<MarkCardForFusion_t>(0x00486bf0);
+
 	// top = 1 -> put on top of deck
 	// top = 0 -> put on bottom of deck
 	using PutCardFromHandToDeck_t = void(__cdecl*)(unsigned int playerIdx, unsigned int handIdx, unsigned int top);

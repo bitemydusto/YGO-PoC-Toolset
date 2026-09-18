@@ -324,7 +324,10 @@ namespace GameData
 	{
 		return Utils::ReadUint8((void*)0x00a5504c);
 	}
-
+    uint8_t GetSelectedLocation()
+    {
+		return Utils::ReadUint8((void*)0x00a55048);
+    }
     uint16_t GetState()
     {
        return Utils::ReadUint16((void*)0x00a57808);
@@ -353,7 +356,11 @@ namespace GameData
 	{
 		return Utils::ReadUint8((void*)0x00a577fa) & 1;
 	}
-	uint16_t GetSelectedHandIndex()
+    uint16_t GetSelectedHandIndex()
+    {
+        return Utils::ReadUint16((void*)0x00a55064);
+    }
+	uint16_t GetConfirmedHandIndex()
 	{
 		return Utils::ReadUint16((void*)0x00a57822);
 	}

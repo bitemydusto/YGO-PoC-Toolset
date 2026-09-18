@@ -353,4 +353,8 @@ namespace GameData
 	{
 		return Utils::ReadUint8((void*)0x00a577fa) & 1;
 	}
+	uint16_t GetSelectedHandIndex()
+	{
+		return Utils::ReadUint16((void*)0x00a57822);
+	}
 }

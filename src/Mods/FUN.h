@@ -83,8 +83,8 @@ namespace FUN
 	using DealEffectDamage_t = void(__cdecl*)(unsigned int playerIdx, unsigned int amount);
 	inline DealEffectDamage_t DealEffectDamage = reinterpret_cast<DealEffectDamage_t>(0x00578430);
 
-	using GetCardPtrFromDest_t = uint32_t*(__cdecl*)(unsigned int playerIdx, unsigned int destCode, unsigned int idx);
-	inline GetCardPtrFromDest_t GetCardPtrFromDest = reinterpret_cast<GetCardPtrFromDest_t>(0x00570040);
+	using GetCardPtrFromLocation_t = uint32_t*(__cdecl*)(unsigned int playerIdx, unsigned int destCode, unsigned int idx);
+	inline GetCardPtrFromLocation_t GetCardPtrFromLocation = reinterpret_cast<GetCardPtrFromLocation_t>(0x00570040);
 
 	using BanishFromGrave_t = void(__cdecl*)(unsigned int playerIdx, unsigned int* cardPtr, unsigned int flag);
 	inline BanishFromGrave_t BanishFromGrave = reinterpret_cast<BanishFromGrave_t>(0x00575f30);
@@ -234,8 +234,19 @@ namespace FUN
 	using GainLP_t = void(__cdecl*)(unsigned int playerIdx, unsigned int amount);
 	inline GainLP_t GainLP = reinterpret_cast<GainLP_t>(0x00578740);
 
-	using GetRNG_t = int(__cdecl*)(int maxValue);
-	inline GetRNG_t GetRNG = reinterpret_cast<GetRNG_t>(0x005bde20);
+	using GetRandomNumber_t = int(__cdecl*)(int max);
+	inline GetRandomNumber_t GetRandomNumber = reinterpret_cast<GetRandomNumber_t>(0x005bde20);
+
+	using SelectCardInOppHand_t = void(__cdecl*)(unsigned int activatingPlayerIdx);
+	inline SelectCardInOppHand_t SelectCardInOppHand = reinterpret_cast<SelectCardInOppHand_t>(0x005bcf30);
+
+	using DisCardSelectedHandIndex_t = void(__cdecl*)(unsigned int playerIdx, unsigned int handIdx, unsigned int param3);
+	inline DisCardSelectedHandIndex_t DisCardSelectedHandIndex = reinterpret_cast<DisCardSelectedHandIndex_t>(0x005758c0);
+
+	// top = 1 -> put on top of deck
+	// top = 0 -> put on bottom of deck
+	using PutCardFromHandToDeck_t = void(__cdecl*)(unsigned int playerIdx, unsigned int handIdx, unsigned int top);
+	inline PutCardFromHandToDeck_t PutCardFromHandToDeck = reinterpret_cast<PutCardFromHandToDeck_t>(0x005757f0);
 
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);
 	using FUN_591C90_t = uint32_t(__cdecl*)(uint32_t player, uint32_t packed);
@@ -285,14 +296,40 @@ namespace FUN
 	}
 	uint32_t W_RollDice(uint16_t* param, uint8_t diceCmd)
 	{
-		int roll = FUN::GetRNG(6) + 1;
+		int roll = FUN::GetRandomNumber(6) + 1;
 		FUN::QueueFX((param[1] << 15) | diceCmd, roll, (param[1] >> 1) & 0x1F, 0);
 
 		return roll;
 	}
+	void W_PutCardFromLocationToDeck(uint32_t playerIdx, Location location, uint32_t idx, bool top)
+	{
+		if (location < 0xa) return;
+		
+		uint32_t* cardDword = (uint32_t*)FUN::GetCardPtrFromLocation(playerIdx, location, idx);
+		byte x = (byte)(*cardDword >> 0xc);
+
+		FUN::QueueFX(
+			0x8e,
+			((((uint16_t)(char)(*cardDword >> 0x18) * 2 + (x & 1)) << 8) | (uint8_t)(char)playerIdx) & 0xff01 | 0x16,
+			((((uint16_t)(top == 0)) << 8) | (uint8_t)x) & 0xff01 | 0x1a,
+			0
+		);
+	}
+	void W_PutCardFromFieldToDeck(uint32_t playerIdx, uint32_t sideIdx, uint32_t zoneIdx, bool top)
+	{
+		uint32_t* cardDword = (uint32_t*)Utils::ReadUint32((void*)(GameData::BASE_PLAYER_ADDRESS + playerIdx * GameData::PLAYER_OFFSET + 0x10 + zoneIdx * 0x90));
+
+		byte x = (byte)(*cardDword >> 0xc);
+		FUN::QueueFX(
+			0x8e,
+			((((uint16_t)(char)(*cardDword >> 0x18) * 2 + (x & 1)) << 8) | (uint8_t)(char)playerIdx) & 0xff01 | 0x16,
+			((((uint16_t)(top == 0)) << 8) | (uint8_t)x) & 0xff01 | 0x1a,
+			0
+		);
+	}
 	uint32_t W_RollDice(uint32_t playerIdx, uint32_t sideIdx, uint8_t diceCmd)
 	{
-		int roll = FUN::GetRNG(6) + 1;
+		int roll = FUN::GetRandomNumber(6) + 1;
 		FUN::QueueFX((sideIdx << 15) | diceCmd, roll, (playerIdx >> 1) & 0x1F, 0);
 
 		return roll;

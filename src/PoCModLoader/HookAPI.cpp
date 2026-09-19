@@ -109,4 +109,8 @@ extern "C"
 	{
 		HookManager::Register_CanBeSpecialSummoned(cardID, canBeSpecialSummoned);
 	}
+	void Register_DuelEnd(DuelEnd event)
+	{
+		HookManager::Register_DuelEnd(event);
+	}
 }

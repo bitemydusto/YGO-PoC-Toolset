@@ -14,6 +14,8 @@ using Condition = bool(*)(uint32_t playerIdx);
 using Event = void(__stdcall*)();
 using Event1 = void(__stdcall*)(uint32_t playerIdx, uint32_t zoneIdx);
 using State = uint32_t(__stdcall*)();
+// loserIdx is the player index (0 or 1) that lost the duel, or 2 for a draw.
+using DuelEnd = void(__stdcall*)(uint32_t loserIdx);
 using StatChange = void(__stdcall*)(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 using EffectScript = Utils::EffectScript;
 using Fusion2 = Utils::Fusion2;
@@ -49,4 +51,5 @@ extern "C"
 	MOD_API void Register_HasEffectInHand(uint16_t cardID);
 	MOD_API void Register_UnRevivable(uint16_t cardID);
 	MOD_API void Register_CanBeSpecialSummoned(uint16_t cardID, bool canBeSpecialSummoned);
+	MOD_API void Register_DuelEnd(DuelEnd event);
 }

@@ -10,6 +10,9 @@ using ScriptFUN = uint32_t(__cdecl*)(unsigned int* param, int param2, int param3
 using Event = void(__stdcall*)();
 using Event1 = void(__stdcall*)(uint32_t playerIdx, uint32_t zoneIdx);
 using State = uint32_t(__stdcall*)();
+// Mirrors the declaration in Mods/HookAPI.h; this header does not include it.
+// loserIdx is the player index (0 or 1) that lost the duel, or 2 for a draw.
+using DuelEnd = void(__stdcall*)(uint32_t loserIdx);
 using StatChange = void(__stdcall*)(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 using EffectScript = Utils::EffectScript;
 using SpellSpeedHook = Utils::SpellSpeed;
@@ -104,6 +107,7 @@ void PatchPhase();
 void PatchStatChange();
 void PatchStatCHange2();
 void PatchAfterDamageCalculation();
+void PatchCheckDuelEnd();
 void PatchNormalSummonTrigger();
 void PatchSpecialSummonTrigger();
 void PatchSpecialSummonTrigger2();
@@ -161,6 +165,9 @@ public:
 
 	static void Register_AfterDamageCalculation(Event event);
 	static void __stdcall Dispatch_AfterDamageCalculation();
+
+	static void Register_DuelEnd(DuelEnd event);
+	static void __stdcall Dispatch_DuelEnd();
 
 	static void Register_NormalSummonTrigger(uint16_t id);
 	static void Register_NormalSummonTrigger(uint16_t id, Event1 event);
@@ -222,6 +229,7 @@ private:
 	static inline std::vector<StatChangeHook> statChangeHooks;
 	static inline std::vector<StatChangeHook> statChangeHooks2;
 	static inline std::vector<Event> afterDamageCalculationHooks;
+	static inline std::vector<DuelEnd> duelEndHooks;
 	static inline std::vector<NormalSummonTriggerHook> normalSummonTriggerHooks;
 	static inline std::vector<NormalSummonCustomTriggerHook> normalSummonCustomTriggerHooks;
 	static inline std::vector<SpecialSummonTriggerHook> specialSummonTriggerHooks;
@@ -257,6 +265,7 @@ private:
 	static inline Utils::Hook hStatChange;
 	static inline Utils::Hook hStatChange2;
 	static inline Utils::Hook hAfterDamageCalculation;
+	static inline Utils::Hook hCheckDuelEnd;
 	static inline Utils::Hook hNormalSummonTrigger;
 	static inline Utils::Hook hSpecialSummonTrigger; static inline Utils::Hook hSpecialSummonTrigger2;
 	static inline Utils::Hook hOnSentToGraveTrigger; static inline Utils::Hook hOnSentToGraveTrigger2;

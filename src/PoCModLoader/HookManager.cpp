@@ -13,6 +13,7 @@ namespace
 	void* gStatChangeTrampoline = nullptr;
 	void* gStatChangeTrampoline2 = nullptr;
 	void* gAfterDamageCalculationTrampoline = nullptr;
+	void* gCheckDuelEndTrampoline = nullptr;
 	void* gNormalSummonTriggerTrampoline = nullptr;
 	void* gSpecialSummonTriggerTrampoline = nullptr; void* gSpecialSummonTriggerTrampoline2 = nullptr;
 	void* gOnSentToGraveTriggerTrampoline = nullptr; void* gOnSentToGraveTriggerTrampoline2 = nullptr;
@@ -56,6 +57,16 @@ void HookManager::InstallHooks()
 
 	hAfterDamageCalculation = Utils::InstallHook((void*)0x00407aae, 5, PatchAfterDamageCalculation);
 	gAfterDamageCalculationTrampoline = hAfterDamageCalculation.Trampoline;
+
+	// Duel end. CheckDuelEnd has four independent end conditions (player status
+	// bits 0x100 / 0x200 / 0x400 at player+8, and life points reaching zero), each
+	// with its own pair of result stores -- seven store sites in total. Rather than
+	// hook all seven we wrap the function: the stub calls the trampoline, and the
+	// original's own RET brings control back to us with EAX holding 1 when the duel
+	// ended. By then 0x00a577fa holds the settled result for every path.
+	// 6 stolen bytes = `mov cl, byte ptr [0x00a577fa]`, a clean boundary.
+	hCheckDuelEnd = Utils::InstallHook((void*)0x005bc0c0, 6, PatchCheckDuelEnd);
+	gCheckDuelEndTrampoline = hCheckDuelEnd.Trampoline;
 
 	hNormalSummonTrigger = Utils::InstallHook((void*)0x005ac08c, 5, PatchNormalSummonTrigger);
 	gNormalSummonTriggerTrampoline = hNormalSummonTrigger.Trampoline;
@@ -672,6 +683,54 @@ __declspec(naked) void PatchAfterDamageCalculation()
 		CALL HookManager::Dispatch_AfterDamageCalculation
 	hook_end :
 		JMP[gAfterDamageCalculationTrampoline]
+	}
+}
+void HookManager::Register_DuelEnd(DuelEnd event)
+{
+	duelEndHooks.push_back(event);
+}
+void HookManager::Dispatch_DuelEnd()
+{
+	// Result bits live in the high nibble of the phase byte. They are relative to
+	// the turn player, not to an absolute index: 0x40 means the non-turn player
+	// lost, 0x80 means the turn player did, and 0xc0 (neither resolved) is a draw.
+	const uint8_t result = *(volatile uint8_t*)0x00a577fa & 0xc0;
+
+	// CheckDuelEnd is polled, so report only on a transition. InitDuelState clears
+	// the byte at the start of each duel, which re-arms this for the next one.
+	static uint8_t lastResult = 0;
+	if (result == lastResult) return;
+	lastResult = result;
+	if (result == 0) return;
+
+	const uint32_t turn = *(volatile uint8_t*)0x00a54e5c & 1;
+	const uint32_t loserIdx = (result == 0xc0) ? 2 : ((result & 0x40) ? (~turn & 1) : turn);
+
+	for (const auto& hook : duelEndHooks)
+	{
+		hook(loserIdx);
+	}
+}
+// A wrapper rather than the usual jump-through detour. CALLing the trampoline
+// runs the stolen bytes and jumps into the body; the original's own RET returns
+// here, so EAX holds its return value (nonzero once the duel has ended).
+// PUSHAD/POPAD preserves EAX across the dispatch so the caller still sees it.
+__declspec(naked) void PatchCheckDuelEnd()
+{
+	__asm
+	{
+	hook:
+		CALL[gCheckDuelEndTrampoline]
+		TEST EAX, EAX
+		JZ still_duelling
+		PUSHAD
+		PUSHFD
+		CALL HookManager::Dispatch_DuelEnd
+		POPFD
+		POPAD
+	still_duelling:
+	hook_end :
+		RET
 	}
 }
 void HookManager::Register_NormalSummonTrigger(uint16_t id)

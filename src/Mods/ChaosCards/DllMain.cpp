@@ -156,7 +156,6 @@ uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3)
 uint32_t __cdecl Condition_BLS(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
-	duel = GameData::GetDuel();
 	GameData::Player player = duel->players[funParam.playerIdx];
 
 	if (FUN::IsCardOnSideOfField(funParam.playerIdx ^ 0x1, 0x5E7) > 0) return 0;
@@ -176,15 +175,13 @@ uint32_t __cdecl Condition_BLS(unsigned int* param, int param2, int param3)
 uint32_t __cdecl Cost_BLS(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
-	duel = GameData::GetDuel();
-	GameData::Player player = duel->players[funParam.playerIdx];
 
 	if (funParam.zoneIdx > 4) return 0;
+
 	// Make it unable to attack this turn
-	uint16_t stateFlag = player.monsterZones[funParam.zoneIdx].stateFlags | 0x2;
-	Utils::WriteUint16((void*)(GameData::BASE_PLAYER_ADDRESS + funParam.playerIdx * GameData::PLAYER_OFFSET + 0x10 + 0x90 * funParam.zoneIdx + 0x8C + 0x2), stateFlag);
+	duel->players[funParam.playerIdx].monsterZones[funParam.zoneIdx].stateFlags |= 0x40000;
 	// Set custom once per turn flag
-	Utils::WriteUint16((void*)(GameData::BASE_PLAYER_ADDRESS + funParam.playerIdx * GameData::PLAYER_OFFSET + 0x10 + 0x90 * funParam.zoneIdx + 0x4A), 0x1);
+	duel->players[funParam.playerIdx].monsterZones[funParam.zoneIdx].effectIDs[31] = 0x1;
 
 	return 1;
 }
@@ -209,7 +206,6 @@ uint32_t __cdecl Effect_DMOC(unsigned int* param, int param2, int param3)
 uint32_t __cdecl Condition_DMOC(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
-	duel = GameData::GetDuel();
 	GameData::Player player = duel->players[funParam.playerIdx];
 
 	int spells = 0;
@@ -367,7 +363,6 @@ uint32_t __cdecl Effect_CED(unsigned int* param, int param2, int param3)
 uint32_t __cdecl Condition_CED(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
-	duel = GameData::GetDuel();
 	GameData::Player player = duel->players[funParam.playerIdx];
 
 	if (player.lifePoints <= 1000) return 0;
@@ -377,7 +372,6 @@ uint32_t __cdecl Condition_CED(unsigned int* param, int param2, int param3)
 uint32_t __cdecl Cost_CED(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
-	duel = GameData::GetDuel();
 	GameData::Player player = duel->players[funParam.playerIdx];
 	FUN::PayLifePoints(funParam.playerIdx, 1000);
 	return 1;
@@ -411,7 +405,6 @@ uint32_t __cdecl Effect_PS(unsigned int* param, int param2, int param3)
 uint32_t __cdecl Condition_PS(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
-	duel = GameData::GetDuel();
 	GameData::Player player = duel->players[funParam.playerIdx];
 
 	if (player.cardsInBanish < 2) return 0;
@@ -536,7 +529,6 @@ void __stdcall DMOC_BanishOnKill()
 bool CanBeSummoned(uint32_t playerIdx)
 {
 	if (FUN::IsCardOnSideOfField(playerIdx ^ 0x1, 0x5E7) > 0) return false;
-	duel = GameData::GetDuel();
 	GameData::Player player = duel->players[playerIdx];
 
 	int numOfLight = 0;
@@ -674,7 +666,6 @@ uint32_t __stdcall SummonStates()
 void __stdcall LoadSelectionListDark()
 {
 	std::vector<uint32_t> darkCards;
-	duel = GameData::GetDuel();
 	GameData::Player player = duel->players[1];
 	for (size_t i = 0; i < player.cardsInGrave; i++)
 	{
@@ -693,7 +684,6 @@ void __stdcall LoadSelectionListDark()
 void __stdcall LoadSelectionListBanished()
 {
 	std::vector<uint32_t> banishedCards;
-	duel = GameData::GetDuel();
 	GameData::Player player = duel->players[1];
 
 	for (size_t i = 0; i < player.cardsInBanish; i++)

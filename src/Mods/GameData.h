@@ -21,6 +21,42 @@ namespace GameData
 		{
 			return fullValue & 0xfff;
 		}
+		uint16_t GetCardID()
+		{
+			return FUN::GetCardID(GetIntID());
+		}
+		uint8_t GetSubType()
+		{
+			return FUN::GetCardSubType(GetIntID());
+		}
+		uint8_t GetType()
+		{
+			return FUN::GetMonsterType(GetIntID());
+		}
+		uint8_t GetAttribute()
+		{
+			return FUN::GetMonsterAttribute(GetIntID());
+		}
+		uint8_t GetLevel()
+		{
+			return FUN::GetMonsterLevel(GetIntID());
+		}
+		uint8_t GetSpellTrapType()
+		{
+			return FUN::GetSpellTrapType(GetIntID());
+		}
+		uint16_t GetATK()
+		{
+			return FUN::GetMonsterATK(GetIntID());
+		}
+		uint16_t GetDEF()
+		{
+			return FUN::GetMonsterDEF(GetIntID());
+		}
+		uint8_t GetOwner()
+		{
+			return (fullValue >> 12) & 1;
+		}
 		bool WasProperlySummoned()
 		{
 			return (fullValue >> 0xe & 1) != 0;

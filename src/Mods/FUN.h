@@ -68,7 +68,7 @@ namespace FUN
 
 	inline auto BanishFromGrave = reinterpret_cast<void(__cdecl*)(unsigned int playerIdx, unsigned int* cardPtr, unsigned int flag)>(0x00575f30);
 
-	inline auto InitiateSelectionList = reinterpret_cast<void(__cdecl*)(unsigned int playerIdx, unsigned int param2, unsigned int cardID, unsigned int param4)>(0x0040c990);
+	inline auto InitiateSelectionList = reinterpret_cast<void(__cdecl*)(unsigned int playerIdx, unsigned int type, unsigned int cardID, unsigned int loc)>(0x0040c990);
 
 	inline auto PopulateSelectionList = reinterpret_cast<void(__cdecl*)(unsigned int playerIdx, unsigned int cardID, unsigned int param3)>(0x00599d70);
 
@@ -191,6 +191,8 @@ namespace FUN
 
 	inline auto IssueCommand = reinterpret_cast<void(__cdecl*)(unsigned int cmd, unsigned int src, unsigned int dest, unsigned int param3)>(0x005b91e0);
 
+	inline auto CanCardBeTargeted = reinterpret_cast<bool(__cdecl*)(unsigned int playerIdx, unsigned int zoneIdx)>(0x0056c510);
+
 
 
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);
@@ -212,8 +214,6 @@ namespace FUN
 	static FUN_5777d0_t  FUN_005777D0 = (FUN_5777d0_t)0x005777D0;
 	static FUN_579880_t  FUN_00579880 = (FUN_579880_t)0x00579880;
 	static FUN_5b91e0_t  FUN_005b91e0 = (FUN_5b91e0_t)0x005b91e0;
-
-
 
 
 
@@ -361,11 +361,9 @@ namespace FUN
 	}
 
 	// Effects
-	using DestroyEffect_t = uint32_t(__cdecl*)(unsigned int* param, int param2, int param3);
-	inline DestroyEffect_t DestroyEffect = reinterpret_cast<DestroyEffect_t>(0x00585C10);
+	inline auto DestroyEffect = reinterpret_cast<uint32_t(__cdecl*)(unsigned int* param, int param2, int param3)>(0x00585C10);
 
-	using TargetMonster_t = uint32_t(__cdecl*)(unsigned int* param, int param2, int param3);
-	inline TargetMonster_t TargetMonster = reinterpret_cast<TargetMonster_t>(0x00596570);
+	inline auto TargetFieldCard = reinterpret_cast<uint32_t(__cdecl*)(unsigned int* param, int param2, int param3)>(0x00596570);
 
 	// Helper structs
 	struct FieldMaskGenerator

@@ -19,6 +19,10 @@ extern "C"
 	{
 		HookManager::Register_SpiritMonster(cardID);
 	}
+	void Register_ExtraSummonMonster(uint16_t cardID, Condition summonCondition, State summonState)
+	{
+		HookManager::Register_ExtraSummonMonster(cardID, summonCondition, summonState);
+	}
 
 
 	void Register_FlipMonster(uint16_t cardID)

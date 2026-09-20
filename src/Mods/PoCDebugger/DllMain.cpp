@@ -1,6 +1,6 @@
 #include "Debugger.h"
 
-GameData::Duel duel;
+GameData::Duel* duel = GameData::GetDuel();
 
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
@@ -92,6 +92,20 @@ void Start()
 			std::cout << "draw <player> <amount>\n";
             std::cout << "add <cardID>\n";
             std::cout << "roll <player> <side> <diceCmd>\n";
+			std::cout << "ss <player> <cardID>\n";
+            continue;
+        }
+        if (command == "ss")
+        {
+			std::string playerIdxString,cardIDString;
+            if (!(ss >> playerIdxString >> cardIDString))
+            {
+				std::cout << "Usage: ss <player> <cardID>\n";
+				continue;
+            }
+			uint8_t playerIdx = static_cast<uint8_t>(std::stoull(playerIdxString, nullptr, 0));
+			uint16_t cardID = static_cast<uint16_t>(std::stoull(cardIDString, nullptr, 0));
+			SummonCommand(playerIdx, cardID);
             continue;
         }
 		if (command == "roll")
@@ -190,4 +204,13 @@ void AddCommand(uint16_t cardID)
 	Utils::WriteUint32((void*)(GameData::BASE_PLAYER_ADDRESS + GameData::PLAYER_OFFSET + 0x810), topcard);
 
 	DrawCommand(1, 1);
+}
+void SummonCommand(uint8_t player, uint16_t cardID)
+{
+    uint32_t topcard = duel->players[player].deck[0].fullValue;
+    uint16_t cardIntID = FUN::GetCardIntID(cardID);
+    topcard = (topcard & 0xFFFFF000) | (cardIntID & 0xFFF);
+	duel->players[player].deck[0].fullValue = topcard;
+
+    FUN::SpecialSummon(player, &(duel->players[player].deck[0].fullValue), 1, 0x20, 0x0d, 0);
 }

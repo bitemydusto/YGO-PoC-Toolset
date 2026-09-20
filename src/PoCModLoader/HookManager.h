@@ -85,6 +85,12 @@ struct CanBeSpecialSummonedByEffectHook
 	uint16_t cardID;
 	bool canBeSpecialSummoned;
 };
+struct ExtraMonster
+{
+	uint16_t cardID;
+	Condition summonCondition;
+	State summonState;
+};
 
 void PatchCardEffectScript1();
 void PatchCardEffectScript2();
@@ -122,6 +128,9 @@ void PatchHasEffectInHand2();
 void PatchCanBeRevived();
 void PatchResponse();
 void PatchCanBeSpecialSummonedByEffect();
+void PatchListClicked();
+
+void __stdcall LoadSelectionListExtra();
 
 void __stdcall ReturnSpiritsToHand();
 
@@ -134,6 +143,7 @@ public:
 	static void Register_Fusion2(Fusion2 fusion);
 	static void Register_Fusion3(Fusion3 fusion);
 	static void Register_SpiritMonster(uint16_t cardID);
+	static void Register_ExtraSummonMonster(uint16_t cardID, Condition summonCondition, State summonState);
 
 	static void Register_FlipMonster(uint16_t cardID);
 	static bool __stdcall Dispatch_FlipMonster(uint16_t cardID);
@@ -202,6 +212,12 @@ public:
 
 	static inline std::vector<uint16_t> spiritMonsters;
 	static inline std::vector<PhaseHook> phaseHooks;
+	static inline std::vector<ExtraMonster> extraMonsters;
+
+	static bool __stdcall Dispatch_ListClicked();
+	static inline uint32_t __cdecl ExtraSummon(unsigned int* param, int param2, int param3);
+
+	static inline uint16_t selectedExtraMonster;
 private:
 	static int __cdecl M_GetEffectScriptIndex(uint32_t cardID);
 	static uint32_t __cdecl M_GetNumOfFusionReqs(uint32_t cardIntID);
@@ -270,4 +286,6 @@ private:
 	static inline Utils::Hook hCanBeRevived;
 	static inline Utils::Hook hResponse;
 	static inline Utils::Hook hCanBeSpecialSummonedByEffect;
+	static inline Utils::Hook hListClicked;
+
 };

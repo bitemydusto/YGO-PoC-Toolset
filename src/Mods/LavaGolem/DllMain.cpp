@@ -5,6 +5,8 @@
 #include "HookAPI.h"
 #include "Cards.h"
 
+GameData::Duel* duel = GameData::GetDuel();
+
 const uint16_t LAVA_GOLEM = Cards::DARK_TITAN_OF_TERROR;
 int innerState = 0;
 uint8_t firstZone = 0;
@@ -148,48 +150,42 @@ uint32_t __stdcall SummonStates()
 }
 bool SummonCondition(uint32_t playerIdx)
 {
-	GameData::Duel duel = GameData::GetDuel();
-
 	if ((Utils::ReadUint8((void*)0x00A57176) & 2) != 0) return false; // Already normal summoned this turn
 	if (FUN::CanPlayerSummon(playerIdx) == 0) return false;
 	if (FUN::IsCardOnField(Cards::MASK_OF_RESTRICT) != 0) return false;
 	int n = 0;
 	for (size_t i = 0; i < 5; i++)
 	{
-		if (duel.players[0].monsterZones[i].card.intID != 0) n++;
+		if (duel->players[0].monsterZones[i].card.GetIntID() != 0) n++;
 	}
 	if (n < 2) return false;
 	return true;
 }
 bool CanBeTributed(uint8_t playerIdx, uint8_t side, uint8_t col)
 {
-	GameData::Duel duel = GameData::GetDuel();
-
 	if (side == playerIdx) return false;
 	if (col > 4) return false;
-	if (duel.players[playerIdx ^ 1].monsterZones[col].card.intID == 0) return false;
+	if (duel->players[playerIdx ^ 1].monsterZones[col].card.GetIntID() == 0) return false;
 
 	return true;
 }
 void __stdcall StandbyPhase()
 {
-	GameData::Duel duel = GameData::GetDuel();
-
 	for (size_t i = 0; i < 2; i++)
 	{
 		for (size_t j = 0; j < 5; j++)
 		{
-			uint16_t cardIntID = duel.players[i].monsterZones[j].card.intID;
+			uint16_t cardIntID = duel->players[i].monsterZones[j].card.GetIntID();
 			uint16_t cardID = FUN::GetCardID(cardIntID);
 			if (cardID == LAVA_GOLEM)
 			{
-				if ((duel.players[i].monsterZones[j].effectIDs[31] & 0x1) == 0x1) return; // Already used its effect this turn
+				if ((duel->players[i].monsterZones[j].effectIDs[31] & 0x1) == 0x1) return; // Already used its effect this turn
 				if (GameData::GetTurnPlayer() != i) return; // Not the turn of the player who controls it
 				Utils::WriteUint16((void*)(0x00a55d64 + i * 0xD44 + 0x10 + 0x90 * j + 0x4A), 0x1); // Set custom once per turn flag
 
 
 
-				uint32_t dword = duel.players[i].monsterZones[j].card.fullValue;
+				uint32_t dword = duel->players[i].monsterZones[j].card.fullValue;
 				uint32_t owner = (dword >> 12) & 1;
 				uint32_t instHi = (dword >> 24) & 0x7F;
 				uint16_t flag = instHi * 2 + owner;

@@ -4,7 +4,7 @@
 #include "GameData.h"
 #include "HookAPI.h"
 
-GameData::Duel duel;
+auto duel = GameData::GetDuel();
 
 unsigned int cedDamage;
 int innerState = 0;
@@ -144,7 +144,7 @@ uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3)
 	uint32_t side = funParam.GetFieldTargetSide(0);
 	uint32_t zone = funParam.GetFieldTargetZone(0);
 
-	if (GameData::GetDuel().players[side].monsterZones[zone].card.intID == 0) return 0;
+	if (GameData::GetDuel()->players[side].monsterZones[zone].card.GetIntID() == 0) return 0;
 
 	FUN::FieldMaskGenerator maskGen;
 	maskGen.zones[side][zone] = true;
@@ -157,7 +157,7 @@ uint32_t __cdecl Condition_BLS(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
 	duel = GameData::GetDuel();
-	GameData::Player player = duel.players[funParam.playerIdx];
+	GameData::Player player = duel->players[funParam.playerIdx];
 
 	if (FUN::IsCardOnSideOfField(funParam.playerIdx ^ 0x1, 0x5E7) > 0) return 0;
 
@@ -177,7 +177,7 @@ uint32_t __cdecl Cost_BLS(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
 	duel = GameData::GetDuel();
-	GameData::Player player = duel.players[funParam.playerIdx];
+	GameData::Player player = duel->players[funParam.playerIdx];
 
 	if (funParam.zoneIdx > 4) return 0;
 	// Make it unable to attack this turn
@@ -210,12 +210,12 @@ uint32_t __cdecl Condition_DMOC(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
 	duel = GameData::GetDuel();
-	GameData::Player player = duel.players[funParam.playerIdx];
+	GameData::Player player = duel->players[funParam.playerIdx];
 
 	int spells = 0;
 	for (size_t i = 0; i < player.cardsInGrave; i++)
 	{
-		if (player.grave[i].GetType() == 0x16) spells++;
+		if (FUN::GetMonsterType(player.grave[i].GetIntID()) == 0x16) spells++;
 	}
 	return spells > 0 ? 1 : 0;
 }
@@ -321,19 +321,19 @@ uint32_t __cdecl Effect_CED(unsigned int* param, int param2, int param3)
 			unsigned int cardsOnOppField = 0;
 			for (size_t i = 0; i < 5; i++)
 			{
-				if (duel.players[opp].monsterZones[i].card.intID != 0) cardsOnOppField++;
-				if (duel.players[opp].spellTrapZones[i].card.intID != 0) cardsOnOppField++;
-				if (duel.players[playerIdx].monsterZones[i].card.intID != 0) cardsOnPlayerField++;
-				if (duel.players[playerIdx].spellTrapZones[i].card.intID != 0) cardsOnPlayerField++;
+				if (duel->players[opp].monsterZones[i].card.GetIntID() != 0) cardsOnOppField++;
+				if (duel->players[opp].spellTrapZones[i].card.GetIntID() != 0) cardsOnOppField++;
+				if (duel->players[playerIdx].monsterZones[i].card.GetIntID() != 0) cardsOnPlayerField++;
+				if (duel->players[playerIdx].spellTrapZones[i].card.GetIntID() != 0) cardsOnPlayerField++;
 			}
-			if (duel.players[opp].fieldSpell.intID != 0) cardsOnOppField++;
-			if (duel.players[playerIdx].fieldSpell.intID != 0) cardsOnPlayerField++;
-			cedDamage = (duel.players[opp].cardsInHand + cardsOnOppField + duel.players[playerIdx].cardsInHand + cardsOnPlayerField) * 300;
+			if (duel->players[opp].fieldSpellZone.card.GetIntID() != 0) cardsOnOppField++;
+			if (duel->players[playerIdx].fieldSpellZone.card.GetIntID() != 0) cardsOnPlayerField++;
+			cedDamage = (duel->players[opp].cardsInHand + cardsOnOppField + duel->players[playerIdx].cardsInHand + cardsOnPlayerField) * 300;
 
 		}break;
 		case 0x7f:
 		{
-			if (duel.players[1].cardsInHand != 0)
+			if (duel->players[1].cardsInHand != 0)
 			{
 				FUN::DiscardFromHand(1, 0, 1);
 				return 0x7f;
@@ -342,7 +342,7 @@ uint32_t __cdecl Effect_CED(unsigned int* param, int param2, int param3)
 		}break;
 		case 0x7e:
 		{
-			if (duel.players[0].cardsInHand != 0)
+			if (duel->players[0].cardsInHand != 0)
 			{
 				FUN::DiscardFromHand(0, 0, 1);
 				return 0x7e;
@@ -368,7 +368,7 @@ uint32_t __cdecl Condition_CED(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
 	duel = GameData::GetDuel();
-	GameData::Player player = duel.players[funParam.playerIdx];
+	GameData::Player player = duel->players[funParam.playerIdx];
 
 	if (player.lifePoints <= 1000) return 0;
 
@@ -378,7 +378,7 @@ uint32_t __cdecl Cost_CED(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
 	duel = GameData::GetDuel();
-	GameData::Player player = duel.players[funParam.playerIdx];
+	GameData::Player player = duel->players[funParam.playerIdx];
 	FUN::PayLifePoints(funParam.playerIdx, 1000);
 	return 1;
 }
@@ -412,7 +412,7 @@ uint32_t __cdecl Condition_PS(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
 	duel = GameData::GetDuel();
-	GameData::Player player = duel.players[funParam.playerIdx];
+	GameData::Player player = duel->players[funParam.playerIdx];
 
 	if (player.cardsInBanish < 2) return 0;
 	if (FUN::IsCardOnTheField(0x7B) == 0 && FUN::IsCardOnField(0x1BD) == 0) return 0;
@@ -501,7 +501,7 @@ void __stdcall BLS_DoubleAttack()
 	if (battleResult.sides[attackerIdx].IntID == 0x05 && (battleResult.sides[attackerIdx ^ 0x1].ResultFlags & 0x10) != 0)
 	{
 		duel = GameData::GetDuel();
-		GameData::Player attacker = duel.players[attackerIdx];
+		GameData::Player attacker = duel->players[attackerIdx];
 		uint8_t zoneIdx = (battleResult.StateFlags >> 8) & 7;
 		if (zoneIdx > 4) return;
 		if ((attacker.monsterZones[zoneIdx].effectIDs[31] & 0x1) == 0)
@@ -537,15 +537,15 @@ bool CanBeSummoned(uint32_t playerIdx)
 {
 	if (FUN::IsCardOnSideOfField(playerIdx ^ 0x1, 0x5E7) > 0) return false;
 	duel = GameData::GetDuel();
-	GameData::Player player = duel.players[playerIdx];
+	GameData::Player player = duel->players[playerIdx];
 
 	int numOfLight = 0;
 	int numOfDark = 0;
 	for (size_t i = 0; i < player.cardsInGrave; i++)
 	{
-		if (player.grave[i].GetType() < 0x15)
+		if (FUN::GetMonsterType(player.grave[i].fullValue) < 0x15)
 		{
-			uint32_t attr = player.grave[i].GetAttribute();
+			uint32_t attr = FUN::GetMonsterAttribute(player.grave[i].fullValue);
 			if (attr == 0x1) numOfLight++; // Light
 			else if (attr == 0x2) numOfDark++; // Dark
 		}
@@ -675,12 +675,12 @@ void __stdcall LoadSelectionListDark()
 {
 	std::vector<uint32_t> darkCards;
 	duel = GameData::GetDuel();
-	GameData::Player player = duel.players[1];
+	GameData::Player player = duel->players[1];
 	for (size_t i = 0; i < player.cardsInGrave; i++)
 	{
-		if (player.grave[i].GetType() < 0x15)
+		if (FUN::GetMonsterType(player.grave[i].fullValue) < 0x15)
 		{
-			uint32_t attr = player.grave[i].GetAttribute();
+			uint32_t attr = FUN::GetMonsterAttribute(player.grave[i].fullValue);
 			if (attr == 0x2) // Dark
 			{
 				darkCards.push_back(player.grave[i].fullValue);
@@ -694,7 +694,7 @@ void __stdcall LoadSelectionListBanished()
 {
 	std::vector<uint32_t> banishedCards;
 	duel = GameData::GetDuel();
-	GameData::Player player = duel.players[1];
+	GameData::Player player = duel->players[1];
 
 	for (size_t i = 0; i < player.cardsInBanish; i++)
 	{

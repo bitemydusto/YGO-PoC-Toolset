@@ -16,16 +16,11 @@ namespace GameData
     struct Card
     {
         uint32_t fullValue;
-        uint16_t intID;
 
-        uint32_t GetAttribute()
-        {
-            return FUN::GetMonsterAttribute(intID);
-        }
-        uint32_t GetType()
-        {
-            return FUN::GetMonsterType(intID);
-        }
+		uint16_t GetIntID()
+		{
+			return fullValue & 0xfff;
+		}
 		bool WasProperlySummoned()
 		{
 			return (fullValue >> 0xe & 1) != 0;
@@ -39,7 +34,9 @@ namespace GameData
     struct CardZone
     {
         Card card;
+		uint16_t unknown1;
         uint16_t status;
+		uint16_t unknown2;
         uint16_t effectCount;
         uint16_t effectIDs[32];
         EffectEntity effectEntries[32];
@@ -56,8 +53,9 @@ namespace GameData
     };
     struct Player
     {
-        int id;
         uint16_t lifePoints;
+        uint8_t unkown1;
+		uint8_t unkown2;
         uint8_t cardsInHand;
         uint8_t cardsInDeck;
         uint8_t cardsInGrave;
@@ -67,141 +65,34 @@ namespace GameData
         uint16_t canAttackZones;
 		uint16_t alreadyAttackedZones;
 
+        uint16_t padding;
+
         CardZone monsterZones[5];
         CardZone spellTrapZones[5];
 		CardZone fieldSpellZone;
-        Card fieldSpell;
+        uint8_t playerFlags[0x90];
 
         Card hand[80];
         Card deck[80];
+        Card extra[15];
         Card grave[95];
         Card banish[95];
-        Card extra[15];
+
+		uint8_t footer[0xc0];
+
+        Card fieldSpell()
+        {
+			return fieldSpellZone.card;
+        }
     };
     struct Duel
     {
         Player players[2];
     };
-    void LoadCardZone(uint32_t address, CardZone& zone)
+	Duel* _duel = reinterpret_cast<Duel*>(BASE_PLAYER_ADDRESS);
+    Duel* GetDuel()
     {
-        Card card;
-        card.intID = Utils::ReadUint32((void*)(address)) & 0xFFF;
-        card.fullValue = Utils::ReadUint32((void*)(address));
-
-        zone.card = card;
-        zone.status = Utils::ReadUint16((void*)(address + 0x6));
-        zone.effectCount = Utils::ReadUint16((void*)(address + 0xa));
-        for (size_t k = 0; k < 32; k++)
-        {
-            zone.effectIDs[k] = Utils::ReadUint16((void*)(address + 0xc + (k * 2)));
-        }
-        for (size_t k = 0; k < 32; k++)
-        {
-            zone.effectEntries[k].type = Utils::ReadUint8((void*)(address + 0x4c + (k * 2)));
-            zone.effectEntries[k].value = Utils::ReadUint8((void*)(address + 0x4d + (k * 2)));
-        }
-        zone.stateFlags = Utils::ReadUint32((void*)(address + 0x8c));
-    }
-    Duel GetDuel()
-    {
-        Duel duel;
-        for (size_t i = 0; i < 2; i++)
-        {
-            uint32_t address = BASE_PLAYER_ADDRESS + (i * PLAYER_OFFSET);
-
-            Player player;
-            player.id = i;
-
-            player.lifePoints = Utils::ReadUint16((void*)(address));
-            address += 0x4;
-            player.cardsInHand = Utils::ReadUint8((void*)(address));
-            address += 0x1;
-            player.cardsInDeck = Utils::ReadUint8((void*)(address));
-            address += 0x1;
-            player.cardsInGrave = Utils::ReadUint8((void*)(address));
-            address += 0x1;
-            player.cardsInExtra = Utils::ReadUint8((void*)(address));
-            address += 0x1;
-            player.cardsInBanish = Utils::ReadUint8((void*)(address));
-            address += 0x1;
-            player.status = Utils::ReadUint8((void*)(address));
-            address += 0x1;
-            player.canAttackZones = Utils::ReadUint16((void*)(address));
-            address += 0x2;
-            player.alreadyAttackedZones = Utils::ReadUint16((void*)(address));
-            address += 0x2;
-
-            address = BASE_PLAYER_ADDRESS + (i * PLAYER_OFFSET) + 0x10;
-            // Monster
-            for (size_t j = 0; j < 5; j++)
-            {
-				LoadCardZone(address, player.monsterZones[j]);
-
-                address += 0x90;
-            }
-			// Spell/Trap
-            for (size_t j = 0; j < 5; j++)
-            {
-				LoadCardZone(address, player.spellTrapZones[j]);
-
-                address += 0x90;
-            }
-			// Field Spell
-			LoadCardZone(address, player.fieldSpellZone);
-			player.fieldSpell = player.fieldSpellZone.card;
-
-			// Hand, Deck, Extra, Grave, Banish
-            address = BASE_PLAYER_ADDRESS + (i * PLAYER_OFFSET) + 0x6d0;
-            for (size_t j = 0; j < 80; j++)
-            {
-                Card card;
-                card.intID = Utils::ReadUint32((void*)(address)) & 0xFFF;
-                card.fullValue = Utils::ReadUint32((void*)(address));
-                player.hand[j] = card;
-
-                address += 0x4;
-            }
-            for (size_t j = 0; j < 80; j++)
-            {
-                Card card;
-                card.intID = Utils::ReadUint32((void*)(address)) & 0xFFF;
-                card.fullValue = Utils::ReadUint32((void*)(address));
-                player.deck[j] = card;
-
-                address += 0x4;
-            }
-            for (size_t j = 0; j < 15; j++)
-            {
-                Card card;
-                card.intID = Utils::ReadUint32((void*)(address)) & 0xFFF;
-                card.fullValue = Utils::ReadUint32((void*)(address));
-                player.extra[j] = card;
-
-                address += 0x4;
-            }
-            for (size_t j = 0; j < 95; j++)
-            {
-                Card card;
-                card.intID = Utils::ReadUint32((void*)(address)) & 0xFFF;
-                card.fullValue = Utils::ReadUint32((void*)(address));
-                player.grave[j] = card;
-
-                address += 0x4;
-            }
-            for (size_t j = 0; j < 95; j++)
-            {
-                Card card;
-                card.intID = Utils::ReadUint32((void*)(address)) & 0xFFF;
-                card.fullValue = Utils::ReadUint32((void*)(address));
-                player.banish[j] = card;
-
-                address += 0x4;
-            }
-
-            duel.players[i] = player;
-        }
-
-        return duel;
+        return _duel;
     }
 
 

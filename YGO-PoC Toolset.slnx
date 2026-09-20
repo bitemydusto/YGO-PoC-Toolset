@@ -24,6 +24,7 @@
     <Project Path="src/Mods/PoCDebugger/PoCDebugger.vcxproj" Id="02bbb32a-4b03-428a-823a-5961469ebf4f" />
     <Project Path="src/Mods/ScriptLoader/ScriptLoader.vcxproj" Id="ee89654c-08da-4f1e-8b3e-ea9a514ffb8e" />
     <Project Path="src/Mods/SpiritMonsters/SpiritMonsters.vcxproj" Id="98809c4d-70b9-4cb6-88cd-fffe5c75c15a" />
+    <Project Path="src/Mods/XYZ/XYZ.vcxproj" Id="80d34bdb-42f3-4e63-987f-b9b2d554adc1" />
   </Folder>
   <Project Path="src/Editor/Editor.csproj" />
   <Project Path="src/PoCModLoader/PoCModLoader.vcxproj" Id="8901e795-fdf3-41cc-8d45-1760b10e7a50">

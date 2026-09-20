@@ -7,7 +7,7 @@
 
 const uint16_t TSUKUYOMI = Cards::AIR_EATER;
 
-GameData::Duel duel;
+GameData::Duel* duel = GameData::GetDuel();
 
 uint32_t __cdecl Effect_TSUKUYOMI(unsigned int* param, int param2, int param3);
 
@@ -58,10 +58,10 @@ uint32_t __cdecl Effect_TSUKUYOMI(unsigned int* param, int param2, int param3)
     uint32_t side = funParam.GetFieldTargetSide(0);
     uint32_t zone = funParam.GetFieldTargetZone(0);
 
-    if (GameData::GetDuel().players[side].monsterZones[zone].card.intID == 0) return 0;
+    if (duel->players[side].monsterZones[zone].card.GetIntID() == 0) return 0;
 
 	duel = GameData::GetDuel();
-    if (duel.players[side].monsterZones[zone].InAttackPosition())
+    if (duel->players[side].monsterZones[zone].InAttackPosition())
     {
 		FUN::ToggleMonsterPosition(side, zone, 1, 0, 0);
     }

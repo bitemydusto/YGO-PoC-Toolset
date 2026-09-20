@@ -26,6 +26,7 @@ namespace
 	void* gCanBeRevivedTrampoline = nullptr;
 	void* gResponseTrampoline = nullptr;
 	void* gCanBeSpecialSummonedByEffectTrampoline = nullptr;
+	void* gListClickedTrampoline = nullptr;
 }
 
 void HookManager::InstallHooks()
@@ -96,6 +97,9 @@ void HookManager::InstallHooks()
 
 	hCanBeSpecialSummonedByEffect = Utils::InstallHook((void*)0x00570ac1, 5, PatchCanBeSpecialSummonedByEffect);
 	gCanBeSpecialSummonedByEffectTrampoline = hCanBeSpecialSummonedByEffect.Trampoline;
+
+	hListClicked = Utils::InstallHook((void*)0x005b9128, 6, PatchListClicked);
+	gListClickedTrampoline = hListClicked.Trampoline;
 
 	//hResponse = Utils::InstallHook((void*)0x005bab25, 6, PatchResponse);
 	//gResponseTrampoline = hResponse.Trampoline;
@@ -170,18 +174,29 @@ void HookManager::InstallHooks()
 	Utils::PatchCall(0x005922b2, M_CanFuse);
 	Utils::PatchCall(0x0059c190, M_CanFuse);
 
+
+	EffectScript extra;
+	extra.CardID = 0x1c1;
+	extra.Effect = reinterpret_cast<uintptr_t>(&ExtraSummon);
+	extra.AppliesTo = 0;
+	extra.Condition = 0;
+	extra.Cost = 0;
+	extra.Target = 0;
+	Register_EffectScript(extra);
+
+	Register_SelectionListPopulation(0x1c1, LoadSelectionListExtra);
 }
 void __stdcall ReturnSpiritsToHand()
 {
-	GameData::Duel duel = GameData::GetDuel();
+	GameData::Duel* duel = GameData::GetDuel();
 
 	FUN::FieldMaskGenerator maskGen;
 	for (size_t i = 0; i < 2; i++)
 	{
 		for (size_t j = 0; j < 5; j++)
 		{
-			uint16_t cardIntID = duel.players[i].monsterZones[j].card.intID;
-			if (cardIntID != 0 && duel.players[i].monsterZones[j].IsFaceUp())
+			uint16_t cardIntID = duel->players[i].monsterZones[j].card.GetIntID();
+			if (cardIntID != 0 && duel->players[i].monsterZones[j].IsFaceUp())
 			{
 				uint16_t cardID = FUN::GetCardID(cardIntID);
 				for (const auto& id : HookManager::spiritMonsters)
@@ -199,6 +214,126 @@ void __stdcall ReturnSpiritsToHand()
 
 	uint8_t block[32] = {};
 	FUN::SendCardFromField(block, maskGen.GenerateMask(), 0xb, 0);
+}
+void __stdcall LoadSelectionListExtra()
+{
+	auto duel = GameData::GetDuel();
+	std::vector<uint32_t> extras;
+	GameData::Player player = duel->players[1];
+
+	for (size_t i = 0; i < player.cardsInExtra; i++)
+	{
+		uint16_t cardInExtra = FUN::GetCardID(player.extra[i].GetIntID());
+		for (const auto& extraMonster : HookManager::extraMonsters)
+		{
+			if (cardInExtra == extraMonster.cardID && extraMonster.summonCondition(1))
+			{
+				extras.push_back(player.extra[i].fullValue);
+			}
+		}
+	}
+
+	GameData::ChangeSelectionList(extras, 8);
+
+}
+uint32_t __cdecl HookManager::ExtraSummon(unsigned int* param, int param2, int param3)
+{
+	FUN::Param funParam(param);
+	uint8_t state = GameData::GetEffectState();
+
+	switch (state)
+	{
+		case 0x80:
+		{
+			FUN::ShowDialog("Do you want to @2Summon@0 a monster from your @3Extra Deck@0?");
+			FUN::ShowDialogOptions(1, 0);
+			return 0x7f;
+		}
+		case 0x7f:
+		{
+			if (GameData::GetDialogResult() == 0)
+			{
+				FUN::InitiateSelectionList(1, 1, -1, Location::EXTRA);
+				return 0;
+			}
+			else return 0x7e;
+		}
+		case 0x7e:
+		{
+			FUN::InitiateSelectionList(funParam.playerIdx, 6, 0x1c1, Location::EXTRA);
+
+			return 0x7d;
+		}
+		case 0x7d:
+		{
+			uint32_t count = FUN::GetSelectionListCount();
+			if (count == 0) return 0;
+
+			uint32_t* entry = (uint32_t*)FUN::GetSelectedItem();
+			if (!entry || (*entry & 0xFFF) == 0) return 0xfe;
+
+			HookManager::selectedExtraMonster = FUN::GetCardID(*entry & 0xFFF);
+
+			return 0x7c;
+		}
+		case 0x7c:
+		{
+			uint32_t result = 0;
+			for (const auto& extraMonster : HookManager::extraMonsters)
+			{
+				if (HookManager::selectedExtraMonster == extraMonster.cardID)
+				{
+					result = extraMonster.summonState();
+					break;
+				}
+			}
+			if (result != 1) return 0x7c;
+
+			return 0;
+		}
+
+	}
+}
+bool __stdcall HookManager::Dispatch_ListClicked()
+{
+	GameData::Duel* duel = GameData::GetDuel();
+
+	if (GameData::GetSelectedLocation() != Location::EXTRA) return false;
+	if (duel->players[1].cardsInExtra == 0) return false;
+
+	for (size_t i = 0; i < duel->players[1].cardsInExtra; i++)
+	{
+		uint16_t cardInExtra = FUN::GetCardID(duel->players[1].extra[i].GetIntID());
+		for (const auto& extraMonster : HookManager::extraMonsters)
+		{
+			if (cardInExtra == extraMonster.cardID && extraMonster.summonCondition(1))
+			{
+				uint16_t cardIntID = FUN::GetCardIntID(0x1c1);
+				uint32_t pack =
+					((uint32_t)(0 & 0x1F) | ((uint32_t)1 << 15) | 0x0A20u) << 16
+					| (cardIntID & 0xFFF);
+
+				FUN::InvokeEffect(pack, 0, 0);
+
+				return true;
+			}
+		}
+	}
+	return false;
+}
+__declspec(naked) void PatchListClicked()
+{
+	__asm
+	{
+	hook:
+		CALL HookManager::Dispatch_ListClicked
+		TEST AL, AL
+		JZ hook_end
+		PUSH 0x005b916a
+		RET
+	hook_end :
+		JMP[gListClickedTrampoline]
+	}
 }
 void HookManager::Register_EffectScript(EffectScript script)
 {
@@ -237,6 +372,15 @@ void HookManager::Register_SpiritMonster(uint16_t cardID)
 	}
 	spiritMonsters.push_back(cardID);
 	Register_CanBeSpecialSummoned(cardID, false);
+}
+void HookManager::Register_ExtraSummonMonster(uint16_t cardID, Condition summonCondition, State summonState)
+{
+	// Check if the card ID is already registered
+	for (const auto& item : extraMonsters)
+	{
+		if (item.cardID == cardID) return;
+	}
+	extraMonsters.push_back({ cardID, summonCondition, summonState });
 }
 void HookManager::Register_FlipMonster(uint16_t cardID)
 {
@@ -371,14 +515,14 @@ void HookManager::Register_MandatoryResponse(uint16_t cardID, ScriptFUN conditio
 }
 void __stdcall HookManager::Dispatch_MandatoryResponse(uint32_t cardDword)
 {
-	GameData::Duel duel = GameData::GetDuel();
+	GameData::Duel* duel = GameData::GetDuel();
 
 	for (size_t i = 0; i < 2; i++)
 	{
 		for (size_t j = 0; j < 5; j++)
 		{
-			uint16_t cardIntID = duel.players[i].monsterZones[j].card.intID;
-			if (cardIntID != 0 && duel.players[i].monsterZones[j].IsFaceUp())
+			uint16_t cardIntID = duel->players[i].monsterZones[j].card.GetIntID();
+			if (cardIntID != 0 && duel->players[i].monsterZones[j].IsFaceUp())
 			{
 				uint16_t cardID = FUN::GetCardID(cardIntID);
 				for (const auto& item : mandatoryResponses)

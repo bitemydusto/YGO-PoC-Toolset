@@ -5,6 +5,8 @@
 #include "HookAPI.h"
 #include "Cards.h"
 
+GameData::Duel* duel = GameData::GetDuel();
+
 const uint16_t METAMORPHOSIS = Cards::ARLOWNAY;
 int tributedLevel = 0;
 uint32_t cardDword = 0;
@@ -70,7 +72,7 @@ uint32_t __cdecl Effect_Meta(unsigned int* param, int param2, int param3)
         }
         case 0x7f:
         {
-            FUN::InitiateSelectionList(funParam.playerIdx, 6, Cards::ARLOWNAY, 0);
+            FUN::InitiateSelectionList(funParam.playerIdx, 6, Cards::ARLOWNAY, Location::EXTRA);
 
             return 0xfe;
         }
@@ -97,7 +99,7 @@ uint32_t __cdecl Effect_Meta(unsigned int* param, int param2, int param3)
 uint32_t __cdecl Condition_Meta(unsigned int* param, int param2, int param3)
 {
     FUN::Param funParam(param);
-	GameData::Player player = GameData::GetDuel().players[funParam.playerIdx];
+	GameData::Player player = duel->players[funParam.playerIdx];
 
 	if (player.cardsInExtra == 0) return 0;
     if (FUN::CanPlayerSummon(funParam.playerIdx) == 0) return 0;
@@ -105,13 +107,13 @@ uint32_t __cdecl Condition_Meta(unsigned int* param, int param2, int param3)
 
 	for (size_t i = 0; i < 5; i++)
 	{
-        if (player.monsterZones[i].card.intID != 0)
+        if (player.monsterZones[i].card.GetIntID() != 0)
         {
-            int fieldLevel = FUN::GetMonsterLevel(player.monsterZones[i].card.intID);
+            int fieldLevel = FUN::GetMonsterLevel(player.monsterZones[i].card.GetIntID());
 
 			for (size_t j = 0; j < player.cardsInExtra; j++)
 			{
-				int extraLevel = FUN::GetMonsterLevel(player.extra[j].intID);
+				int extraLevel = FUN::GetMonsterLevel(player.extra[j].GetIntID());
 
 				if (fieldLevel == extraLevel) return 1;
 			}
@@ -148,7 +150,7 @@ uint32_t __cdecl Cost_Meta(unsigned int* param, int param2, int param3)
 
 			FUN::TributeSelected(side, col);
 
-            tributedLevel = FUN::GetMonsterLevel(GameData::GetDuel().players[side].monsterZones[col].card.intID);
+            tributedLevel = FUN::GetMonsterLevel(duel->players[side].monsterZones[col].card.GetIntID());
 
             GameData::SetEffectSubState(0);
              
@@ -160,15 +162,15 @@ uint32_t __cdecl Cost_Meta(unsigned int* param, int param2, int param3)
 }
 bool CanBeTributed(uint8_t playerIdx,uint8_t side, uint8_t col)
 {
-	GameData::Player player = GameData::GetDuel().players[playerIdx];
+	GameData::Player player = duel->players[playerIdx];
 
 	if (side !=  playerIdx) return false;
 	if (col > 4) return false;
-	if (player.monsterZones[col].card.intID == 0) return false;
-	int fieldLevel = FUN::GetMonsterLevel(player.monsterZones[col].card.intID);
+	if (player.monsterZones[col].card.GetIntID() == 0) return false;
+	int fieldLevel = FUN::GetMonsterLevel(player.monsterZones[col].card.GetIntID());
 	for (size_t i = 0; i < player.cardsInExtra; i++)
 	{
-		int extraLevel = FUN::GetMonsterLevel(player.extra[i].intID);
+		int extraLevel = FUN::GetMonsterLevel(player.extra[i].GetIntID());
 		if (fieldLevel == extraLevel) return true;
 	}
 	return false;
@@ -176,11 +178,11 @@ bool CanBeTributed(uint8_t playerIdx,uint8_t side, uint8_t col)
 void __stdcall LoadSelectionListFusion()
 {
     std::vector<uint32_t> fusions;
-    GameData::Player player = GameData::GetDuel().players[1];
+    GameData::Player player = duel->players[1];
 
     for (size_t i = 0; i < player.cardsInExtra; i++)
     {
-		if (FUN::GetMonsterLevel(player.extra[i].intID) == tributedLevel)
+		if (FUN::GetMonsterLevel(player.extra[i].GetIntID()) == tributedLevel)
 		{
 			fusions.push_back(player.extra[i].fullValue);
 		}

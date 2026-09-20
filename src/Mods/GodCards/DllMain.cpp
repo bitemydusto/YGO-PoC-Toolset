@@ -5,7 +5,7 @@
 #include "GameData.h"
 #include "HookAPI.h"
 
-GameData::Duel duel;
+GameData::Duel* duel = GameData::GetDuel();
 
 int innerState = 0;
 uint16_t monsterSummoned = 0;
@@ -152,7 +152,7 @@ uint32_t __cdecl Effect_Slifer(unsigned int* param, int param2, int param3)
     if (funParam.finishedResolving) return 0;
 
 	if (t_zoneIdx > 4) return 0;
-    if (duel.players[t_playerIdx].monsterZones[t_zoneIdx].card.intID == 0) return 0;
+    if (duel->players[t_playerIdx].monsterZones[t_zoneIdx].card.GetIntID() == 0) return 0;
 
     uint8_t x = Utils::ReadUint8((void*)(GameData::BASE_PLAYER_ADDRESS + GameData::PLAYER_OFFSET * t_playerIdx + 0x10 + t_zoneIdx * 0x90 + 0x6));
     if ((x & 2) == 0) return 0;
@@ -190,7 +190,7 @@ uint32_t __cdecl Condition_Slifer(unsigned int* param, int param2, int param3)
 	uint16_t rWindow = (block[1] & 0xfc0) >> 6;
     if (rWindow != 5 && rWindow != 6 && rWindow != 7) return 0; // Normal/Flip/Special summon response window
 
-    if ((duel.players[t_playerIdx].monsterZones[t_zoneIdx].card.intID & 0xfff) == 0) return 0;
+    if ((duel->players[t_playerIdx].monsterZones[t_zoneIdx].card.GetIntID() & 0xfff) == 0) return 0;
 
 	uint8_t x = Utils::ReadUint8((void*)(GameData::BASE_PLAYER_ADDRESS + GameData::PLAYER_OFFSET * t_playerIdx + 0x10 + t_zoneIdx * 0x90 + 0x6));
 	if ((x & 2) == 0) return 0;
@@ -206,13 +206,13 @@ uint32_t __cdecl Condition_Obelisk(unsigned int* param, int param2, int param3)
 	FUN::Param funParam(param);
 
 	duel = GameData::GetDuel();
-	GameData::Player player = duel.players[funParam.playerIdx];
+	GameData::Player player = duel->players[funParam.playerIdx];
 
     int n = 0;
 	for (size_t i = 0; i < 5; i++)
 	{
 		if (i == funParam.zoneIdx) continue;
-		if (player.monsterZones[i].card.intID != 0) n++;
+		if (player.monsterZones[i].card.GetIntID() != 0) n++;
 	}
 
 	if (n < 2) return 0;
@@ -303,7 +303,7 @@ uint32_t __cdecl Target_Ra(unsigned int* param, int param2, int param3)
 {
 	if (raEffectChoice == 0)
 	{
-		return FUN::TargetMonster(param, param2, param3);
+		return FUN::TargetFieldCard(param, param2, param3);
 	}
 	else
 	{
@@ -346,7 +346,7 @@ uint32_t __cdecl Cost_Ra(unsigned int* param, int param2, int param3)
             }
             else
             {
-				raLifePaid = duel.players[funParam.playerIdx].lifePoints - 1;
+				raLifePaid = duel->players[funParam.playerIdx].lifePoints - 1;
 				FUN::PayLifePoints(funParam.playerIdx, raLifePaid);
             }
 		    GameData::SetEffectSubState(0);
@@ -357,7 +357,7 @@ uint32_t __cdecl Cost_Ra(unsigned int* param, int param2, int param3)
         {
             raEffectChoice = 1;
 
-            raLifePaid = duel.players[funParam.playerIdx].lifePoints - 1;
+            raLifePaid = duel->players[funParam.playerIdx].lifePoints - 1;
             FUN::PayLifePoints(funParam.playerIdx, raLifePaid);
 
             GameData::SetEffectSubState(0);
@@ -389,12 +389,12 @@ bool CanBeTributed(uint8_t playerIdx, uint8_t side, uint8_t col)
 bool CanBeTributedObelisk(uint8_t playerIdx, uint8_t zoneIdx, uint8_t selSide, uint8_t selCol)
 {
 	duel = GameData::GetDuel();
-    GameData::Player player = duel.players[playerIdx];
+    GameData::Player player = duel->players[playerIdx];
 
     if (selSide != playerIdx) return false;
 	if (selCol == zoneIdx) return false;
     if (selCol > 4) return false;
-    if (player.monsterZones[selCol].card.intID == 0) return false;
+    if (player.monsterZones[selCol].card.GetIntID() == 0) return false;
 	if (FUN::IsMonsterTributable(playerIdx, selSide, selCol) == 0) return false;
 
     return true;
@@ -402,14 +402,14 @@ bool CanBeTributedObelisk(uint8_t playerIdx, uint8_t zoneIdx, uint8_t selSide, u
 bool raCondition1(uint8_t playerIdx)
 {
 	duel = GameData::GetDuel();
-	GameData::Player player = duel.players[playerIdx];
+	GameData::Player player = duel->players[playerIdx];
 	if (player.lifePoints <= 1000) return false;
 	return true;
 }
 bool raCondition2(uint8_t playerIdx)
 {
 	duel = GameData::GetDuel();
-	GameData::Player player = duel.players[playerIdx];
+	GameData::Player player = duel->players[playerIdx];
 	if (player.lifePoints <= 1) return false;
 	return true;
 }
@@ -553,7 +553,7 @@ uint32_t __stdcall SummonStates()
 void __stdcall ChangeSliferStat(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx)
 {
 	duel = GameData::GetDuel();
-	GameData::Player player = duel.players[playerIdx];
+	GameData::Player player = duel->players[playerIdx];
 
     // Modify stats
     // 0x20 = ATK, 0x24 = DEF
@@ -564,7 +564,7 @@ void __stdcall ChangeSliferStat(uint32_t statAddress, uint32_t playerIdx, uint32
 void __stdcall SliferStatReduce(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx)
 {
 	duel = GameData::GetDuel();
-	GameData::Player player = duel.players[playerIdx];
+	GameData::Player player = duel->players[playerIdx];
 	// Modify stats
 	// 0x20 = ATK, 0x24 = DEF
 	uint32_t currentATK = Utils::ReadUint32((void*)(statAddress + 0x20));
@@ -595,7 +595,7 @@ void __stdcall EndPhase()
 	{
 		for (size_t j = 0; j < 5; j++)
 		{
-			uint16_t intID = duel.players[i].monsterZones[j].card.intID;
+			uint16_t intID = duel->players[i].monsterZones[j].card.GetIntID();
             if (intID != 0)
             {
                 uint16_t cardID = FUN::GetCardID(intID);

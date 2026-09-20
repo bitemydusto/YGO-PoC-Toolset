@@ -27,6 +27,9 @@ namespace
 	void* gResponseTrampoline = nullptr;
 	void* gCanBeSpecialSummonedByEffectTrampoline = nullptr;
 	void* gListClickedTrampoline = nullptr;
+	void* gCardHoverTrampoline = nullptr;
+	void* gCardHoverTrampoline2 = nullptr;
+	void* gCardHoverTrampoline3 = nullptr;
 }
 
 void HookManager::InstallHooks()
@@ -98,11 +101,11 @@ void HookManager::InstallHooks()
 	hCanBeSpecialSummonedByEffect = Utils::InstallHook((void*)0x00570ac1, 5, PatchCanBeSpecialSummonedByEffect);
 	gCanBeSpecialSummonedByEffectTrampoline = hCanBeSpecialSummonedByEffect.Trampoline;
 
-	hListClicked = Utils::InstallHook((void*)0x005b9128, 6, PatchListClicked);
-	gListClickedTrampoline = hListClicked.Trampoline;
+	hCardHover = Utils::InstallHook((void*)0x005a0206, 5, PatchCardHover);
+	gCardHoverTrampoline = hCardHover.Trampoline;
 
-	//hResponse = Utils::InstallHook((void*)0x005bab25, 6, PatchResponse);
-	//gResponseTrampoline = hResponse.Trampoline;
+	hCardHover2 = Utils::InstallHook((void*)0x005b8da4, 7, PatchInputProcess);
+	gCardHoverTrampoline2 = hCardHover2.Trampoline;
 
 
 	PatchLoader::LoadPatches();
@@ -294,7 +297,7 @@ uint32_t __cdecl HookManager::ExtraSummon(unsigned int* param, int param2, int p
 
 	}
 }
-bool __stdcall HookManager::Dispatch_ListClicked()
+bool __stdcall HookManager::Dispatch_InputProcess()
 {
 	GameData::Duel* duel = GameData::GetDuel();
 
@@ -321,18 +324,53 @@ bool __stdcall HookManager::Dispatch_ListClicked()
 	}
 	return false;
 }
-__declspec(naked) void PatchListClicked()
+bool __stdcall HookManager::Dispatch_CardHover()
+{
+	GameData::Duel* duel = GameData::GetDuel();
+	if (GameData::GetSelectedLocation() != Location::EXTRA) return false;
+	if (duel->players[1].cardsInExtra == 0) return false;
+	for (size_t i = 0; i < duel->players[1].cardsInExtra; i++)
+	{
+		uint16_t cardInExtra = FUN::GetCardID(duel->players[1].extra[i].GetIntID());
+		for (const auto& extraMonster : HookManager::extraMonsters)
+		{
+			if (cardInExtra == extraMonster.cardID && extraMonster.summonCondition(1))
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+__declspec(naked) void PatchCardHover()
 {
 	__asm
 	{
 	hook:
-		CALL HookManager::Dispatch_ListClicked
+		PUSH ESI
+		CALL HookManager::Dispatch_CardHover
 		TEST AL, AL
+		POP ESI
 		JZ hook_end
-		PUSH 0x005b916a
+		OR ESI, 0x8
+	hook_end:
+		MOV AX, SI
+		PUSH 0x005a0160
 		RET
-	hook_end :
-		JMP[gListClickedTrampoline]
+	}
+}
+__declspec(naked) void PatchInputProcess()
+{
+	__asm
+	{
+	hook:
+		CMP BYTE PTR DS : [0x00a55048] , 0xc
+		JNE hook_end
+		PUSH EAX
+		CALL HookManager::Dispatch_InputProcess
+		POP EAX
+	hook_end:
+		JMP[gCardHoverTrampoline2]
 	}
 }
 void HookManager::Register_EffectScript(EffectScript script)
@@ -371,7 +409,7 @@ void HookManager::Register_SpiritMonster(uint16_t cardID)
 		if (id == cardID) return;
 	}
 	spiritMonsters.push_back(cardID);
-	Register_CanBeSpecialSummoned(cardID, false);
+	Register_CanBeSummonedByEffect(cardID, false);
 }
 void HookManager::Register_ExtraSummonMonster(uint16_t cardID, Condition summonCondition, State summonState)
 {
@@ -420,7 +458,7 @@ __declspec(naked) void PatchFlipMonster()
 		JMP[gFlipMonsterTrampoline]
 	}
 }
-void HookManager::Register_CanBeSpecialSummoned(uint16_t cardID, bool canBeSpecialSummoned)
+void HookManager::Register_CanBeSummonedByEffect(uint16_t cardID, bool canBeSpecialSummoned)
 {
 	// Check if the card ID is already registered
 	for (const auto& item : canBeSpecialSummonedByEffectHooks)
@@ -429,7 +467,7 @@ void HookManager::Register_CanBeSpecialSummoned(uint16_t cardID, bool canBeSpeci
 	}
 	canBeSpecialSummonedByEffectHooks.push_back({ cardID, canBeSpecialSummoned });
 }
-uint32_t __stdcall HookManager::Dispatch_CanBeSpecialSummoned(uint16_t cardIntID)
+uint32_t __stdcall HookManager::Dispatch_CanBeSummonedByEffect(uint16_t cardIntID)
 {
 	uint16_t cardID = FUN::GetCardID(cardIntID);
 	for (const auto& item : canBeSpecialSummonedByEffectHooks)
@@ -455,7 +493,7 @@ __declspec(naked) void PatchCanBeSpecialSummonedByEffect()
 	hook:
 		PUSH EAX
 		PUSH DWORD PTR DS : [ESP + 0x10]
-		CALL HookManager::Dispatch_CanBeSpecialSummoned
+		CALL HookManager::Dispatch_CanBeSummonedByEffect
 		CMP EAX, 0x2
 		JE hook_end
 		ADD ESP, 0x4

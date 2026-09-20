@@ -80,6 +80,7 @@ uint32_t __cdecl Condition_XYZ(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
 
+	if (duel->players[funParam.playerIdx].cardsInHand == 0) return 0;
 	uint8_t side = funParam.playerIdx ^ 1;
 
 	int n = 0;

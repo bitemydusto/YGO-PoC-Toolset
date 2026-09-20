@@ -49,5 +49,5 @@ extern "C"
 	MOD_API void Register_SpellSpeed(uint32_t cardID, uint32_t speed);
 	MOD_API void Register_HasEffectInHand(uint16_t cardID);
 	MOD_API void Register_UnRevivable(uint16_t cardID);
-	MOD_API void Register_CanBeSpecialSummoned(uint16_t cardID, bool canBeSpecialSummoned);
+	MOD_API void Register_CanBeSummonedByEffect(uint16_t cardID, bool canBeSpecialSummoned);
 }

@@ -128,7 +128,8 @@ void PatchHasEffectInHand2();
 void PatchCanBeRevived();
 void PatchResponse();
 void PatchCanBeSpecialSummonedByEffect();
-void PatchListClicked();
+void PatchCardHover();
+void PatchInputProcess();
 
 void __stdcall LoadSelectionListExtra();
 
@@ -207,14 +208,15 @@ public:
 	static void Register_MandatoryResponse(uint16_t cardID, ScriptFUN condition);
 	static void __stdcall Dispatch_MandatoryResponse(uint32_t cardDword);
 
-	static void Register_CanBeSpecialSummoned(uint16_t cardID, bool canBeSpecialSummoned);
-	static uint32_t __stdcall Dispatch_CanBeSpecialSummoned(uint16_t cardID);
+	static void Register_CanBeSummonedByEffect(uint16_t cardID, bool canBeSpecialSummoned);
+	static uint32_t __stdcall Dispatch_CanBeSummonedByEffect(uint16_t cardID);
 
 	static inline std::vector<uint16_t> spiritMonsters;
 	static inline std::vector<PhaseHook> phaseHooks;
 	static inline std::vector<ExtraMonster> extraMonsters;
 
-	static bool __stdcall Dispatch_ListClicked();
+	static bool __stdcall Dispatch_InputProcess();
+	static bool __stdcall Dispatch_CardHover();
 	static inline uint32_t __cdecl ExtraSummon(unsigned int* param, int param2, int param3);
 
 	static inline uint16_t selectedExtraMonster;
@@ -287,5 +289,8 @@ private:
 	static inline Utils::Hook hResponse;
 	static inline Utils::Hook hCanBeSpecialSummonedByEffect;
 	static inline Utils::Hook hListClicked;
+	static inline Utils::Hook hCardHover;
+	static inline Utils::Hook hCardHover2;
+	static inline Utils::Hook hCardHover3;
 
 };

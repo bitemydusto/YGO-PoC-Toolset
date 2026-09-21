@@ -115,6 +115,7 @@ void PatchNormalSummonCondition();
 void PatchPhase();
 void PatchStatChange();
 void PatchStatCHange2();
+void PatchStatChange3();
 void PatchAfterDamageCalculation();
 void PatchNormalSummonTrigger();
 void PatchSpecialSummonTrigger();
@@ -127,6 +128,7 @@ void PatchSummonState();
 void PatchSelectionListPopulation();
 void PatchInherentSpecialSummon();
 void PatchActivatableEffect();
+void PatchActivatableStEffect();
 void PatchFlipMonster();
 void PatchSpellSpeed();
 void PatchHasEffectInHand();
@@ -158,6 +160,9 @@ public:
 	static void Register_ActivatableEffect(uint16_t cardID);
 	static bool __stdcall Dispatch_ActivatableEffect(uint16_t cardID);
 
+	static void Register_ActivatableStEffect(uint16_t cardIntID);
+	static bool __stdcall Dispatch_ActivatableStEffect(uint16_t cardIntID, uint8_t zoneIdx);
+
 	static void Register_InherentSpecialSummon(uint16_t cardID, bool firstOnly);
 	static bool __stdcall Dispatch_InherentSpecialSummon(uint16_t cardID);
 
@@ -175,6 +180,9 @@ public:
 
 	static void Regigster_StatChangeEffect(uint16_t effectId, StatChange statChange);
 	static bool __stdcall Dispatch_StatChangeEffect(uint16_t effectId, uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
+
+	static void Register_StatChangeEquip(uint16_t cardID, StatChange statChange);
+	static bool __stdcall Dispatch_StatChangeEquip(uint16_t cardID, uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 
 	static void Register_AfterDamageCalculation(Event event);
 	static void __stdcall Dispatch_AfterDamageCalculation();
@@ -242,11 +250,13 @@ private:
 	static inline std::vector<uint16_t> flipMonsters;
 	static inline std::vector<ResponeHook> mandatoryResponses;
 	static inline std::vector<uint16_t> activatableEffects;
+	static inline std::vector<uint16_t> activatableStEffects;
 	static inline std::vector<uint16_t> inherentSpecialSummons;
 	static inline std::vector<SpecialSummonHook> specialSummonHooks;
 	static inline std::vector<SpecialSummonHook> normalSummonHooks;
 	static inline std::vector<StatChangeHook> statChangeHooks;
 	static inline std::vector<StatChangeHook> statChangeHooks2;
+	static inline std::vector<StatChangeHook> statChangeHooks3;
 	static inline std::vector<Event> afterDamageCalculationHooks;
 	static inline std::vector<NormalSummonTriggerHook> normalSummonTriggerHooks;
 	static inline std::vector<NormalSummonCustomTriggerHook> normalSummonCustomTriggerHooks;
@@ -277,12 +287,14 @@ private:
 
 	static inline Utils::Hook hFlipMonster;
 	static inline Utils::Hook hActivatableEffect;
+	static inline Utils::Hook hActivatableStEffect;
 	static inline Utils::Hook hInherentSpecialSummon;
 	static inline Utils::Hook hSpecialSummonCondition;
 	static inline Utils::Hook hNormalSummonCondition;
 	static inline Utils::Hook hPhase;
 	static inline Utils::Hook hStatChange;
 	static inline Utils::Hook hStatChange2;
+	static inline Utils::Hook hStatChange3;
 	static inline Utils::Hook hAfterDamageCalculation;
 	static inline Utils::Hook hNormalSummonTrigger;
 	static inline Utils::Hook hSpecialSummonTrigger; static inline Utils::Hook hSpecialSummonTrigger2;

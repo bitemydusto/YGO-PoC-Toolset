@@ -6,12 +6,14 @@ namespace
 {
 	void* gFlipMonsterTrampoline = nullptr;
 	void* gActivatableEffectTrampoline = nullptr;
+	void* gActivatableStEffectTrampoline = nullptr;
 	void* gInherentSpecialSummonTrampoline = nullptr;
 	void* gSpecialSummonTrampoline = nullptr;
 	void* gNormalSummonTrampoline = nullptr;
 	void* gPhaseTrampoline = nullptr;
 	void* gStatChangeTrampoline = nullptr;
 	void* gStatChangeTrampoline2 = nullptr;
+	void* gStatChangeTrampoline3 = nullptr;
 	void* gAfterDamageCalculationTrampoline = nullptr;
 	void* gNormalSummonTriggerTrampoline = nullptr;
 	void* gSpecialSummonTriggerTrampoline = nullptr; void* gSpecialSummonTriggerTrampoline2 = nullptr;
@@ -40,6 +42,9 @@ void HookManager::InstallHooks()
 	hActivatableEffect = Utils::InstallHook((void*)0x00568042, 5, PatchActivatableEffect);
 	gActivatableEffectTrampoline = hActivatableEffect.Trampoline;
 
+	hActivatableStEffect = Utils::InstallHook((void*)0x005a0181, 5, PatchActivatableStEffect);
+	gActivatableStEffectTrampoline = hActivatableStEffect.Trampoline;
+
 	hInherentSpecialSummon = Utils::InstallHook((void*)0x00567a43, 5, PatchInherentSpecialSummon);
 	gInherentSpecialSummonTrampoline = hInherentSpecialSummon.Trampoline;
 
@@ -57,6 +62,9 @@ void HookManager::InstallHooks()
 
 	hStatChange2 = Utils::InstallHook((void*)0x0056e77a, 5, PatchStatCHange2);
 	gStatChangeTrampoline2 = hStatChange2.Trampoline;
+
+	hStatChange3 = Utils::InstallHook((void*)0x0056ec35, 5, PatchStatChange3);
+	gStatChangeTrampoline3 = hStatChange3.Trampoline;
 
 	hAfterDamageCalculation = Utils::InstallHook((void*)0x00407aae, 5, PatchAfterDamageCalculation);
 	gAfterDamageCalculationTrampoline = hAfterDamageCalculation.Trampoline;
@@ -503,6 +511,50 @@ __declspec(naked) void PatchActivatableEffect()
 		JMP[gActivatableEffectTrampoline]
 	}
 }
+void HookManager::Register_ActivatableStEffect(uint16_t cardID)
+{
+	// Check if the card ID is already registered
+	for (const auto& id : activatableStEffects)
+	{
+		if (id == cardID) return;
+	}
+	activatableStEffects.push_back(cardID);
+}
+bool __stdcall HookManager::Dispatch_ActivatableStEffect(uint16_t cardIntID, uint8_t zoneIdx)
+{
+	if (GameData::GetTurnPlayer() != GameData::GetLocalSide()) return false;
+	uint16_t cardID = FUN::GetCardID(cardIntID & 0xfff);
+	for (const auto& id : activatableStEffects)
+	{
+		if (id == cardID)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+__declspec(naked) void PatchActivatableStEffect()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH DWORD PTR DS : [ESP + 0x10]
+		PUSH ECX
+		CALL HookManager::Dispatch_ActivatableStEffect
+		TEST AL, AL
+		POP EAX
+		JZ hook_end
+		ADD ESP, 0xc
+		MOV ESI, EAX
+		OR ESI, 0x8
+		MOV AX, SI
+		PUSH 0x005a0189
+		RET
+	hook_end :
+		JMP[gActivatableStEffectTrampoline]
+	}
+}
 void HookManager::Register_MandatoryResponse(uint16_t cardID, ScriptFUN condition)
 {
 	// Check if the card ID is already registered
@@ -794,6 +846,47 @@ __declspec(naked) void PatchStatCHange2()
 		JMP EAX
 	hook_end :
 		JMP[gStatChangeTrampoline2]
+	}
+}
+void HookManager::Register_StatChangeEquip(uint16_t cardID, StatChange statChange)
+{
+	// Check if the equip ID is already registered
+	for (const auto& hook : statChangeHooks3)
+	{
+		if (hook.cardID == cardID) return;
+	}
+	statChangeHooks3.push_back({ cardID, statChange });
+}
+bool HookManager::Dispatch_StatChangeEquip(uint16_t cardID, uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx)
+{
+	for (const auto& hook : statChangeHooks3)
+	{
+		if (hook.cardID == cardID)
+		{
+			hook.statChange(statAddress, playerIdx, zoneIdx);
+			return true;
+		}
+	}
+	return false;
+}
+__declspec(naked) void PatchStatChange3()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH DWORD PTR DS : [ESP + 0x4C]
+		PUSH DWORD PTR DS : [ESP + 0x4C]
+		PUSH ESP
+		PUSH EAX
+		CALL HookManager::Dispatch_StatChangeEquip
+		TEST AL, AL
+		POP EAX
+		JZ hook_end
+		MOV EAX, 0x0056f083
+		JMP EAX
+	hook_end :
+		JMP[gStatChangeTrampoline3]
 	}
 }
 void HookManager::Register_AfterDamageCalculation(Event event)

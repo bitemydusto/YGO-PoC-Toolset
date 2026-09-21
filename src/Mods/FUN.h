@@ -113,7 +113,7 @@ namespace FUN
 
 	inline auto NormalSummon = reinterpret_cast<void(__cdecl*)(unsigned int playerIdx, unsigned int handIdx, unsigned int destZone, unsigned int packedTributes, int set)>(0x005ad710);
 
-	inline auto GetSummonZone = reinterpret_cast<uint32_t(__cdecl*)(unsigned int playerIdx)>(0x0056a030);
+	inline auto GetSummonZone = reinterpret_cast<int(__cdecl*)(unsigned int playerIdx)>(0x0056a030);
 
 	inline auto IsFieldSelectionReady = reinterpret_cast<uint32_t(__cdecl*)(unsigned int mask)>(0x005aa410);
 
@@ -204,6 +204,14 @@ namespace FUN
 	// summonType = 0 : Normal Summon, summonType = 1 : Special Summon
 	// returns 1 when the SM finished, 0 otherwise
 	inline auto SummonStateMachine = reinterpret_cast<uint32_t(__cdecl*)(int position, int summonType, int consumeNormal)>(0x0059dee0);
+
+	inline auto GetEmptySpellTrapZoneIdx = reinterpret_cast<int(__cdecl*)(unsigned int playerIdx)>(0x0056a400);
+
+	inline auto MoveCardOnTheField = reinterpret_cast<bool(__cdecl*)(uint8_t* block, int srcSide, char srcZone, int destSide, int destZone)>(0x00577bf0);
+
+	// equipment, target = packed location (zone << 8 | side)
+	// mode = 1 : regular equip, 5 : absorbed monster
+	inline auto EquipCard = reinterpret_cast<void(__cdecl*)(int targetIdx, uint16_t equipment, uint16_t target, int mode)>(0x00574900);
 
 
 

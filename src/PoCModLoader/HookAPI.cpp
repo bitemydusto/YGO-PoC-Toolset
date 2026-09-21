@@ -33,6 +33,10 @@ extern "C"
 	{
 		HookManager::Register_ActivatableEffect(cardID);
 	}
+	void Register_ActivatableStEffect(uint16_t cardID)
+	{
+		HookManager::Register_ActivatableStEffect(cardID);
+	}
 	void Register_InherentSpecialSummon(uint16_t cardID, bool firstOnly)
 	{
 		HookManager::Register_InherentSpecialSummon(cardID, firstOnly);
@@ -56,6 +60,10 @@ extern "C"
 	void Register_StatChangeEffect(uint16_t effectId, StatChange statChange)
 	{
 		HookManager::Regigster_StatChangeEffect(effectId, statChange);
+	}
+	void Register_StatChangeEquip(uint16_t cardID, StatChange statChange)
+	{
+		HookManager::Register_StatChangeEquip(cardID, statChange);
 	}
 	void Register_AfterDamageCalculation(Event event)
 	{

@@ -93,6 +93,10 @@ extern "C"
 	{
 		HookManager::Register_SummonState(stateCode, state);
 	}
+	void Register_SummonStateByID(uint16_t cardID, State state, bool useDefaultNS)
+	{
+		HookManager::Register_SummonState(cardID, state, useDefaultNS);
+	}
 	void Register_SelectionListPopulation(uint16_t cardID, Event event)
 	{
 		HookManager::Register_SelectionListPopulation(cardID, event);

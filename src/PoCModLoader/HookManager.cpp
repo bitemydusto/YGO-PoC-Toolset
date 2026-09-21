@@ -1072,6 +1072,14 @@ void HookManager::Register_InitialSummonState(uint16_t cardID, uint8_t state, bo
 uint8_t __stdcall HookManager::Dispatch_InitialSummonState(uint16_t cardID, uint32_t summonType)
 {
 	if (GameData::GetSelectedLocation() == Location::EXTRA) return 0xff;
+	for (const auto& hook : summonStateHooks2)
+	{
+		if (hook.cardID == cardID)
+		{
+			if (summonType == 0 && hook.useDefaultNS) return 0;
+			return 0xfe;
+		}
+	}
 	for (const auto& hook : initialSummonStateHooks)
 	{
 		if (hook.cardID == cardID)
@@ -1119,9 +1127,28 @@ void HookManager::Register_SummonState(uint8_t stateCode, State state)
 	}
 	summonStateHooks.push_back({ stateCode, state});
 }
+void HookManager::Register_SummonState(uint16_t cardID, State state, bool useDefaultNS)
+{
+	// Check if the card ID is already registered
+	for (const auto& hook : summonStateHooks2)
+	{
+		if (hook.cardID == cardID) return;
+	}
+	summonStateHooks2.push_back({ cardID, state, useDefaultNS });
+}
 uint8_t __stdcall HookManager::Dispatch_SummonState(uint8_t stateCode)
 {
 	if (stateCode == 0xff) return HookManager::ExtraSummonState();
+	if (stateCode == 0xfe)
+	{
+		for (const auto& hook : summonStateHooks2)
+		{
+			if (hook.cardID == FUN::GetCardID(GameData::GetCardUsed()))
+			{
+				return hook.state();
+			}
+		}
+	}
 	for (const auto& hook : summonStateHooks)
 	{
 		if (hook.stateCode == stateCode)

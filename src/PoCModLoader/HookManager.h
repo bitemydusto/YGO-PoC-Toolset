@@ -70,6 +70,12 @@ struct SummonStateHook
 	uint8_t stateCode;
 	State state;
 };
+struct SummonStateHook2
+{
+	uint16_t cardID;
+	State state;
+	bool useDefaultNS;
+};
 struct SelectionListPopulationHook
 {
 	uint16_t cardID;
@@ -191,6 +197,7 @@ public:
 	static uint8_t __stdcall Dispatch_InitialSummonState(uint16_t cardID, uint32_t summonType);
 
 	static void Register_SummonState(uint8_t stateCode, State state);
+	static void Register_SummonState(uint16_t cardID, State state, bool useDefaultNS);
 	static uint8_t __stdcall Dispatch_SummonState(uint8_t stateCode);
 
 	static void Register_SelectionListPopulation(uint16_t cardID, Event event);
@@ -249,6 +256,7 @@ private:
 	static inline std::vector<BanishOnLeavingFieldHook> banishOnLeavingFieldHooks;
 	static inline std::vector<InitialSummonStateHook> initialSummonStateHooks;
 	static inline std::vector<SummonStateHook> summonStateHooks;
+	static inline std::vector<SummonStateHook2> summonStateHooks2;
 	static inline std::vector<SelectionListPopulationHook> selectionListPopulationHooks;
 	static inline std::vector<SpellSpeedHook> spellSpeedHooks;
 	static inline std::vector<uint16_t> hasEffectInHandHooks;

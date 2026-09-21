@@ -222,7 +222,7 @@ void __stdcall LoadSelectionListExtra()
 {
 	auto duel = GameData::GetDuel();
 	std::vector<uint32_t> extras;
-	GameData::Player player = duel->players[1];
+	GameData::Player player = duel->players[GameData::GetTurnPlayer()];
 
 	for (size_t i = 0; i < player.cardsInExtra; i++)
 	{
@@ -248,26 +248,11 @@ uint32_t __cdecl HookManager::ExtraSummon(unsigned int* param, int param2, int p
 	{
 		case 0x80:
 		{
-			FUN::ShowDialog("Do you want to @2Summon@0 a monster from your @3Extra Deck@0?");
-			FUN::ShowDialogOptions(1, 0);
+			FUN::InitiateSelectionList(funParam.playerIdx, 6, 0x1c1, Location::EXTRA);
+
 			return 0x7f;
 		}
 		case 0x7f:
-		{
-			if (GameData::GetDialogResult() == 0)
-			{
-				FUN::InitiateSelectionList(1, 1, -1, Location::EXTRA);
-				return 0;
-			}
-			else return 0x7e;
-		}
-		case 0x7e:
-		{
-			FUN::InitiateSelectionList(funParam.playerIdx, 6, 0x1c1, Location::EXTRA);
-
-			return 0x7d;
-		}
-		case 0x7d:
 		{
 			uint32_t count = FUN::GetSelectionListCount();
 			if (count == 0) return 0;
@@ -277,9 +262,9 @@ uint32_t __cdecl HookManager::ExtraSummon(unsigned int* param, int param2, int p
 
 			HookManager::selectedExtraMonster = FUN::GetCardID(*entry & 0xFFF);
 
-			return 0x7c;
+			return 0x7e;
 		}
-		case 0x7c:
+		case 0x7e:
 		{
 			uint32_t result = 0;
 			for (const auto& extraMonster : HookManager::extraMonsters)
@@ -290,7 +275,7 @@ uint32_t __cdecl HookManager::ExtraSummon(unsigned int* param, int param2, int p
 					break;
 				}
 			}
-			if (result != 1) return 0x7c;
+			if (result != 1) return 0x7e;
 
 			return 0;
 		}
@@ -300,20 +285,19 @@ uint32_t __cdecl HookManager::ExtraSummon(unsigned int* param, int param2, int p
 bool __stdcall HookManager::Dispatch_InputProcess()
 {
 	GameData::Duel* duel = GameData::GetDuel();
+	uint8_t localSide = GameData::GetLocalSide();
 
-	if (GameData::GetSelectedLocation() != Location::EXTRA) return false;
-	if (duel->players[1].cardsInExtra == 0) return false;
 
-	for (size_t i = 0; i < duel->players[1].cardsInExtra; i++)
+	for (size_t i = 0; i < duel->players[localSide].cardsInExtra; i++)
 	{
-		uint16_t cardInExtra = FUN::GetCardID(duel->players[1].extra[i].GetIntID());
+		uint16_t cardInExtra = FUN::GetCardID(duel->players[localSide].extra[i].GetIntID());
 		for (const auto& extraMonster : HookManager::extraMonsters)
 		{
-			if (cardInExtra == extraMonster.cardID && extraMonster.summonCondition(1))
+			if (cardInExtra == extraMonster.cardID && extraMonster.summonCondition(localSide))
 			{
 				uint16_t cardIntID = FUN::GetCardIntID(0x1c1);
 				uint32_t pack =
-					((uint32_t)(0 & 0x1F) | ((uint32_t)1 << 15) | 0x0A20u) << 16
+					((uint32_t)(0xc & 0x1F) | ((uint32_t)localSide << 15) | 0) << 16
 					| (cardIntID & 0xFFF);
 
 				FUN::InvokeEffect(pack, 0, 0);
@@ -327,14 +311,18 @@ bool __stdcall HookManager::Dispatch_InputProcess()
 bool __stdcall HookManager::Dispatch_CardHover()
 {
 	GameData::Duel* duel = GameData::GetDuel();
+	uint8_t localSide = GameData::GetLocalSide();
+
+	if (GameData::GetSelectedSide() != localSide) return false;
 	if (GameData::GetSelectedLocation() != Location::EXTRA) return false;
-	if (duel->players[1].cardsInExtra == 0) return false;
-	for (size_t i = 0; i < duel->players[1].cardsInExtra; i++)
+	if (duel->players[localSide].cardsInExtra == 0) return false;
+
+	for (size_t i = 0; i < duel->players[localSide].cardsInExtra; i++)
 	{
-		uint16_t cardInExtra = FUN::GetCardID(duel->players[1].extra[i].GetIntID());
+		uint16_t cardInExtra = FUN::GetCardID(duel->players[localSide].extra[i].GetIntID());
 		for (const auto& extraMonster : HookManager::extraMonsters)
 		{
-			if (cardInExtra == extraMonster.cardID && extraMonster.summonCondition(1))
+			if (cardInExtra == extraMonster.cardID && extraMonster.summonCondition(localSide))
 			{
 				return true;
 			}
@@ -484,6 +472,7 @@ uint32_t __stdcall HookManager::Dispatch_CanBeSummonedByEffect(uint16_t cardIntI
 			}
 		}
 	}
+	if (FUN::GetCardSubType(cardIntID) == SubType::FUSION) return 1; // A "fix" to the original logic. I think it should work like this.
 	return 2; // Not found
 }
 __declspec(naked) void PatchCanBeSpecialSummonedByEffect()

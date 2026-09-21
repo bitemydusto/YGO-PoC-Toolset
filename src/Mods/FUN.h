@@ -13,6 +13,13 @@ enum Location : uint8_t
 	GRAVE = 0xE,
 	BANISHED = 0xF
 };
+enum SubType : uint8_t
+{
+	NORMAL = 0,
+	EFFECT = 1,
+	FUSION = 2,
+	RITUAL = 3,
+};
 
 namespace FUN
 {

@@ -666,7 +666,7 @@ uint32_t __stdcall SummonStates()
 void __stdcall LoadSelectionListDark()
 {
 	std::vector<uint32_t> darkCards;
-	GameData::Player player = duel->players[1];
+	GameData::Player player = duel->players[GameData::GetTurnPlayer()];
 	for (size_t i = 0; i < player.cardsInGrave; i++)
 	{
 		if (FUN::GetMonsterType(player.grave[i].fullValue) < 0x15)
@@ -684,7 +684,7 @@ void __stdcall LoadSelectionListDark()
 void __stdcall LoadSelectionListBanished()
 {
 	std::vector<uint32_t> banishedCards;
-	GameData::Player player = duel->players[1];
+	GameData::Player player = duel->players[GameData::GetTurnPlayer()];
 
 	for (size_t i = 0; i < player.cardsInBanish; i++)
 	{

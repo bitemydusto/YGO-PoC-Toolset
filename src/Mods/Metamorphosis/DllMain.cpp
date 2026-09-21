@@ -115,7 +115,7 @@ uint32_t __cdecl Condition_Meta(unsigned int* param, int param2, int param3)
 			{
 				int extraLevel = FUN::GetMonsterLevel(player.extra[j].GetIntID());
 
-				if (fieldLevel == extraLevel) return 1;
+				if (fieldLevel == extraLevel && FUN::CanBeSummonedByEffect(funParam.playerIdx, player.extra[j].GetIntID())) return 1;
 			}
         }
 	}
@@ -178,11 +178,11 @@ bool CanBeTributed(uint8_t playerIdx,uint8_t side, uint8_t col)
 void __stdcall LoadSelectionListFusion()
 {
     std::vector<uint32_t> fusions;
-    GameData::Player player = duel->players[1];
+    GameData::Player player = duel->players[GameData::GetTurnPlayer()];
 
     for (size_t i = 0; i < player.cardsInExtra; i++)
     {
-		if (FUN::GetMonsterLevel(player.extra[i].GetIntID()) == tributedLevel)
+		if (FUN::GetMonsterLevel(player.extra[i].GetIntID()) == tributedLevel && FUN::CanBeSummonedByEffect(GameData::GetTurnPlayer(), player.extra[i].GetIntID()))
 		{
 			fusions.push_back(player.extra[i].fullValue);
 		}

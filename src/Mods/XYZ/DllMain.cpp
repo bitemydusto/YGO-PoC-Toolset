@@ -51,6 +51,7 @@ void Start()
     Register_ExtraSummonMonster(XYZ_DRAGON_CANNON, CanBeSummoned, SummonStates);
 	Register_ActivatableEffect(XYZ_DRAGON_CANNON);
 	Register_UnRevivable(XYZ_DRAGON_CANNON);
+	Register_CanBeSummonedByEffect(XYZ_DRAGON_CANNON, false);
 
 	EffectScript scriptXYZ;
 	scriptXYZ.CardID = XYZ_DRAGON_CANNON;
@@ -213,12 +214,12 @@ uint32_t __stdcall SummonStates()
 		case 4:
 		{
 			uint32_t* cardDword = nullptr;
-			for (size_t i = 0; i < duel->players[1].cardsInExtra; i++)
+			for (size_t i = 0; i < duel->players[GameData::GetTurnPlayer()].cardsInExtra; i++)
 			{
-				uint16_t cardID = FUN::GetCardID(duel->players[1].extra[i].GetIntID());
+				uint16_t cardID = FUN::GetCardID(duel->players[GameData::GetTurnPlayer()].extra[i].GetIntID());
 				if (cardID == XYZ_DRAGON_CANNON)
 				{
-					cardDword = &(duel->players[1].extra[i].fullValue);
+					cardDword = &(duel->players[GameData::GetTurnPlayer()].extra[i].fullValue);
 					break;
 				}
 			}

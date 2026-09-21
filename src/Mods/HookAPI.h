@@ -43,7 +43,7 @@ extern "C"
 	MOD_API void Register_CustomSpecialSummonTrigger(uint16_t id, Event1 event);
 	MOD_API void Register_OnSentToGraveTrigger(uint16_t id, Event1 event);
 	MOD_API void Register_BanishOnLeavingField(uint16_t id);
-	MOD_API void Register_InitialSummonState(uint16_t cardIntID, uint8_t stateCode, bool useDefaultNS);
+	MOD_API void Register_InitialSummonState(uint16_t cardID, uint8_t stateCode, bool useDefaultNS);
 	MOD_API void Register_SummonState(uint8_t stateCode, State state);
 	MOD_API void Register_SelectionListPopulation(uint16_t cardID, Event event);
 	MOD_API void Register_SpellSpeed(uint32_t cardID, uint32_t speed);

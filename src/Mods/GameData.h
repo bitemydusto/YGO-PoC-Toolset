@@ -255,6 +255,8 @@ namespace GameData
     {
 		return Utils::ReadUint8((void*)0x00a55048);
     }
+	// lower byte = main state
+	// upper byte = summon state
     uint16_t GetState()
     {
        return Utils::ReadUint16((void*)0x00a57808);

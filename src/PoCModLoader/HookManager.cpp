@@ -177,17 +177,8 @@ void HookManager::InstallHooks()
 	Utils::PatchCall(0x005922b2, M_CanFuse);
 	Utils::PatchCall(0x0059c190, M_CanFuse);
 
-
-	EffectScript extra;
-	extra.CardID = 0x1c1;
-	extra.Effect = reinterpret_cast<uintptr_t>(&ExtraSummon);
-	extra.AppliesTo = 0;
-	extra.Condition = 0;
-	extra.Cost = 0;
-	extra.Target = 0;
-	Register_EffectScript(extra);
-
 	Register_SelectionListPopulation(0x1c1, LoadSelectionListExtra);
+	Register_SummonState(0xff, ExtraSummonState);
 }
 void __stdcall ReturnSpiritsToHand()
 {
@@ -218,6 +209,53 @@ void __stdcall ReturnSpiritsToHand()
 	uint8_t block[32] = {};
 	FUN::SendCardFromField(block, maskGen.GenerateMask(), 0xb, 0);
 }
+uint32_t __stdcall HookManager::ExtraSummonState()
+{
+	switch (HookManager::innerExtraSummonState)
+	{
+		case 0:
+		{
+			FUN::InitiateSelectionList(GameData::GetTurnPlayer(), 6, 0x1c1, Location::EXTRA);
+
+			HookManager::innerExtraSummonState = 1;
+		}break;
+		case 1:
+		{
+			uint32_t count = FUN::GetSelectionListCount();
+			if (count == 0) return 0;
+
+			uint32_t* entry = (uint32_t*)FUN::GetSelectedItem();
+			if (!entry || (*entry & 0xFFF) == 0) return 0;
+
+			HookManager::selectedExtraMonster = FUN::GetCardID(*entry & 0xFFF);
+
+			HookManager::innerExtraSummonState = 2;
+		}break;
+		case 2:
+		{
+			uint32_t result = 0;
+			for (const auto& extraMonster : HookManager::extraMonsters)
+			{
+				if (HookManager::selectedExtraMonster == extraMonster.cardID)
+				{
+					result = extraMonster.summonState();
+					break;
+				}
+			}
+			if (result != 0)
+			{
+				HookManager::innerExtraSummonState = 0;
+				HookManager::extraRunning = 0;
+				uint32_t& runningFlag = *(uint32_t*)0x00a57804;
+				runningFlag &= 0xfffffffd;
+
+				return 1;
+			}
+		}break;
+	}
+
+	return 0;
+}
 void __stdcall LoadSelectionListExtra()
 {
 	auto duel = GameData::GetDuel();
@@ -238,75 +276,6 @@ void __stdcall LoadSelectionListExtra()
 
 	GameData::ChangeSelectionList(extras, 8);
 
-}
-uint32_t __cdecl HookManager::ExtraSummon(unsigned int* param, int param2, int param3)
-{
-	FUN::Param funParam(param);
-	uint8_t state = GameData::GetEffectState();
-
-	switch (state)
-	{
-		case 0x80:
-		{
-			FUN::InitiateSelectionList(funParam.playerIdx, 6, 0x1c1, Location::EXTRA);
-
-			return 0x7f;
-		}
-		case 0x7f:
-		{
-			uint32_t count = FUN::GetSelectionListCount();
-			if (count == 0) return 0;
-
-			uint32_t* entry = (uint32_t*)FUN::GetSelectedItem();
-			if (!entry || (*entry & 0xFFF) == 0) return 0xfe;
-
-			HookManager::selectedExtraMonster = FUN::GetCardID(*entry & 0xFFF);
-
-			return 0x7e;
-		}
-		case 0x7e:
-		{
-			uint32_t result = 0;
-			for (const auto& extraMonster : HookManager::extraMonsters)
-			{
-				if (HookManager::selectedExtraMonster == extraMonster.cardID)
-				{
-					result = extraMonster.summonState();
-					break;
-				}
-			}
-			if (result != 1) return 0x7e;
-
-			return 0;
-		}
-
-	}
-}
-bool __stdcall HookManager::Dispatch_InputProcess()
-{
-	GameData::Duel* duel = GameData::GetDuel();
-	uint8_t localSide = GameData::GetLocalSide();
-
-
-	for (size_t i = 0; i < duel->players[localSide].cardsInExtra; i++)
-	{
-		uint16_t cardInExtra = FUN::GetCardID(duel->players[localSide].extra[i].GetIntID());
-		for (const auto& extraMonster : HookManager::extraMonsters)
-		{
-			if (cardInExtra == extraMonster.cardID && extraMonster.summonCondition(localSide))
-			{
-				uint16_t cardIntID = FUN::GetCardIntID(0x1c1);
-				uint32_t pack =
-					((uint32_t)(0xc & 0x1F) | ((uint32_t)localSide << 15) | 0) << 16
-					| (cardIntID & 0xFFF);
-
-				FUN::InvokeEffect(pack, 0, 0);
-
-				return true;
-			}
-		}
-	}
-	return false;
 }
 bool __stdcall HookManager::Dispatch_CardHover()
 {
@@ -353,12 +322,15 @@ __declspec(naked) void PatchInputProcess()
 	{
 	hook:
 		CMP BYTE PTR DS : [0x00a55048] , 0xc
-		JNE hook_end
-		PUSH EAX
-		CALL HookManager::Dispatch_InputProcess
-		POP EAX
+		JE hook_extra
+		CMP HookManager::extraRunning, 0x1
+		JE hook_extra
 	hook_end:
 		JMP[gCardHoverTrampoline2]
+	hook_extra:
+		MOV HookManager::extraRunning, 0x1
+		PUSH 0x005b8d84
+		RET
 	}
 }
 void HookManager::Register_EffectScript(EffectScript script)
@@ -1088,20 +1060,21 @@ __declspec(naked) void PatchBanishOnLeavingField()
 		JMP[gBanishOnLeavingFieldTrampoline]
 	}
 }
-void HookManager::Register_InitialSummonState(uint16_t cardIntID, uint8_t state, bool useDefaultNS)
+void HookManager::Register_InitialSummonState(uint16_t cardID, uint8_t state, bool useDefaultNS)
 {
 	// Check if the card ID is already registered
 	for (const auto& hook : initialSummonStateHooks)
 	{
-		if (hook.cardIntID == cardIntID) return;
+		if (hook.cardID == cardID) return;
 	}
-	initialSummonStateHooks.push_back({ cardIntID, state, useDefaultNS });
+	initialSummonStateHooks.push_back({ cardID, state, useDefaultNS });
 }
-uint8_t __stdcall HookManager::Dispatch_InitialSummonState(uint16_t cardIntID, uint32_t summonType)
+uint8_t __stdcall HookManager::Dispatch_InitialSummonState(uint16_t cardID, uint32_t summonType)
 {
+	if (GameData::GetSelectedLocation() == Location::EXTRA) return 0xff;
 	for (const auto& hook : initialSummonStateHooks)
 	{
-		if (hook.cardIntID == cardIntID)
+		if (hook.cardID == cardID)
 		{
 			if (summonType == 0 && hook.useDefaultNS) return 0;
 			return hook.stateCode;
@@ -1148,6 +1121,7 @@ void HookManager::Register_SummonState(uint8_t stateCode, State state)
 }
 uint8_t __stdcall HookManager::Dispatch_SummonState(uint8_t stateCode)
 {
+	if (stateCode == 0xff) return HookManager::ExtraSummonState();
 	for (const auto& hook : summonStateHooks)
 	{
 		if (hook.stateCode == stateCode)

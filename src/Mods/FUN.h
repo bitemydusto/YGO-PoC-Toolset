@@ -200,6 +200,11 @@ namespace FUN
 
 	inline auto CanCardBeTargeted = reinterpret_cast<bool(__cdecl*)(unsigned int playerIdx, unsigned int zoneIdx)>(0x0056c510);
 
+	// position = 0 : DEF, position = 1 : ATK
+	// summonType = 0 : Normal Summon, summonType = 1 : Special Summon
+	// returns 1 when the SM finished, 0 otherwise
+	inline auto SummonStateMachine = reinterpret_cast<uint32_t(__cdecl*)(int position, int summonType, int consumeNormal)>(0x0059dee0);
+
 
 
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);

@@ -61,7 +61,7 @@ struct BanishOnLeavingFieldHook
 };
 struct InitialSummonStateHook
 {
-	uint16_t cardIntID;
+	uint16_t cardID;
 	uint8_t stateCode;
 	bool useDefaultNS;
 };
@@ -187,8 +187,8 @@ public:
 	static void Register_BanishOnLeavingField(uint16_t id);
 	static bool __stdcall Dispatch_BanishOnLeavingField(uint16_t id);
 
-	static void Register_InitialSummonState(uint16_t cardIntID, uint8_t stateCode, bool useDefaultNS);
-	static uint8_t __stdcall Dispatch_InitialSummonState(uint16_t cardIntID, uint32_t summonType);
+	static void Register_InitialSummonState(uint16_t cardID, uint8_t stateCode, bool useDefaultNS);
+	static uint8_t __stdcall Dispatch_InitialSummonState(uint16_t cardID, uint32_t summonType);
 
 	static void Register_SummonState(uint8_t stateCode, State state);
 	static uint8_t __stdcall Dispatch_SummonState(uint8_t stateCode);
@@ -215,11 +215,12 @@ public:
 	static inline std::vector<PhaseHook> phaseHooks;
 	static inline std::vector<ExtraMonster> extraMonsters;
 
-	static bool __stdcall Dispatch_InputProcess();
 	static bool __stdcall Dispatch_CardHover();
-	static inline uint32_t __cdecl ExtraSummon(unsigned int* param, int param2, int param3);
+	static inline uint32_t __stdcall ExtraSummonState();
 
 	static inline uint16_t selectedExtraMonster;
+	static inline int innerExtraSummonState;
+	static inline int extraRunning;
 private:
 	static int __cdecl M_GetEffectScriptIndex(uint32_t cardID);
 	static uint32_t __cdecl M_GetNumOfFusionReqs(uint32_t cardIntID);

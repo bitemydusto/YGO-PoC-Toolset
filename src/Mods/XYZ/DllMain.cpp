@@ -10,7 +10,8 @@ const uint16_t X_HEAD_CANNON = Cards::GANIGUMO;
 const uint16_t Y_DRAGON_HEAD = Cards::KAMAKIRIMAN;
 const uint16_t Z_METAL_TANK = Cards::MASKED_CLOWN;
 
-GameData::Duel* duel = GameData::GetDuel();
+auto duel = GameData::GetDuel();
+auto battleResult = GameData::GetBattleResult();
 int innerState = 0;
 uint8_t destZoneYZ = 0;
 
@@ -35,6 +36,7 @@ bool CanBeSummoned(uint32_t playerIdx);
 uint32_t __stdcall SummonStates();
 void __stdcall StatChange_Y(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 void __stdcall StatChange_Z(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
+void __stdcall Protection();
 
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
@@ -67,6 +69,8 @@ void Start()
 	Register_ActivatableEffect(Z_METAL_TANK);
 	Register_ActivatableStEffect(Z_METAL_TANK);
 	Register_StatChangeEquip(Z_METAL_TANK, StatChange_Z);
+
+	Register_AfterDamageCalculation(Protection);
 
 
 	EffectScript scriptXYZ;
@@ -391,4 +395,42 @@ void __stdcall StatChange_Z(uint32_t statAddress, uint32_t playerIdx, uint32_t z
 	refATK = refATK += 600;
 	refDEF = refDEF += 600;
 
+}
+void __stdcall Protection()
+{
+	for (size_t side = 0; side < 2; side++)
+	{
+		if ((battleResult->sides[side].ResultFlags & 0x10) != 0)
+		{
+			uint8_t zone = (side == (battleResult->StateFlags & 1)) ? battleResult->GetZone(0) : battleResult->GetZone(1);
+
+			if (duel->players[side].monsterZones[zone].effectCount != 0)
+			{
+				for (size_t i = 0; i < duel->players[side].monsterZones[zone].effectCount; i++)
+				{
+					if (duel->players[side].monsterZones[zone].effectEntries[i].type == 1)
+					{
+						uint16_t loc = duel->players[side].monsterZones[zone].effectIDs[i];
+						uint8_t equipSide = loc & 0x1;
+						uint8_t equipZone = loc >> 8 & 0xff;
+
+						uint16_t equipIntID = duel->players[equipSide].monsterZones[equipZone].card.GetIntID();
+						uint16_t equipID = FUN::GetCardID(equipIntID);
+						if (equipID == Y_DRAGON_HEAD || equipID == Z_METAL_TANK)
+						{
+							// Prevent destruction
+							battleResult->sides[side].ResultFlags &= ~0x10;
+
+							FUN::FieldMaskGenerator maskGen;
+							maskGen.zones[equipSide][equipZone] = true;
+							uint8_t block[32] = {};
+
+							FUN::SendCardFromField(block, maskGen.GenerateMask(), 0xe, 2);
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
 }

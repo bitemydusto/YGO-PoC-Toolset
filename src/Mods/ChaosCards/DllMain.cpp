@@ -5,6 +5,7 @@
 #include "HookAPI.h"
 
 auto duel = GameData::GetDuel();
+auto battleResult = GameData::GetBattleResult();
 
 unsigned int cedDamage;
 int innerState = 0;
@@ -489,13 +490,12 @@ void __stdcall EndPhase()
 }
 void __stdcall BLS_DoubleAttack()
 {
-	GameData::BattleResult battleResult = GameData::GetBattleResult();
-	uint8_t attackerIdx = battleResult.StateFlags & 0x1;
-	if (battleResult.sides[attackerIdx].IntID == 0x05 && (battleResult.sides[attackerIdx ^ 0x1].ResultFlags & 0x10) != 0)
+	uint8_t attackerIdx = battleResult->StateFlags & 0x1;
+	if (battleResult->sides[attackerIdx].IntID == 0x05 && (battleResult->sides[attackerIdx ^ 0x1].ResultFlags & 0x10) != 0)
 	{
 		duel = GameData::GetDuel();
 		GameData::Player attacker = duel->players[attackerIdx];
-		uint8_t zoneIdx = (battleResult.StateFlags >> 8) & 7;
+		uint8_t zoneIdx = (battleResult->StateFlags >> 8) & 7;
 		if (zoneIdx > 4) return;
 		if ((attacker.monsterZones[zoneIdx].effectIDs[31] & 0x1) == 0)
 		{
@@ -510,13 +510,12 @@ void __stdcall BLS_DoubleAttack()
 }
 void __stdcall DMOC_BanishOnKill()
 {
-	GameData::BattleResult battleResult = GameData::GetBattleResult();
-	uint8_t attackerIdx = battleResult.StateFlags & 0x1;
+	uint8_t attackerIdx = battleResult->StateFlags & 0x1;
 
 	if (FUN::IsCardOnSideOfField(!attackerIdx, 0x5E7) > 0) return;
-	if (battleResult.sides[attackerIdx].IntID == 0x0D && (battleResult.sides[!attackerIdx].ResultFlags & 0x10) != 0)
+	if (battleResult->sides[attackerIdx].IntID == 0x0D && (battleResult->sides[!attackerIdx].ResultFlags & 0x10) != 0)
 	{
-		uint8_t attackedZoneIdx = (battleResult.StateFlags >> 0xB) & 7;
+		uint8_t attackedZoneIdx = (battleResult->StateFlags >> 0xB) & 7;
 		uint32_t mask = 1u << ((((int)(char)!attackerIdx) << 4) + (char)attackedZoneIdx & 0x1f);
 		uint8_t block[0x20];
 		memset(block, 0, sizeof(block));

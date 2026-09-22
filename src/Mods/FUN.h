@@ -216,7 +216,6 @@ namespace FUN
 	inline auto ClearTributeMarks = reinterpret_cast<void(__cdecl*)()>(0x00486c30);
 
 
-
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);
 	using FUN_591C90_t = uint32_t(__cdecl*)(uint32_t player, uint32_t packed);
 	using FUN_568580_t = int(__cdecl*)(uint32_t cardIntId);

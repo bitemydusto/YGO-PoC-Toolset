@@ -9,6 +9,7 @@ namespace GameData
 
     const uint32_t BASE_PLAYER_ADDRESS = 0x00A55D64;
     const uint32_t PLAYER_OFFSET = 0xd44;
+	const uint32_t BATTLE_RESULT_ADDRESS = 0x00a57840;
     const uint32_t SELECTION_LIST_SIZE_ADDRESS = 0x00A585A4;
     const uint32_t SELECTION_LIST_ADDRESS = 0x00A582A4;
 	const uint32_t EFFECT_SCRIPT_ADDRESS = 0x005ed0a8;
@@ -189,21 +190,23 @@ namespace GameData
 	{
         uint32_t StateFlags;
 		BattleResultSide sides[2];
+
+		uint8_t GetSide(uint8_t index)
+		{
+			// 0 = attacker, 1 = defender
+			return StateFlags >> index & 1;
+		}
+		uint8_t GetZone(uint8_t index)
+		{
+			// 0 = attacker, 1 = defender
+			return StateFlags >> (8 + index * 3) & 7;
+		}
 	};
 
-	BattleResult GetBattleResult()
+	BattleResult* _battleResult = reinterpret_cast<BattleResult*>(BATTLE_RESULT_ADDRESS);
+	BattleResult* GetBattleResult()
 	{
-		BattleResult result;
-		result.StateFlags = Utils::ReadUint32((void*)(0x00a57840));
-		for (size_t i = 0; i < 2; i++)
-		{
-			result.sides[i].ResultFlags = Utils::ReadUint16((void*)(0x00a57844 + (i * 0x10)));
-			result.sides[i].IntID = Utils::ReadUint16((void*)(0x00a57846 + (i * 0x10)));
-			result.sides[i].ATK = Utils::ReadUint32((void*)(0x00a57848 + (i * 0x10)));
-			result.sides[i].DEF = Utils::ReadUint32((void*)(0x00a5784c + (i * 0x10)));
-			result.sides[i].DamageTaken = Utils::ReadUint32((void*)(0x00a57850 + (i * 0x10)));
-		}
-		return result;
+		return _battleResult;
 	}
 
     uint16_t GetSummonState()
@@ -251,10 +254,25 @@ namespace GameData
 	{
 		return Utils::ReadUint8((void*)0x00a5504c);
 	}
+	// 0x0 : Monster Zone
+	// 0x5 : Spell/Trap Zone
+	// 0xa : Field Zone
+	// 0xb : Hand
+	// 0xc : Extra
+	// 0xd : Deck
+	// 0xe : Graveyard
+	// 0xf : Banish
     uint8_t GetSelectedLocation()
     {
 		return Utils::ReadUint8((void*)0x00a55048);
     }
+	uint8_t GetSelectedZone()
+	{
+		uint8_t loc = GetSelectedLocation();
+
+		if (loc > 9) return loc;
+		return GetSelectedColumn() + loc;
+	}
 	// lower byte = main state
 	// upper byte = summon state
     uint16_t GetState()

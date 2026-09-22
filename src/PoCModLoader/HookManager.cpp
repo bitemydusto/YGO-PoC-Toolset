@@ -520,15 +520,30 @@ void HookManager::Register_ActivatableStEffect(uint16_t cardID)
 	}
 	activatableStEffects.push_back(cardID);
 }
-bool __stdcall HookManager::Dispatch_ActivatableStEffect(uint16_t cardIntID, uint8_t zoneIdx)
+bool __stdcall HookManager::Dispatch_ActivatableStEffect(uint16_t _cardIntID, uint8_t zoneIdx)
 {
-	if (GameData::GetTurnPlayer() != GameData::GetLocalSide()) return false;
-	uint16_t cardID = FUN::GetCardID(cardIntID & 0xfff);
+	uint8_t selectedSide = GameData::GetSelectedSide();
+	uint8_t turnPlayer = GameData::GetTurnPlayer();
+	if (turnPlayer != selectedSide) return false;
+
+	uint16_t cardIntID = _cardIntID & 0xfff;
+	uint16_t cardID = FUN::GetCardID(cardIntID);
 	for (const auto& id : activatableStEffects)
 	{
 		if (id == cardID)
 		{
-			return true;
+			FUN::EffectBlock block = { turnPlayer, cardIntID, zoneIdx, selectedSide };
+
+			byte nullBlock[32] = {};
+
+			auto condition = reinterpret_cast<bool(__cdecl*)(unsigned int* param, unsigned int* param2, unsigned int* param3)>(effectScripts[cardIntID & 0xfff].Condition);
+
+			if (condition && condition((unsigned int*)&block, (unsigned int*)&nullBlock, (unsigned int*)&nullBlock))
+			{
+				return true;
+			}
+
+			break;
 		}
 	}
 	return false;

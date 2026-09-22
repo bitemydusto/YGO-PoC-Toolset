@@ -481,7 +481,7 @@ void __stdcall EndPhase()
 {
 	for (size_t i = 0; i < 2; i++)
 	{
-		for (size_t j = 0; j < 5; j++)
+		for (size_t j = 0; j < 11; j++)
 		{
 			Utils::WriteUint16((void*)(0x00a55d64 + i * 0xD44 + 0x10 + j* 0x90 + 0x4A), 0x0);
 		}

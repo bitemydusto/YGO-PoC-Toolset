@@ -427,6 +427,10 @@ namespace FUN
 			fieldTargets = (uint16_t*)(block + 6);
 			outerTargets = (uint32_t*)(block + 6);
 		}
+		Param()
+		{
+
+		}
 		uint8_t GetFieldTargetSide(uint8_t index)
 		{
 			return fieldTargets[index] & 1;
@@ -434,6 +438,20 @@ namespace FUN
 		uint8_t GetFieldTargetZone(uint8_t index)
 		{
 			return (fieldTargets[index] >> 4) & 0xF;
+		}
+	};
+
+	struct EffectBlock
+	{
+		uint16_t cardIntId;   // +0
+		uint16_t location;    // +2  side | (place << 1) | flags
+		uint16_t flags;       // +4  instance in bits 5–12 (0x1FE0), target count bits 13–15, done bit 2
+		uint16_t targets[7];  // +6  field halfwords / room for outer dwords
+
+		EffectBlock(uint8_t _owner, uint16_t _cardIntID, uint8_t _location, uint8_t _side)
+		{
+			cardIntId = (_owner << 12) | (_cardIntID & 0xFFF);
+			location = (_location << 1) | (_side);
 		}
 	};
 }

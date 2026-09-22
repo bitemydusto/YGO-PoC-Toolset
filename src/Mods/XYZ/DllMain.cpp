@@ -249,7 +249,7 @@ bool CanBeSummoned(uint32_t playerIdx)
 	bool hasY = false;
 	bool hasZ = false;
 
-	for (size_t i = 0; i < 5; i++)
+	for (size_t i = 0; i < 10; i++)
 	{
 		uint16_t cardIntID = duel->players[playerIdx].monsterZones[i].card.GetIntID();
 		if (cardIntID != 0)
@@ -273,12 +273,12 @@ uint32_t __stdcall SummonStates()
 		}break;
 		case 1:
 		{
-			if (FUN::IsFieldSelectionReady(0xf000f0) == 0) return 0;
-
 			uint8_t side = GameData::GetSelectedSide();
-			uint8_t col = GameData::GetSelectedColumn();
+			uint8_t zone = GameData::GetSelectedColumn() + GameData::GetSelectedLocation();
 
-			uint16_t intID = duel->players[side].monsterZones[col].card.GetIntID();
+			if (side != GameData::GetTurnPlayer() || zone > 9) return 0;
+
+			uint16_t intID = duel->players[side].monsterZones[zone].card.GetIntID();
 			if (intID == 0) return 0;
 
 			uint16_t cardID = FUN::GetCardID(intID);
@@ -286,69 +286,66 @@ uint32_t __stdcall SummonStates()
 
 			if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
 
-			materials[0].zone = col;
+			materials[0].zone = zone;
 			materials[0].cardID = cardID;
 
-			FUN::FieldMaskGenerator maskGen;
-			maskGen.zones[side][col] = true;
-
-			uint8_t block[32] = {};
-			FUN::SendCardFromField(block, maskGen.GenerateMask(), 0xF, 0);
+			FUN::MarkZoneAsTributed(side, zone);
 
 			innerState = 2;
 		}break;
 		case 2:
 		{
-			if (FUN::IsFieldSelectionReady(0xf000f0) == 0) return 0;
-
 			uint8_t side = GameData::GetSelectedSide();
-			uint8_t col = GameData::GetSelectedColumn();
+			uint8_t zone = GameData::GetSelectedColumn() + GameData::GetSelectedLocation();
 
-			uint16_t intID = duel->players[side].monsterZones[col].card.GetIntID();
+			if (side != GameData::GetTurnPlayer() || zone > 9) return 0;
+
+			uint16_t intID = duel->players[side].monsterZones[zone].card.GetIntID();
 			if (intID == 0) return 0;
 
 			uint16_t cardID = FUN::GetCardID(intID);
 			if (!(cardID == X_HEAD_CANNON || cardID == Y_DRAGON_HEAD || cardID == Z_METAL_TANK)) return 0;
 
 			if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
-			if (materials[0].zone == col || materials[0].cardID == cardID) return 0;
+			if (materials[0].zone == zone || materials[0].cardID == cardID) return 0;
 
-			materials[1].zone = col;
+			materials[1].zone = zone;
 			materials[1].cardID = cardID;
 
-			FUN::FieldMaskGenerator maskGen;
-			maskGen.zones[side][col] = true;
-
-			uint8_t block[32] = {};
-			FUN::SendCardFromField(block, maskGen.GenerateMask(), 0xF, 0);
+			FUN::MarkZoneAsTributed(side, zone);
 
 			innerState = 3;
 		}break;
 		case 3:
 		{
-			if (FUN::IsFieldSelectionReady(0xf000f0) == 0) return 0;
-
 			uint8_t side = GameData::GetSelectedSide();
-			uint8_t col = GameData::GetSelectedColumn();
+			uint8_t zone = GameData::GetSelectedColumn() + GameData::GetSelectedLocation();
 
-			uint16_t intID = duel->players[side].monsterZones[col].card.GetIntID();
+			if (side != GameData::GetTurnPlayer()) return 0;
+
+			uint16_t intID = duel->players[side].monsterZones[zone].card.GetIntID();
 			if (intID == 0) return 0;
 
 			uint16_t cardID = FUN::GetCardID(intID);
 			if (!(cardID == X_HEAD_CANNON || cardID == Y_DRAGON_HEAD || cardID == Z_METAL_TANK)) return 0;
 
 			if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
-			if (materials[0].zone == col || materials[1].zone == col) return 0;
+			if (materials[0].zone == zone || materials[1].zone == zone) return 0;
 			if (materials[0].cardID == cardID || materials[1].cardID == cardID) return 0;
 
-			materials[2].zone = col;
+			materials[2].zone = zone;
 			materials[2].cardID = cardID;
 
+			FUN::MarkZoneAsTributed(side, zone);
+
 			FUN::FieldMaskGenerator maskGen;
-			maskGen.zones[side][col] = true;
+			maskGen.zones[side][materials[0].zone] = true;
+			maskGen.zones[side][materials[1].zone] = true;
+			maskGen.zones[side][materials[2].zone] = true;
 
 			uint8_t block[32] = {};
 			FUN::SendCardFromField(block, maskGen.GenerateMask(), 0xF, 0);
+			FUN::ClearTributeMarks();
 
 			innerState = 4;
 		}break;

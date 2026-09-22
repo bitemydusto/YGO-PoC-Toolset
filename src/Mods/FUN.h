@@ -213,6 +213,8 @@ namespace FUN
 	// mode = 1 : regular equip, 5 : absorbed monster
 	inline auto EquipCard = reinterpret_cast<void(__cdecl*)(int targetIdx, uint16_t equipment, uint16_t target, int mode)>(0x00574900);
 
+	inline auto ClearTributeMarks = reinterpret_cast<void(__cdecl*)()>(0x00486c30);
+
 
 
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);

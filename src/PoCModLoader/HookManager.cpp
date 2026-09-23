@@ -32,6 +32,7 @@ namespace
 	void* gCardHoverTrampoline = nullptr;
 	void* gCardHoverTrampoline2 = nullptr;
 	void* gCardHoverTrampoline3 = nullptr;
+	void* gOnCardLeavingFieldTrampoline = nullptr;
 }
 
 void HookManager::InstallHooks()
@@ -114,6 +115,9 @@ void HookManager::InstallHooks()
 
 	hCardHover2 = Utils::InstallHook((void*)0x005b8da4, 7, PatchInputProcess);
 	gCardHoverTrampoline2 = hCardHover2.Trampoline;
+
+	hOnCardLeavingField = Utils::InstallHook((void*)0x00576a80, 5, PatchCardLeavingField);
+	gOnCardLeavingFieldTrampoline = hOnCardLeavingField.Trampoline;
 
 
 	PatchLoader::LoadPatches();
@@ -426,6 +430,41 @@ __declspec(naked) void PatchFlipMonster()
 		JMP[gFlipMonsterTrampoline]
 	}
 }
+void HookManager::Register_OnCardLeavingField(LeavingFieldEvent event)
+{
+	onCardLeavingFieldHooks.push_back({ event });
+}
+bool __stdcall HookManager::Dispatch_OnCardLeavingField(uint32_t side, uint32_t zone, uint32_t dest, uint32_t action, uint32_t effectIntID)
+{
+	bool finish = false;
+	for (const auto& event : onCardLeavingFieldHooks)
+	{
+		finish = event(side, zone, dest, action, effectIntID);
+	}
+	return finish;
+}
+__declspec(naked) void PatchCardLeavingField()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH DWORD PTR DS : [ESP + 0x18]
+		PUSH DWORD PTR DS : [ESP + 0x18]
+		PUSH DWORD PTR DS : [ESP + 0x18]
+		PUSH DWORD PTR DS : [ESP + 0x18]
+		PUSH DWORD PTR DS : [ESP + 0x18]
+		CALL HookManager::Dispatch_OnCardLeavingField
+		TEST AL, AL
+		POP EAX
+		JZ hook_end
+		XOR EAX, EAX
+		PUSH 0x00576e75
+		RET
+	hook_end :
+		JMP[gOnCardLeavingFieldTrampoline]
+	}
+}
 void HookManager::Register_CanBeSummonedByEffect(uint16_t cardID, bool canBeSpecialSummoned)
 {
 	// Check if the card ID is already registered
@@ -524,6 +563,8 @@ bool __stdcall HookManager::Dispatch_ActivatableStEffect(uint16_t _cardIntID, ui
 {
 	uint8_t selectedSide = GameData::GetSelectedSide();
 	uint8_t turnPlayer = GameData::GetTurnPlayer();
+	uint8_t selectedZone = GameData::GetSelectedZone();
+
 	if (turnPlayer != selectedSide) return false;
 
 	uint16_t cardIntID = _cardIntID & 0xfff;
@@ -532,7 +573,7 @@ bool __stdcall HookManager::Dispatch_ActivatableStEffect(uint16_t _cardIntID, ui
 	{
 		if (id == cardID)
 		{
-			FUN::EffectBlock block = { turnPlayer, cardIntID, zoneIdx, selectedSide };
+			FUN::EffectBlock block = { turnPlayer, cardIntID, selectedZone, selectedSide };
 
 			byte nullBlock[32] = {};
 

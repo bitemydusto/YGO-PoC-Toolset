@@ -125,4 +125,8 @@ extern "C"
 	{
 		HookManager::Register_CanBeSummonedByEffect(cardID, canBeSpecialSummoned);
 	}
+	void Register_OnCardLeavingField(LeavingFieldEvent event)
+	{
+		HookManager::Register_OnCardLeavingField(event);
+	}
 }

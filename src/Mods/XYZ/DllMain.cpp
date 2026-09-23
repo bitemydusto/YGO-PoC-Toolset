@@ -38,6 +38,7 @@ uint32_t __stdcall SummonStates();
 void __stdcall StatChange_Y(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 void __stdcall StatChange_Z(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 void __stdcall Protection();
+bool __stdcall EffectProtection(uint32_t side, uint32_t zone, uint32_t dest, uint32_t flags, uint32_t effectIntID);
 
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
@@ -72,6 +73,7 @@ void Start()
 	Register_StatChangeEquip(Z_METAL_TANK, StatChange_Z);
 
 	Register_AfterDamageCalculation(Protection);
+	Register_OnCardLeavingField(EffectProtection);
 
 
 	EffectScript scriptXYZ;
@@ -448,4 +450,41 @@ void __stdcall Protection()
 			}
 		}
 	}
+}
+// Returns true if the rest of the stock function should be skipped, false otherwise
+bool __stdcall EffectProtection(uint32_t side, uint32_t zone, uint32_t dest, uint32_t action, uint32_t effectIntID)
+{
+	// Check for destruction
+	// Same fxCode in SendCardFromField
+	if (action != 2) return false;
+	if (zone > 4) return false;
+	
+	auto effectCount = duel->players[side].monsterZones[zone].effectCount;
+	if (effectCount == 0) return false;
+
+	for (size_t i = 0; i < effectCount; i++)
+	{
+		if (duel->players[side].monsterZones[zone].effectEntries[i].type == 1)
+		{
+			uint16_t loc = duel->players[side].monsterZones[zone].effectIDs[i];
+			uint8_t equipSide = loc & 0x1;
+			uint8_t equipZone = loc >> 8 & 0xff;
+
+
+			uint16_t equipIntID = duel->players[equipSide].monsterZones[equipZone].card.GetIntID();
+			uint16_t equipID = FUN::GetCardID(equipIntID);
+			if (equipID == Y_DRAGON_HEAD || equipID == Z_METAL_TANK)
+			{
+				FUN::FieldMaskGenerator maskGen;
+				maskGen.zones[equipSide][equipZone] = true;
+				uint8_t block[32] = {};
+
+				FUN::SendCardFromField(block, maskGen.GenerateMask(), 0xe, 2);
+
+				return true;
+			}
+		}
+	}
+
+	return false;
 }

@@ -46,6 +46,7 @@ void __stdcall SliferStatReduce(uint32_t statAddress, uint32_t playerIdx, uint32
 uint32_t __stdcall SummonStates();
 void __stdcall OnSpecialSummon(uint32_t playerIdx, uint32_t zoneIdx);
 void __stdcall EndPhase();
+bool __stdcall TrapProtection(uint32_t side, uint32_t zone, uint32_t dest, uint32_t flags, uint32_t effectIntID);
 
 bool raCondition1(uint8_t playerIdx);
 bool raCondition2(uint8_t playerIdx);
@@ -105,6 +106,9 @@ void Start()
 	Register_CustomSpecialSummonTrigger(Cards::SLIFER_THE_SKY_DRAGON, OnSpecialSummon);
 	Register_CustomSpecialSummonTrigger(Cards::OBELISK_THE_TORMENTOR, OnSpecialSummon);
 	Register_CustomSpecialSummonTrigger(Cards::THE_WINGED_DRAGON_OF_RA, OnSpecialSummon);
+
+	Register_OnCardLeavingField(TrapProtection);
+
 
 	Register_Phase(5, EndPhase);
 
@@ -615,4 +619,23 @@ void __stdcall EndPhase()
 	}
     uint8_t block[32] = {};
     FUN::SendCardFromField(block, maskGen.GenerateMask(), 0xe, 2);
+}
+bool __stdcall TrapProtection(uint32_t side, uint32_t zone, uint32_t dest, uint32_t action, uint32_t effectIntID)
+{
+	uint32_t type = FUN::GetMonsterType(effectIntID);
+
+    if (type == 0x15)
+    {
+		uint16_t cardIntID = duel->players[side].monsterZones[zone].card.GetIntID();
+		uint16_t cardID = FUN::GetCardID(cardIntID);
+
+		if (cardID == Cards::SLIFER_THE_SKY_DRAGON ||
+			cardID == Cards::OBELISK_THE_TORMENTOR ||
+			cardID == Cards::THE_WINGED_DRAGON_OF_RA)
+		{
+			return true;
+		}
+    }
+
+    return false;
 }

@@ -436,12 +436,11 @@ void HookManager::Register_OnCardLeavingField(LeavingFieldEvent event)
 }
 bool __stdcall HookManager::Dispatch_OnCardLeavingField(uint32_t side, uint32_t zone, uint32_t dest, uint32_t action, uint32_t effectIntID)
 {
-	bool finish = false;
 	for (const auto& event : onCardLeavingFieldHooks)
 	{
-		finish = event(side, zone, dest, action, effectIntID);
+		if (event(side, zone, dest, action, effectIntID)) return true;
 	}
-	return finish;
+	return false;
 }
 __declspec(naked) void PatchCardLeavingField()
 {

@@ -124,14 +124,15 @@ void Start()
 		}
 		if (command == "add")
 		{
-			std::string cardIDString;
-			if (!(ss >> cardIDString))
+			std::string playerString, cardIDString;
+			if (!(ss >> playerString >> cardIDString))
 			{
-				std::cout << "Usage: add <cardID>\n";
+				std::cout << "Usage: add <player> <cardID>\n";
 				continue;
 			}
+			uint8_t player = static_cast<uint8_t>(std::stoull(playerString, nullptr, 0));
             uint16_t cardID = static_cast<uint16_t>(std::stoull(cardIDString, nullptr, 0));
-			AddCommand(cardID);
+			AddCommand(player,cardID);
 			continue;
 		}
         if (command == "mill")
@@ -196,14 +197,14 @@ void DrawCommand(uint32_t playerIdx, uint32_t amount)
 {
 	FUN::DrawCards(playerIdx, amount);
 }
-void AddCommand(uint16_t cardID)
+void AddCommand(uint8_t player, uint16_t cardID)
 {
-	uint32_t topcard = Utils::ReadUint32((void*)(GameData::BASE_PLAYER_ADDRESS + GameData::PLAYER_OFFSET + 0x810));
+	uint32_t topcard = Utils::ReadUint32((void*)(GameData::BASE_PLAYER_ADDRESS + GameData::PLAYER_OFFSET * player + 0x810));
 	uint16_t cardIntID = FUN::GetCardIntID(cardID);
 	topcard = (topcard & 0xFFFFF000) | (cardIntID & 0xFFF);
-	Utils::WriteUint32((void*)(GameData::BASE_PLAYER_ADDRESS + GameData::PLAYER_OFFSET + 0x810), topcard);
+	Utils::WriteUint32((void*)(GameData::BASE_PLAYER_ADDRESS + GameData::PLAYER_OFFSET * player + 0x810), topcard);
 
-	DrawCommand(1, 1);
+	DrawCommand(player, 1);
 }
 void SummonCommand(uint8_t player, uint16_t cardID)
 {

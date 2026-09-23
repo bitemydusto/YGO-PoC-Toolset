@@ -31,6 +31,7 @@ uint32_t __cdecl Cost_XYZ(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Effect_YZ(unsigned int* param, int param2, int param3);
 bool __cdecl AppliesTo_YZ(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Condition_YZ(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Target_YZ(unsigned int* param, int param2, int param3);
 
 bool CanBeSummoned(uint32_t playerIdx);
 uint32_t __stdcall SummonStates();
@@ -88,7 +89,7 @@ void Start()
 	scriptY.AppliesTo =reinterpret_cast<uintptr_t>(&AppliesTo_YZ);
 	scriptY.Condition = reinterpret_cast<uintptr_t>(&Condition_YZ);
 	scriptY.Cost = 0;
-	scriptY.Target = 0x00596570;
+	scriptY.Target = reinterpret_cast<uintptr_t>(&Target_YZ);
 	Register_EffectScript(scriptY);
 
 	EffectScript scriptZ;
@@ -97,7 +98,7 @@ void Start()
 	scriptZ.AppliesTo = reinterpret_cast<uintptr_t>(&AppliesTo_YZ);
 	scriptZ.Condition = reinterpret_cast<uintptr_t>(&Condition_YZ);
 	scriptZ.Cost = 0;
-	scriptZ.Target = 0x00596570;
+	scriptZ.Target = reinterpret_cast<uintptr_t>(&Target_YZ);
 	Register_EffectScript(scriptZ);
 
 }
@@ -145,13 +146,14 @@ uint32_t __cdecl Effect_YZ(unsigned int* param, int param2, int param3)
 	FUN::Param funParam(param);
 
 	if (funParam.finishedResolving) return 0;
-	if (funParam.targetCount == 0) return 0;
+	if (funParam.targetCount == 0 && funParam.location < 5) return 0;
 
-	uint8_t tSide = funParam.GetFieldTargetSide(0);
-	uint8_t tZone = funParam.GetFieldTargetZone(0);
 
 	if (funParam.location < 5)
 	{
+		uint8_t tSide = funParam.GetFieldTargetSide(0);
+		uint8_t tZone = funParam.GetFieldTargetZone(0);
+
 		switch (GameData::GetEffectState())
 		{
 			case 0x80:
@@ -181,8 +183,6 @@ uint32_t __cdecl Effect_YZ(unsigned int* param, int param2, int param3)
 		{
 			case 0x80:
 			{
-				if (duel->players[tSide].monsterZones[tZone].card.GetIntID() == 0 || duel->players[tSide].monsterZones[tZone].IsFaceUp() == false) return 0;
-
 				destZoneYZ = FUN::GetSummonZone(funParam.playerIdx);
 				if (destZoneYZ < 0) return 0;
 
@@ -246,6 +246,21 @@ uint32_t __cdecl Condition_YZ(unsigned int* param, int param2, int param3)
 	}
 
 	return 0;
+}
+uint32_t __cdecl Target_YZ(unsigned int* param, int param2, int param3)
+{
+	FUN::Param funParam(param);
+
+	if (funParam.location > 4)
+	{
+		return 1;
+	}
+	else
+	{
+		auto targetCard = reinterpret_cast<uint32_t(__cdecl*)(unsigned int* param, int param2, int param3)>(0x00596570);
+
+		return targetCard(param, param2, param3);
+	}
 }
 bool CanBeSummoned(uint32_t playerIdx)
 {

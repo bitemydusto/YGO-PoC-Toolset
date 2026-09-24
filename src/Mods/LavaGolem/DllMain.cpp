@@ -8,16 +8,22 @@
 GameData::Duel* duel = GameData::GetDuel();
 
 const uint16_t LAVA_GOLEM = Cards::DARK_TITAN_OF_TERROR;
+const uint16_t MIRAGE_OF_NIGHTMARE = Cards::THE_DRDEK;
+
 int innerState = 0;
 uint8_t firstZone = 0;
 
 uint32_t __cdecl Effect_LG(unsigned int* param, int param2, int param3);
+
+uint32_t __cdecl Effect_Mirage(unsigned int* param, int param2, int param3);
+
 void Start();
 
 uint32_t __stdcall SummonStates();
 bool CanBeTributed(uint8_t playerIdx, uint8_t side, uint8_t col);
 bool SummonCondition(uint32_t playerIdx);
 void __stdcall StandbyPhase();
+void __stdcall StandbyPhaseMirage();
 void __stdcall EndPhase();
 
 
@@ -48,6 +54,8 @@ void Start()
 	Register_Phase(1, StandbyPhase);
 	Register_Phase(5, EndPhase);
 
+	Register_Phase(1, StandbyPhaseMirage);
+
 
 	Utils::EffectScript script;
 	script.CardID = LAVA_GOLEM;
@@ -57,12 +65,65 @@ void Start()
 	script.Cost = 0;
 	script.Target = 0;
 	Register_EffectScript(script);
+
+	Utils::EffectScript scriptMirage;
+	scriptMirage.CardID = MIRAGE_OF_NIGHTMARE;
+	scriptMirage.Effect = reinterpret_cast<uintptr_t>(&Effect_Mirage);
+	scriptMirage.AppliesTo = 0;
+	scriptMirage.Condition = 0;
+	scriptMirage.Cost = 0;
+	scriptMirage.Target = 0;
+	Register_EffectScript(scriptMirage);
 }
 uint32_t __cdecl Effect_LG(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
 
 	FUN::DealEffectDamage(funParam.playerIdx, 1000);
+
+	return 0;
+}
+uint32_t __cdecl Effect_Mirage(unsigned int* param, int param2, int param3)
+{
+	FUN::Param funParam(param);
+
+	if (GameData::GetPhase() > 3 || funParam.zoneIdx > 9) return 0;
+
+
+	if (GameData::GetTurnPlayer() == funParam.playerIdx)
+	{
+		for (size_t i = 0; i < duel->players[funParam.playerIdx].monsterZones[funParam.zoneIdx].effectCount; i++)
+		{
+			uint16_t effectIntID = duel->players[funParam.playerIdx].monsterZones[funParam.zoneIdx].effectIDs[i];
+			uint16_t effectID = FUN::GetCardID(effectIntID);
+			if (effectID == MIRAGE_OF_NIGHTMARE)
+			{
+				int n = duel->players[funParam.playerIdx].monsterZones[funParam.zoneIdx].effectEntries[i].value;
+
+				if (n != 0)
+				{
+					if (duel->players[funParam.playerIdx].cardsInHand < n)
+					{
+						n = duel->players[funParam.playerIdx].cardsInHand;
+					}
+					FUN::DiscardRandomCard(funParam.playerIdx, 0, n);
+					FUN::RemoveEffectEntity(funParam.playerIdx, funParam.location, i);
+
+					return 0;
+
+				}
+
+			}
+		}
+	}
+	else
+	{
+		int n = 4 - duel->players[funParam.playerIdx].cardsInHand;
+
+		FUN::W_AddEffectEntityToZone(funParam.playerIdx, funParam.zoneIdx, funParam.cardIntID, (n << 8) | 0xB);
+		FUN::DrawCards(funParam.playerIdx, n);
+	}
+
 
 	return 0;
 }
@@ -92,7 +153,7 @@ uint32_t __stdcall SummonStates()
 			uint8_t side = GameData::GetSelectedSide();
 			uint8_t col = GameData::GetSelectedColumn();
 
-			if (!CanBeTributed(1, side, col)) return 0;
+			if (!CanBeTributed(GameData::GetTurnPlayer(), side, col)) return 0;
 
 			if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
 
@@ -110,7 +171,7 @@ uint32_t __stdcall SummonStates()
 			uint8_t col = GameData::GetSelectedColumn();
 
 			if (col == firstZone) return 0;
-			if (!CanBeTributed(1, side, col)) return 0;
+			if (!CanBeTributed(GameData::GetTurnPlayer(), side, col)) return 0;
 
 			if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
 
@@ -132,12 +193,12 @@ uint32_t __stdcall SummonStates()
 			uint16_t choice = (Utils::ReadUint8((void*)0x00a57804) >> 3) & 1;
 
 			uint32_t param2 = Utils::ReadUint8((void*)0x00a5780c);
-			uint32_t param3 = FUN::GetSummonZone(0);
+			uint32_t param3 = FUN::GetSummonZone(GameData::GetTurnPlayer() ^ 1);
 			uint32_t param5 = (choice == 0) ? 1 : 0;
 
 
 
-			FUN::W_SS_HandToOpp(1, param2, param3, 0, param5);
+			FUN::W_SS_HandToOpp(GameData::GetTurnPlayer(), param2, param3, 0, param5);
 			uint8_t x = Utils::ReadUint8((void*)0x00A57176);
 			Utils::WriteUint8((void*)0x00A57176, x | 2); // Set already normal summoned this turn flag
 
@@ -185,12 +246,9 @@ void __stdcall StandbyPhase()
 
 
 
-				uint32_t dword = duel->players[i].monsterZones[j].card.fullValue;
-				uint32_t owner = (dword >> 12) & 1;
-				uint32_t instHi = (dword >> 24) & 0x7F;
-				uint16_t flag = instHi * 2 + owner;
+				uint32_t pack = ((uint32_t)(j & 0x1F) | ((uint32_t)i << 0xf) | 0x0A20u) << 16 | cardIntID;
 
-				FUN::InvokeEffect((j & 0x1F | i << 0xF | 0x0A20) << 0x10 | (cardIntID & 0xFFF), flag & 0xFF, flag);
+				FUN::InvokeEffect(pack, 0, 0);
 			}
 		}
 	}
@@ -202,6 +260,26 @@ void __stdcall EndPhase()
 		for (size_t j = 0; j < 5; j++)
 		{
 			Utils::WriteUint16((void*)(0x00a55d64 + i * 0xD44 + 0x10 + j * 0x90 + 0x4A), 0x0);
+		}
+	}
+}
+void __stdcall StandbyPhaseMirage()
+{
+	for (size_t i = 0; i < 2; i++)
+	{
+		for (size_t j = 5; j < 10; j++)
+		{
+			uint16_t cardIntID = duel->players[i].monsterZones[j].card.GetIntID();
+			uint16_t cardID = FUN::GetCardID(cardIntID);
+			if (cardID == MIRAGE_OF_NIGHTMARE)
+			{
+				if (GameData::GetTurnPlayer() != i && duel->players[i].cardsInHand > 4) return;
+
+				uint32_t pack = ((uint32_t)(j & 0x1F) | ((uint32_t)i << 0xf) | 0x0A20u) << 16 | cardIntID;
+
+				FUN::InvokeEffect(pack, 0, 0);
+			}
+
 		}
 	}
 }

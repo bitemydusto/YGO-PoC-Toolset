@@ -314,4 +314,8 @@ namespace GameData
 	{
 		return Utils::ReadUint16((void*)0x00a57822);
 	}
+	uint8_t GetPhase()
+	{
+		return Utils::ReadUint8((void*)0x00a577fa);
+	}
 }

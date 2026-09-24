@@ -215,6 +215,8 @@ namespace FUN
 
 	inline auto ClearTributeMarks = reinterpret_cast<void(__cdecl*)()>(0x00486c30);
 
+	inline auto RemoveEffectEntity = reinterpret_cast<void(__cdecl*)(unsigned int side, unsigned int zone, int effectIdx)>(0x005695e0);
+
 
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);
 	using FUN_591C90_t = uint32_t(__cdecl*)(uint32_t player, uint32_t packed);

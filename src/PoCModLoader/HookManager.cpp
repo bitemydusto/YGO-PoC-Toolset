@@ -33,6 +33,7 @@ namespace
 	void* gCardHoverTrampoline2 = nullptr;
 	void* gCardHoverTrampoline3 = nullptr;
 	void* gOnCardLeavingFieldTrampoline = nullptr;
+	void* gUnaffectedBySpellsTrampoline = nullptr;
 }
 
 void HookManager::InstallHooks()
@@ -118,6 +119,9 @@ void HookManager::InstallHooks()
 
 	hOnCardLeavingField = Utils::InstallHook((void*)0x00576a80, 5, PatchCardLeavingField);
 	gOnCardLeavingFieldTrampoline = hOnCardLeavingField.Trampoline;
+
+	hUnAffectedBySpell = Utils::InstallHook((void*)0x0056c460, 5, PatchUnAffectedBySpell);
+	gUnaffectedBySpellsTrampoline = hUnAffectedBySpell.Trampoline;
 
 
 	PatchLoader::LoadPatches();
@@ -547,6 +551,37 @@ __declspec(naked) void PatchActivatableEffect()
 		RET
 	hook_end :
 		JMP[gActivatableEffectTrampoline]
+	}
+}
+void HookManager::Register_UnAffectedBySpells(Condition1 condition)
+{
+	unAffectedBySpellHooks.push_back({ condition });
+}
+bool __stdcall HookManager::Dispatch_UnAffectedBySpells(uint8_t side, uint8_t zone)
+{
+	for (const auto& hook : unAffectedBySpellHooks)
+	{
+		if (hook(side, zone)) return true;
+	}
+	return false;
+}
+__declspec(naked) void PatchUnAffectedBySpell()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH DWORD PTR DS : [ESP + 0xc]
+		PUSH DWORD PTR DS : [ESP + 0xc]
+		CALL HookManager::Dispatch_UnAffectedBySpells
+		TEST AL, AL
+		POP EAX
+		JZ hook_end
+		MOV EAX, 0x1
+		PUSH 0x0056c504
+		RET
+	hook_end :
+		JMP[gUnaffectedBySpellsTrampoline]
 	}
 }
 void HookManager::Register_ActivatableStEffect(uint16_t cardID)

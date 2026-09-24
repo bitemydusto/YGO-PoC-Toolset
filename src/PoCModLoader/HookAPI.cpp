@@ -129,4 +129,8 @@ extern "C"
 	{
 		HookManager::Register_OnCardLeavingField(event);
 	}
+	void Register_UnAffectedBySpells(Condition1 condition)
+	{
+		HookManager::Register_UnAffectedBySpells(condition);
+	}
 }

@@ -6,6 +6,7 @@
 
 
 using Condition = bool(*)(uint32_t playerIdx);
+using Condition1 = bool(__stdcall*)(uint8_t side, uint8_t zone);
 using ScriptFUN = uint32_t(__cdecl*)(unsigned int* param, int param2, int param3);
 using Event = void(__stdcall*)();
 using Event1 = void(__stdcall*)(uint32_t playerIdx, uint32_t zoneIdx);
@@ -140,6 +141,7 @@ void PatchCanBeSpecialSummonedByEffect();
 void PatchCardHover();
 void PatchInputProcess();
 void PatchCardLeavingField();
+void PatchUnAffectedBySpell();
 
 void __stdcall LoadSelectionListExtra();
 
@@ -231,6 +233,9 @@ public:
 	static void Register_OnCardLeavingField(LeavingFieldEvent event);
 	static bool __stdcall Dispatch_OnCardLeavingField(uint32_t side, uint32_t zone, uint32_t dest, uint32_t action, uint32_t effectIntID);
 
+	static void Register_UnAffectedBySpells(Condition1 condition);
+	static bool __stdcall Dispatch_UnAffectedBySpells(uint8_t side, uint8_t zone);
+
 	static inline std::vector<uint16_t> spiritMonsters;
 	static inline std::vector<PhaseHook> phaseHooks;
 	static inline std::vector<ExtraMonster> extraMonsters;
@@ -278,6 +283,7 @@ private:
 	static inline std::vector<uint16_t> unRevivableHooks;
 	static inline std::vector<CanBeSpecialSummonedByEffectHook> canBeSpecialSummonedByEffectHooks;
 	static inline std::vector<LeavingFieldEvent> onCardLeavingFieldHooks;
+	static inline std::vector<Condition1> unAffectedBySpellHooks;
 
 	static inline Utils::Hook hCardEffectSctript1;
 	static inline Utils::Hook hCardEffectSctript2;
@@ -320,5 +326,6 @@ private:
 	static inline Utils::Hook hCardHover2;
 	static inline Utils::Hook hCardHover3;
 	static inline Utils::Hook hOnCardLeavingField;
+	static inline Utils::Hook hUnAffectedBySpell;
 
 };

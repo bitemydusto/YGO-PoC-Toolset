@@ -575,7 +575,7 @@ uint32_t __stdcall SummonStates()
 		}break;
 		case 1:
 		{
-			FUN::InitiateSelectionList(1, 6, 0x5EB, 0); // Original population logic: Soul of Purity and Light
+			FUN::InitiateSelectionList(GameData::GetTurnPlayer(), 6, 0x5EB, 0); // Original population logic: Soul of Purity and Light
 			innerState = 2;
 		}break;
 		case 2:
@@ -584,13 +584,13 @@ uint32_t __stdcall SummonStates()
 			if (!entry || (*entry & 0xFFF) == 0) return 0; // not ready
 
 			uint32_t dword = *entry;
-			FUN::BanishCardFromGrave(1, &dword);
+			FUN::BanishCardFromGrave(GameData::GetTurnPlayer(), &dword);
 
 			innerState = 3;
 		}break;
 		case 3:
 		{
-			FUN::InitiateSelectionList(1, 6, 0x7B, 0); // Use custom population logic
+			FUN::InitiateSelectionList(GameData::GetTurnPlayer(), 6, 0x7B, 0); // Use custom population logic
 			innerState = 4;
 		}break;
 		case 4:
@@ -599,7 +599,7 @@ uint32_t __stdcall SummonStates()
 			if (!entry || (*entry & 0xFFF) == 0) return 0; // not ready
 
 			uint32_t dword = *entry;
-			FUN::BanishCardFromGrave(1, &dword);
+			FUN::BanishCardFromGrave(GameData::GetTurnPlayer(), &dword);
 
 			innerState = 0x5;
 		}break;
@@ -645,12 +645,12 @@ uint32_t __stdcall SummonStates()
 
 			uint32_t param1 = (GameData::GetSelectedSoFar() & 0x100) >> 8;
 			uint32_t param2 = Utils::ReadUint8((void*)0x00a5780c);
-			uint32_t param3 = FUN::GetSummonZone( ((Utils::ReadUint32((void*)0x00a5780a)) & 0x100) >> 8 );
+			uint32_t param3 = FUN::GetSummonZone(GameData::GetTurnPlayer());
 			uint32_t param5 = (choice == 0) ? 1 : 0;
 
 
 
-			FUN::SpecialSummonFromHand(param1, param2, param3, 0, param5);
+			FUN::SpecialSummonFromHand(GameData::GetTurnPlayer(), param2, param3, 0, param5);
 
 			uint32_t x = Utils::ReadUint32((void*)0x00a57804);
 			Utils::WriteInt32((void*)0x00a57804, x & 0xfffffffd);

@@ -493,7 +493,7 @@ uint32_t __stdcall SummonStates()
             uint8_t side = GameData::GetSelectedSide();
             uint8_t col = GameData::GetSelectedColumn();
 
-            if (!CanBeTributed(1, side, col)) return 0;
+            if (!CanBeTributed(GameData::GetTurnPlayer(), side, col)) return 0;
 
             if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
 
@@ -516,7 +516,7 @@ uint32_t __stdcall SummonStates()
             uint8_t col = GameData::GetSelectedColumn();
 
             if (col == tributes[0].zone && tributes[0].side == side) return 0;
-            if (!CanBeTributed(1, side, col)) return 0;
+            if (!CanBeTributed(GameData::GetTurnPlayer()1, side, col)) return 0;
 
             if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
 
@@ -540,7 +540,7 @@ uint32_t __stdcall SummonStates()
 
             if (col == tributes[0].zone && tributes[0].side == side) return 0;
             if (col == tributes[1].zone && tributes[1].side == side) return 0;
-            if (!CanBeTributed(1, side, col)) return 0;
+            if (!CanBeTributed(GameData::GetTurnPlayer(), side, col)) return 0;
 
             if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
 
@@ -565,14 +565,14 @@ uint32_t __stdcall SummonStates()
             GameData::SetSelectedSoFar(sel & 0xff00);
 
             uint32_t handIdx = Utils::ReadUint8((void*)0x00a5780c);
-            uint32_t zone = FUN::GetSummonZone(1);
+            uint32_t zone = FUN::GetSummonZone(GameData::GetTurnPlayer());
             uint16_t choice = (Utils::ReadUint8((void*)0x00a57804) >> 3) & 1;
 			uint8_t set = choice == 0 ? 1 : 0;
 
             monsterSummoned = GameData::GetCardUsed();
 			summonZone = zone;
 
-            FUN::NormalSummon(1, handIdx, zone, 0, set);
+            FUN::NormalSummon(GameData::GetTurnPlayer(), handIdx, zone, 0, set);
 
             innerState = 6;
         }break;
@@ -585,16 +585,16 @@ uint32_t __stdcall SummonStates()
 				int atkBuff = tributes[0].atk + tributes[1].atk + tributes[2].atk;
                 atkBuff = atkBuff / 50;
 				if (atkBuff > 255) atkBuff = 255;
-                Utils::WriteUint8((void*)(GameData::BASE_PLAYER_ADDRESS + 1 * GameData::PLAYER_OFFSET + 0x10 + 0x90 *  summonZone + 0x48), (uint8_t)atkBuff);
+                Utils::WriteUint8((void*)(GameData::BASE_PLAYER_ADDRESS + GameData::GetTurnPlayer() * GameData::PLAYER_OFFSET + 0x10 + 0x90 *  summonZone + 0x48), (uint8_t)atkBuff);
 				// Write def buff
 				int defBuff = tributes[0].def + tributes[1].def + tributes[2].def;
 				defBuff = defBuff / 50;
 				if (defBuff > 255) defBuff = 255;
-				Utils::WriteUint8((void*)(GameData::BASE_PLAYER_ADDRESS + 1 * GameData::PLAYER_OFFSET + 0x10 + 0x90 * summonZone + 0x49), (uint8_t)defBuff);
+				Utils::WriteUint8((void*)(GameData::BASE_PLAYER_ADDRESS + GameData::GetTurnPlayer() * GameData::PLAYER_OFFSET + 0x10 + 0x90 * summonZone + 0x49), (uint8_t)defBuff);
             }
             uint32_t x = Utils::ReadUint8((void*)0x00a57804);
             Utils::WriteUint32((void*)0x00a57804, x & 0xfffffffd);
-			FUN::FUN_00579880(1, 0x11, 1); // Set already normal summoned this turn flag
+			FUN::FUN_00579880(GameData::GetTurnPlayer(), 0x11, 1); // Set already normal summoned this turn flag
 
 			innerState = 0;
             return 1;

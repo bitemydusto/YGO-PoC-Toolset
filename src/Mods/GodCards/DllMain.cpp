@@ -516,7 +516,7 @@ uint32_t __stdcall SummonStates()
             uint8_t col = GameData::GetSelectedColumn();
 
             if (col == tributes[0].zone && tributes[0].side == side) return 0;
-            if (!CanBeTributed(GameData::GetTurnPlayer()1, side, col)) return 0;
+            if (!CanBeTributed(GameData::GetTurnPlayer(), side, col)) return 0;
 
             if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
 

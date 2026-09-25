@@ -196,6 +196,31 @@ void HookManager::InstallHooks()
 	Register_SelectionListPopulation(0x1c1, LoadSelectionListExtra);
 	Register_SummonState(0xff, ExtraSummonState);
 }
+void HookManager::OncePerTurn(uint8_t side, uint8_t zone)
+{
+	FUN::W_AddEffectEntityToZone(side, zone, 0, 0xf);
+}
+void __stdcall ResetOncePerTurnFlags()
+{
+	GameData::Duel* duel = GameData::GetDuel();
+	for (size_t i = 0; i < 2; i++)
+	{
+		for (size_t j = 0; j < 11; j++)
+		{
+			if (duel->players[i].monsterZones[j].card.GetIntID() != 0 && duel->players[i].monsterZones[j].effectCount != 0)
+			{
+				for (size_t k = 0; k < duel->players[i].monsterZones[j].effectCount;)
+				{
+					if (duel->players[i].monsterZones[j].effectEntries[k].type == 0xf)
+					{
+						FUN::RemoveEffectEntity(i, j, k);
+					}
+					else k++; // Only increment k if we didn't remove an effect, since removing shifts the array down
+				}
+			}
+		}
+	}
+}
 void __stdcall ReturnSpiritsToHand()
 {
 	GameData::Duel* duel = GameData::GetDuel();
@@ -320,10 +345,12 @@ __declspec(naked) void PatchCardHover()
 	__asm
 	{
 	hook:
+		PUSH EAX
 		PUSH ESI
 		CALL HookManager::Dispatch_CardHover
 		TEST AL, AL
 		POP ESI
+		POP EAX
 		JZ hook_end
 		OR ESI, 0x8
 	hook_end:

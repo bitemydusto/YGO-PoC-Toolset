@@ -145,12 +145,15 @@ void PatchUnAffectedBySpell();
 
 void __stdcall LoadSelectionListExtra();
 
+void __stdcall ResetOncePerTurnFlags();
 void __stdcall ReturnSpiritsToHand();
 
 class HookManager
 {
 public:
 	static void InstallHooks();
+
+	static void OncePerTurn(uint8_t side, uint8_t zone);
 
 	static void Register_EffectScript(EffectScript script);
 	static void Register_Fusion2(Fusion2 fusion);

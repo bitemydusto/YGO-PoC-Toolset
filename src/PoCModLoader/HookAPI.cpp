@@ -3,6 +3,11 @@
 
 extern "C"
 {
+	void OncePerTurn(uint8_t side, uint8_t zone)
+	{
+		HookManager::OncePerTurn(side, zone);
+	}
+
 	void Register_EffectScript(EffectScript script)
 	{
 		HookManager::Register_EffectScript(script);

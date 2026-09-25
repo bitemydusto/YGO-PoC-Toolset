@@ -197,7 +197,7 @@ void HookManager::InstallHooks()
 	Register_SelectionListPopulation(0x274, LoadSelectionListGrave);
 	Register_SummonState(0xff, ExtraSummonState);
 }
-void HookManager::OncePerTurn(uint8_t side, uint8_t zone)
+void HookManager::SetOncePerTurnFlag(uint8_t side, uint8_t zone)
 {
 	FUN::W_AddEffectEntityToZone(side, zone, 0, 0xf);
 }
@@ -498,6 +498,31 @@ void HookManager::Register_SpiritMonster(uint16_t cardID)
 	}
 	spiritMonsters.push_back(cardID);
 	Register_CanBeSummonedByEffect(cardID, false);
+}
+bool HookManager::IsSpiritMonster(uint16_t cardID)
+{
+	for (const auto& id : spiritMonsters)
+	{
+		if (id == cardID) return true;
+	}
+	return false;
+}
+void HookManager::Register_TunerMonster(uint16_t cardID)
+{
+	// Check if the card ID is already registered
+	for (const auto& id : tunerMonsters)
+	{
+		if (id == cardID) return;
+	}
+	tunerMonsters.push_back(cardID);
+}
+bool HookManager::IsTunerMonster(uint16_t cardID)
+{
+	for (const auto& id : tunerMonsters)
+	{
+		if (id == cardID) return true;
+	}
+	return false;
 }
 void HookManager::Register_ExtraSummonMonster(uint16_t cardID, Condition summonCondition, State summonState)
 {

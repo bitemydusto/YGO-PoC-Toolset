@@ -3,9 +3,9 @@
 
 extern "C"
 {
-	void OncePerTurn(uint8_t side, uint8_t zone)
+	void SetOncePerTurnFlag(uint8_t side, uint8_t zone)
 	{
-		HookManager::OncePerTurn(side, zone);
+		HookManager::SetOncePerTurnFlag(side, zone);
 	}
 
 	void Register_EffectScript(EffectScript script)
@@ -23,6 +23,18 @@ extern "C"
 	void Register_SpiritMonster(uint16_t cardID)
 	{
 		HookManager::Register_SpiritMonster(cardID);
+	}
+	void Register_TunerMonster(uint16_t cardID)
+	{
+		HookManager::Register_TunerMonster(cardID);
+	}
+	bool IsSpiritMonster(uint16_t cardID)
+	{
+		return HookManager::IsSpiritMonster(cardID);
+	}
+	bool IsTunerMonster(uint16_t cardID)
+	{
+		return HookManager::IsTunerMonster(cardID);
 	}
 	void Register_ExtraSummonMonster(uint16_t cardID, Condition summonCondition, State summonState)
 	{

@@ -49,7 +49,7 @@ void __stdcall SliferStatReduce(uint32_t statAddress, uint32_t playerIdx, uint32
 uint32_t __stdcall SummonStates();
 void __stdcall OnSpecialSummon(uint32_t playerIdx, uint32_t zoneIdx);
 void __stdcall EndPhase();
-bool __stdcall TrapProtection(uint32_t side, uint32_t zone, uint32_t dest, uint32_t flags, uint32_t effectIntID);
+bool __stdcall TrapProtection(uint32_t side, uint32_t zone, uint32_t* dest, uint32_t* flags, uint32_t* effectIntID);
 
 bool raCondition1(uint8_t playerIdx);
 bool raCondition2(uint8_t playerIdx);
@@ -682,9 +682,9 @@ void __stdcall EndPhase()
     uint8_t block[32] = {};
     FUN::SendCardFromField(block, maskGen.GenerateMask(), 0xe, 2);
 }
-bool __stdcall TrapProtection(uint32_t side, uint32_t zone, uint32_t dest, uint32_t action, uint32_t effectIntID)
+bool __stdcall TrapProtection(uint32_t side, uint32_t zone, uint32_t* dest, uint32_t* action, uint32_t* effectIntID)
 {
-	uint32_t type = FUN::GetMonsterType(effectIntID);
+	uint32_t type = FUN::GetMonsterType(*effectIntID);
 
     if (type == 0x15)
     {

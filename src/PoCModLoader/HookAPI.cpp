@@ -138,4 +138,8 @@ extern "C"
 	{
 		HookManager::Register_UnAffectedBySpells(condition);
 	}
+	void Register_ActivatableGraveEffect(uint16_t cardID)
+	{
+		HookManager::Register_ActivatableGraveEffect(cardID);
+	}
 }

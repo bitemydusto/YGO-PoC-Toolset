@@ -414,6 +414,7 @@ namespace FUN
 		uint8_t  playerIdx;
 		uint8_t zoneIdx;
 		uint8_t  location;
+		uint32_t instance;
 		uint32_t targetCount;
 		uint16_t* fieldTargets;
 		uint32_t* outerTargets;
@@ -426,6 +427,7 @@ namespace FUN
 			playerIdx = block[2] & 0x1;
 			zoneIdx = *(uint8_t*)(block + 2) >> 1 & 0x7;
 			location = (block[2] >> 1) & 0x1F;
+			instance = (*(uint16_t*)(block + 4) & 0x1FE0) >> 5;
 			targetCount = *(uint16_t*)(block + 4) >> 13;
 			fieldTargets = (uint16_t*)(block + 6);
 			outerTargets = (uint32_t*)(block + 6);

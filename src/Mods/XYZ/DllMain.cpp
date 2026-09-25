@@ -38,7 +38,7 @@ uint32_t __stdcall SummonStates();
 void __stdcall StatChange_Y(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 void __stdcall StatChange_Z(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 void __stdcall Protection();
-bool __stdcall EffectProtection(uint32_t side, uint32_t zone, uint32_t dest, uint32_t flags, uint32_t effectIntID);
+bool __stdcall EffectProtection(uint32_t side, uint32_t zone, uint32_t* dest, uint32_t* flags, uint32_t* effectIntID);
 
 DWORD WINAPI MainThread(LPVOID lpParam)
 {
@@ -452,11 +452,11 @@ void __stdcall Protection()
 	}
 }
 // Returns true if the rest of the stock function should be skipped, false otherwise
-bool __stdcall EffectProtection(uint32_t side, uint32_t zone, uint32_t dest, uint32_t action, uint32_t effectIntID)
+bool __stdcall EffectProtection(uint32_t side, uint32_t zone, uint32_t* dest, uint32_t* action, uint32_t* effectIntID)
 {
 	// Check for destruction
 	// Same fxCode in SendCardFromField
-	if (action != 2) return false;
+	if (*action != 2) return false;
 	if (zone > 4) return false;
 	
 	auto effectCount = duel->players[side].monsterZones[zone].effectCount;

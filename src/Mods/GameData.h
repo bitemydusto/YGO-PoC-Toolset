@@ -58,6 +58,10 @@ namespace GameData
 		{
 			return (fullValue >> 12) & 1;
 		}
+		uint32_t GetInstance()
+		{
+			return (fullValue >> 12 & 1) + (fullValue >> 24 & 0x7F) * 2;
+		}
 		bool WasProperlySummoned()
 		{
 			return (fullValue >> 0xe & 1) != 0;

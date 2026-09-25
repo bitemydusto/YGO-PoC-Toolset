@@ -4,13 +4,17 @@
 #include "PatchLoader.h"
 #include <algorithm>
 
+namespace GameData
+{
+	struct Card;
+}
 
 using Condition = bool(*)(uint32_t playerIdx);
 using Condition1 = bool(__stdcall*)(uint8_t side, uint8_t zone);
 using ScriptFUN = uint32_t(__cdecl*)(unsigned int* param, int param2, int param3);
 using Event = void(__stdcall*)();
 using Event1 = void(__stdcall*)(uint32_t playerIdx, uint32_t zoneIdx);
-using LeavingFieldEvent = bool(__stdcall*)(uint32_t side, uint32_t zone, uint32_t dest, uint32_t flags, uint32_t effectIntID);
+using LeavingFieldEvent = bool(__stdcall*)(uint32_t side, uint32_t zone, uint32_t* dest, uint32_t* action, uint32_t* effectIntID);
 using State = uint32_t(__stdcall*)();
 using StatChange = void(__stdcall*)(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 using EffectScript = Utils::EffectScript;
@@ -144,6 +148,7 @@ void PatchCardLeavingField();
 void PatchUnAffectedBySpell();
 
 void __stdcall LoadSelectionListExtra();
+void __stdcall LoadSelectionListGrave();
 
 void __stdcall ResetOncePerTurnFlags();
 void __stdcall ReturnSpiritsToHand();
@@ -234,21 +239,27 @@ public:
 	static uint32_t __stdcall Dispatch_CanBeSummonedByEffect(uint16_t cardID);
 
 	static void Register_OnCardLeavingField(LeavingFieldEvent event);
-	static bool __stdcall Dispatch_OnCardLeavingField(uint32_t side, uint32_t zone, uint32_t dest, uint32_t action, uint32_t effectIntID);
+	static bool __stdcall Dispatch_OnCardLeavingField(uint32_t side, uint32_t zone, uint32_t* dest, uint32_t* action, uint32_t* effectIntID);
 
 	static void Register_UnAffectedBySpells(Condition1 condition);
 	static bool __stdcall Dispatch_UnAffectedBySpells(uint8_t side, uint8_t zone);
 
+	static void Register_ActivatableGraveEffect(uint16_t cardIntID);
+	static uint32_t __stdcall Dispatch_ActivatableGraveEffect();
+
 	static inline std::vector<uint16_t> spiritMonsters;
 	static inline std::vector<PhaseHook> phaseHooks;
 	static inline std::vector<ExtraMonster> extraMonsters;
+	static inline std::vector<uint16_t> activatableGraveEffects;
 
 	static bool __stdcall Dispatch_CardHover();
 	static inline uint32_t __stdcall ExtraSummonState();
 
 	static inline uint16_t selectedExtraMonster;
+	static inline GameData::Card* selectedGraveCard = nullptr;
 	static inline int innerExtraSummonState;
 	static inline int extraRunning;
+	static inline int graveRunning;
 private:
 	static int __cdecl M_GetEffectScriptIndex(uint32_t cardID);
 	static uint32_t __cdecl M_GetNumOfFusionReqs(uint32_t cardIntID);

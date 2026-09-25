@@ -194,6 +194,7 @@ void HookManager::InstallHooks()
 	Utils::PatchCall(0x0059c190, M_CanFuse);
 
 	Register_SelectionListPopulation(0x1c1, LoadSelectionListExtra);
+	Register_SelectionListPopulation(0x274, LoadSelectionListGrave);
 	Register_SummonState(0xff, ExtraSummonState);
 }
 void HookManager::OncePerTurn(uint8_t side, uint8_t zone)
@@ -318,23 +319,59 @@ void __stdcall LoadSelectionListExtra()
 	GameData::ChangeSelectionList(extras, 8);
 
 }
+void __stdcall LoadSelectionListGrave()
+{
+	auto duel = GameData::GetDuel();
+	std::vector<uint32_t> graveCards;
+	GameData::Player player = duel->players[GameData::GetTurnPlayer()];
+	for (size_t i = 0; i < player.cardsInGrave; i++)
+	{
+		uint16_t cardInGrave = player.grave[i].GetCardID();
+		for (const auto& id : HookManager::activatableGraveEffects)
+		{
+			if (cardInGrave == id)
+			{
+				graveCards.push_back(player.grave[i].fullValue);
+			}
+		}
+	}
+	GameData::ChangeSelectionList(graveCards, 4);
+}
 bool __stdcall HookManager::Dispatch_CardHover()
 {
 	GameData::Duel* duel = GameData::GetDuel();
 	uint8_t localSide = GameData::GetLocalSide();
 
 	if (GameData::GetSelectedSide() != localSide) return false;
-	if (GameData::GetSelectedLocation() != Location::EXTRA) return false;
-	if (duel->players[localSide].cardsInExtra == 0) return false;
-
-	for (size_t i = 0; i < duel->players[localSide].cardsInExtra; i++)
+	if (GameData::GetSelectedLocation() == Location::EXTRA)
 	{
-		uint16_t cardInExtra = FUN::GetCardID(duel->players[localSide].extra[i].GetIntID());
-		for (const auto& extraMonster : HookManager::extraMonsters)
+		if (duel->players[localSide].cardsInExtra == 0) return false;
+
+		for (size_t i = 0; i < duel->players[localSide].cardsInExtra; i++)
 		{
-			if (cardInExtra == extraMonster.cardID && extraMonster.summonCondition(localSide))
+			uint16_t cardInExtra = FUN::GetCardID(duel->players[localSide].extra[i].GetIntID());
+			for (const auto& extraMonster : HookManager::extraMonsters)
 			{
-				return true;
+				if (cardInExtra == extraMonster.cardID && extraMonster.summonCondition(localSide))
+				{
+					return true;
+				}
+			}
+		}
+	}
+	else if (GameData::GetSelectedLocation() == Location::GRAVE)
+	{
+		if (duel->players[localSide].cardsInGrave == 0) return false;
+
+		for (size_t i = 0; i < duel->players[localSide].cardsInGrave; i++)
+		{
+			uint16_t cardID = duel->players[localSide].grave[i].GetCardID();
+			for (const auto& id : HookManager::activatableGraveEffects)
+			{
+				if (cardID == id)
+				{
+					return true;
+				}
 			}
 		}
 	}
@@ -368,13 +405,61 @@ __declspec(naked) void PatchInputProcess()
 		JE hook_extra
 		CMP HookManager::extraRunning, 0x1
 		JE hook_extra
+		CMP BYTE PTR DS : [0x00a55048] , 0xe
+		JE hook_grave
+		CMP HookManager::graveRunning, 0x1
+		JGE hook_grave
 	hook_end:
 		JMP[gCardHoverTrampoline2]
 	hook_extra:
 		MOV HookManager::extraRunning, 0x1
 		PUSH 0x005b8d84
 		RET
+	hook_grave:
+		call HookManager::Dispatch_ActivatableGraveEffect
+		PUSH 0x005b8d92
+		RET
 	}
+}
+void HookManager::Register_ActivatableGraveEffect(uint16_t cardID)
+{
+	// Check if the card ID is already registered
+	for (const auto& id : activatableGraveEffects)
+	{
+		if (id == cardID) return;
+	}
+	activatableGraveEffects.push_back(cardID);
+}
+uint32_t HookManager::Dispatch_ActivatableGraveEffect()
+{
+	switch (HookManager::graveRunning)
+	{
+		case 0:
+		{
+			FUN::InitiateSelectionList(GameData::GetTurnPlayer(), 6, 0x274, Location::GRAVE);
+			HookManager::graveRunning = 1;
+		}break;
+		case 1:
+		{
+			uint32_t count = FUN::GetSelectionListCount();
+			if (count == 0) return 0;
+
+			HookManager::selectedGraveCard = reinterpret_cast<GameData::Card*>(FUN::GetSelectedItem());
+
+			HookManager::graveRunning = 2;
+		}break;
+		case 2:
+		{
+			uint32_t pack = ((uint32_t)(Location::GRAVE & 0x1F) | ((uint32_t)GameData::GetTurnPlayer() << 0xf) | 0x0A20u) << 16 | HookManager::selectedGraveCard->GetIntID();
+
+			FUN::InvokeEffect(pack, HookManager::selectedGraveCard->GetInstance(), 0);
+			HookManager::graveRunning = 0;
+
+			return 1;
+		}break;
+	}
+
+	return 0;
 }
 void HookManager::Register_EffectScript(EffectScript script)
 {
@@ -465,7 +550,7 @@ void HookManager::Register_OnCardLeavingField(LeavingFieldEvent event)
 {
 	onCardLeavingFieldHooks.push_back({ event });
 }
-bool __stdcall HookManager::Dispatch_OnCardLeavingField(uint32_t side, uint32_t zone, uint32_t dest, uint32_t action, uint32_t effectIntID)
+bool __stdcall HookManager::Dispatch_OnCardLeavingField(uint32_t side, uint32_t zone, uint32_t* dest, uint32_t* action, uint32_t* effectIntID)
 {
 	for (const auto& event : onCardLeavingFieldHooks)
 	{
@@ -479,9 +564,12 @@ __declspec(naked) void PatchCardLeavingField()
 	{
 	hook:
 		PUSH EAX
-		PUSH DWORD PTR DS : [ESP + 0x18]
-		PUSH DWORD PTR DS : [ESP + 0x18]
-		PUSH DWORD PTR DS : [ESP + 0x18]
+		LEA EAX, [ESP + 0x18]
+		PUSH EAX
+		LEA EAX, [ESP + 0x18]
+		PUSH EAX
+		LEA EAX, [ESP + 0x18]
+		PUSH EAX
 		PUSH DWORD PTR DS : [ESP + 0x18]
 		PUSH DWORD PTR DS : [ESP + 0x18]
 		CALL HookManager::Dispatch_OnCardLeavingField

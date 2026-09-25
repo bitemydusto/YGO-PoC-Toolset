@@ -9,13 +9,20 @@ GameData::Duel* duel = GameData::GetDuel();
 
 const uint16_t LAVA_GOLEM = Cards::DARK_TITAN_OF_TERROR;
 const uint16_t MIRAGE_OF_NIGHTMARE = Cards::THE_DRDEK;
+const uint16_t PLAGUESPREADER_ZOMBIE = Cards::ALINSECTION;
 
 int innerState = 0;
 uint8_t firstZone = 0;
+uint8_t pzZone = 0;
 
 uint32_t __cdecl Effect_LG(unsigned int* param, int param2, int param3);
 
 uint32_t __cdecl Effect_Mirage(unsigned int* param, int param2, int param3);
+
+uint32_t __cdecl Effect_PZ(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Condition_PZ(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Cost_PZ(unsigned int* param, int param2, int param3);
+
 
 void Start();
 
@@ -25,6 +32,8 @@ bool SummonCondition(uint32_t playerIdx);
 void __stdcall StandbyPhase();
 void __stdcall StandbyPhaseMirage();
 void __stdcall EndPhase();
+bool __stdcall PZ_FieldLeave(uint32_t side, uint32_t zone, uint32_t* dest, uint32_t* action, uint32_t* effectIntID);
+
 
 
 
@@ -56,6 +65,9 @@ void Start()
 
 	Register_Phase(1, StandbyPhaseMirage);
 
+	Register_ActivatableGraveEffect(PLAGUESPREADER_ZOMBIE);
+	Register_OnCardLeavingField(PZ_FieldLeave);
+
 
 	Utils::EffectScript script;
 	script.CardID = LAVA_GOLEM;
@@ -74,6 +86,15 @@ void Start()
 	scriptMirage.Cost = 0;
 	scriptMirage.Target = 0;
 	Register_EffectScript(scriptMirage);
+
+	Utils::EffectScript scriptPZ;
+	scriptPZ.CardID = PLAGUESPREADER_ZOMBIE;
+	scriptPZ.Effect = reinterpret_cast<uintptr_t>(&Effect_PZ);
+	scriptPZ.AppliesTo = 0;
+	scriptPZ.Condition = reinterpret_cast<uintptr_t>(&Condition_PZ);
+	scriptPZ.Cost = reinterpret_cast<uintptr_t>(&Cost_PZ);
+	scriptPZ.Target = 0;
+	Register_EffectScript(scriptPZ);
 }
 uint32_t __cdecl Effect_LG(unsigned int* param, int param2, int param3)
 {
@@ -128,6 +149,82 @@ uint32_t __cdecl Effect_Mirage(unsigned int* param, int param2, int param3)
 		FUN::DrawCards(funParam.playerIdx, n);
 	}
 
+
+	return 0;
+}
+uint32_t __cdecl Effect_PZ(unsigned int* param, int param2, int param3)
+{
+	FUN::Param funParam(param);
+
+	if (FUN::CanPlayerSummon(funParam.playerIdx) == 0) return 0;
+	if (FUN::NumOfEmptyValidSummonZones(funParam.playerIdx) == 0) return 0;
+	if (funParam.location != Location::GRAVE) return 0;
+
+	uint8_t state = GameData::GetEffectState();
+	switch (state)
+	{
+		case 0x80:
+		{
+			for (size_t i = 0; i < duel->players[funParam.playerIdx].cardsInGrave; i++)
+			{
+				auto& card = duel->players[funParam.playerIdx].grave[i];
+
+				if (card.GetInstance() == funParam.instance)
+				{
+					pzZone = FUN::GetSummonZone(funParam.playerIdx);
+
+					FUN::SpecialSummon(funParam.playerIdx, (uint32_t*)&card.fullValue, 1, 0x20, 0x0E, 0);
+				}
+			}
+			return 0x7f;
+		}
+		case 0x7f:
+		{
+			FUN::W_AddEffectEntityToZone(funParam.playerIdx, pzZone, FUN::GetCardIntID(PLAGUESPREADER_ZOMBIE), 0xB | (0 << 8));
+
+			return 0;
+		}
+		default:
+		{
+			return 0;
+		}
+
+	}
+}
+uint32_t __cdecl Condition_PZ(unsigned int* param, int param2, int param3)
+{
+	FUN::Param funParam(param);
+
+	if (FUN::CanPlayerSummon(funParam.playerIdx) == 0) return 0;
+	if (FUN::NumOfEmptyValidSummonZones(funParam.playerIdx) == 0) return 0;
+	if (duel->players[funParam.playerIdx].cardsInHand == 0) return 0;
+
+	return 1;
+}
+uint32_t __cdecl Cost_PZ(unsigned int* param, int param2, int param3)
+{
+	FUN::Param funParam(param);
+
+	uint8_t sub = GameData::GetEffectSubState();
+
+	switch (sub)
+	{
+		case 0:
+		{
+			FUN::ShowDialog("Select @31@0 card from your hand to place on top of your Deck.");
+			GameData::SetEffectSubState(1);
+		}break;
+		case 1:
+		{
+			if (GameData::GetSelectedLocation() != Location::HAND) return 0;
+
+			if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
+
+			FUN::W_PutCardFromLocationToDeck(funParam.playerIdx, Location::HAND, GameData::GetSelectedColumn(), true);
+			GameData::SetEffectSubState(0);
+			return 1;
+		}break;
+	}
 
 	return 0;
 }
@@ -287,4 +384,18 @@ void __stdcall StandbyPhaseMirage()
 		}
 	}
 }
-
+bool __stdcall PZ_FieldLeave(uint32_t side, uint32_t zone, uint32_t* dest, uint32_t* action, uint32_t* effectIntID)
+{
+	auto& card = duel->players[side].monsterZones[zone].card;
+	if (card.GetIntID() != 0)
+	{
+		if (card.GetCardID() == PLAGUESPREADER_ZOMBIE)
+		{
+			if (FUN::HasEffectEntiry(side, zone, PLAGUESPREADER_ZOMBIE) != 0)
+			{
+				*action |= 0x10000; // Banish flag
+			}
+		}
+	}
+	return false;
+}

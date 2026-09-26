@@ -9,6 +9,7 @@ GameData::Duel* duel = GameData::GetDuel();
 
 const uint16_t METAMORPHOSIS = Cards::ARLOWNAY;
 int tributedLevel = 0;
+std::vector<int> validLevels;
 uint32_t cardDword = 0;
 
 uint32_t __cdecl Effect_Meta(unsigned int* param, int param2, int param3);
@@ -115,12 +116,12 @@ uint32_t __cdecl Condition_Meta(unsigned int* param, int param2, int param3)
 			{
 				int extraLevel = FUN::GetMonsterLevel(player.extra[j].GetIntID());
 
-				if (fieldLevel == extraLevel && FUN::CanBeSummonedByEffect(funParam.playerIdx, player.extra[j].GetIntID())) return 1;
+				if (fieldLevel == extraLevel && FUN::CanBeSummonedByEffect(funParam.playerIdx, player.extra[j].GetIntID())) validLevels.push_back(fieldLevel);
 			}
         }
 	}
 
-    return 0;
+    return validLevels.size() == 0 ? 0 : 1;
 }
 uint32_t __cdecl Cost_Meta(unsigned int* param, int param2, int param3)
 {
@@ -167,11 +168,11 @@ bool CanBeTributed(uint8_t playerIdx,uint8_t side, uint8_t col)
 	if (side !=  playerIdx) return false;
 	if (col > 4) return false;
 	if (player.monsterZones[col].card.GetIntID() == 0) return false;
+
 	int fieldLevel = FUN::GetMonsterLevel(player.monsterZones[col].card.GetIntID());
-	for (size_t i = 0; i < player.cardsInExtra; i++)
+	for (const auto& level : validLevels)
 	{
-		int extraLevel = FUN::GetMonsterLevel(player.extra[i].GetIntID());
-		if (fieldLevel == extraLevel) return true;
+		if (fieldLevel == level) return true;
 	}
 	return false;
 }

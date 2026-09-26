@@ -158,4 +158,8 @@ extern "C"
 	{
 		HookManager::Register_ActivatableGraveEffect(cardID);
 	}
+	void Register_OnEffectActivated(EffectActivatedEvent event)
+	{
+		HookManager::Register_OnEffectActivated(event);
+	}
 }

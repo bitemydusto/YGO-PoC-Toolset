@@ -15,6 +15,7 @@ using ScriptFUN = uint32_t(__cdecl*)(unsigned int* param, int param2, int param3
 using Event = void(__stdcall*)();
 using Event1 = void(__stdcall*)(uint32_t playerIdx, uint32_t zoneIdx);
 using LeavingFieldEvent = bool(__stdcall*)(uint32_t side, uint32_t zone, uint32_t* dest, uint32_t* action, uint32_t* effectIntID);
+using EffectActivatedEvent = void(__stdcall*)(unsigned int* srcParam, uint8_t respondingSide);
 using State = uint32_t(__stdcall*)();
 using StatChange = void(__stdcall*)(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 using EffectScript = Utils::EffectScript;
@@ -147,6 +148,7 @@ void PatchCardHover();
 void PatchInputProcess();
 void PatchCardLeavingField();
 void PatchUnAffectedBySpell();
+void PatchOnEffectActivated();
 
 void __stdcall LoadSelectionListExtra();
 void __stdcall LoadSelectionListGrave();
@@ -254,6 +256,9 @@ public:
 	static void Register_ActivatableGraveEffect(uint16_t cardIntID);
 	static uint32_t __stdcall Dispatch_ActivatableGraveEffect();
 
+	static void Register_OnEffectActivated(EffectActivatedEvent event);
+	static void __stdcall Dispatch_OnEffectActivated(unsigned int* srcParam, uint8_t respondingSide);
+
 	static inline std::vector<uint16_t> spiritMonsters;
 	static inline std::vector<uint16_t> tunerMonsters;
 	static inline std::vector<PhaseHook> phaseHooks;
@@ -307,6 +312,7 @@ private:
 	static inline std::vector<CanBeSpecialSummonedByEffectHook> canBeSpecialSummonedByEffectHooks;
 	static inline std::vector<LeavingFieldEvent> onCardLeavingFieldHooks;
 	static inline std::vector<Condition1> unAffectedBySpellHooks;
+	static inline std::vector<EffectActivatedEvent> onEffectActivatedHooks;
 
 	static inline Utils::Hook hCardEffectSctript1;
 	static inline Utils::Hook hCardEffectSctript2;
@@ -351,5 +357,5 @@ private:
 	static inline Utils::Hook hCardHover3;
 	static inline Utils::Hook hOnCardLeavingField;
 	static inline Utils::Hook hUnAffectedBySpell;
-
+	static inline Utils::Hook hOnEffectActivated;
 };

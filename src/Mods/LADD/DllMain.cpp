@@ -7,18 +7,18 @@
 
 const uint16_t LADD = Cards::ARMA_KNIGHT;
 
-GameData::Duel duel;
+GameData::Duel* duel = GameData::GetDuel();
 
 uint32_t* selectedMonster = nullptr;
 
 void Start();
 
-uint32_t __cdecl Effect_LADD(unsigned int* param, int param2, int param3);
-uint32_t __cdecl Condition_LADD(unsigned int* param, int param2, int param3);
-uint32_t __cdecl Cost_LADD(unsigned int* param, int param2, int param3);
-uint32_t __cdecl Target_LADD(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Effect_LADD(unsigned int* self, unsigned int* source, int mode);
+uint32_t __cdecl Condition_LADD(unsigned int* self, unsigned int* source, int mode);
+uint32_t __cdecl Target_LADD(unsigned int* self, unsigned int* source, int mode);
 
 void __stdcall StatChange_LADD(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
+void __stdcall EffectActivated_LADD(unsigned int* srcParam, uint8_t respondingSide);
 
 
 DWORD WINAPI MainThread(LPVOID lpParam)
@@ -41,30 +41,31 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
 
 void Start()
 {
-	Register_ActivatableEffect(LADD);
+	//Register_ActivatableEffect(LADD);
 	Register_UnRevivable(LADD);
 	Register_StatChange(LADD, StatChange_LADD);
 	Register_SpellSpeed(LADD, 2);
 	Register_OnSentToGraveTrigger(LADD, nullptr);
+	Register_OnEffectActivated(EffectActivated_LADD);
 
     Utils::EffectScript script;
     script.CardID = LADD;
     script.Effect = reinterpret_cast<uintptr_t>(&Effect_LADD);
     script.AppliesTo = 0;
     script.Condition = reinterpret_cast<uintptr_t>(&Condition_LADD);
-    script.Cost = reinterpret_cast<uintptr_t>(&Cost_LADD);
+    script.Cost = 0;
     script.Target = reinterpret_cast<uintptr_t>(&Target_LADD);
 
     Register_EffectScript(script);
 
 }
-uint32_t __cdecl Effect_LADD(unsigned int* param, int param2, int param3)
+uint32_t __cdecl Effect_LADD(unsigned int* self, unsigned int* source, int mode)
 {
-    FUN::Param funParam(param);
+    FUN::Param selfParam(self);
 
-    if (funParam.finishedResolving) return 0;
+    if (selfParam.finishedResolving) return 0;
 
-    if (funParam.location == 0xe)
+    if (selfParam.location == 0xe)
     {
 		uint8_t state = GameData::GetEffectState();
 
@@ -75,19 +76,20 @@ uint32_t __cdecl Effect_LADD(unsigned int* param, int param2, int param3)
 				FUN::FieldMaskGenerator maskGen;
                 for (size_t i = 0; i < 11; i++)
                 {
-                    maskGen.zones[funParam.playerIdx][i] = true;
+                    maskGen.zones[selfParam.playerIdx][i] = true;
                 }
                 
-				FUN::SendCardFromField(funParam.block, maskGen.GenerateMask(), 0xe, 2);
+				FUN::SendCardFromField(selfParam.block, maskGen.GenerateMask(), 0xe, 2);
                 return 0x7f;
             }
 			case 0x7f:
 			{
-                uint16_t intId = funParam.outerTargets[0] & 0xFFF;
+				if (selfParam.targetCount < 1) return 0;
+                uint16_t intId = selfParam.outerTargets[0] & 0xFFF;
 
                 if (intId == 0) return 0;
 
-                FUN::SpecialSummon(funParam.playerIdx, selectedMonster, 1, 0x20, 0x0e, 0);
+                FUN::SpecialSummon(selfParam.playerIdx, selectedMonster, 1, 0x20, 0x0e, 0);
 
 				return 0;
 			}
@@ -95,63 +97,42 @@ uint32_t __cdecl Effect_LADD(unsigned int* param, int param2, int param3)
     }
     else
     {
-        uint16_t* target = (uint16_t*)param2;
-
-        uint16_t  loc = target[1];
-
-        uint8_t tPlayer = loc & 1;
-        uint8_t tZone = (loc >> 1) & 0x1F;
-
-        uint32_t cmdArg0 = ((uint32_t)loc << 15) | 0xB1;
-        uint32_t cmdArg1 = tZone;
-        FUN::FUN_005b91e0(cmdArg0, cmdArg1, 1, 0);
-
-        *(uint8_t*)((uint8_t*)target + 4) |= 0x0E;
+        FUN::W_NegateActivation(source, false);
+        FUN::W_AddEffectEntityToZone(selfParam.playerIdx, selfParam.zoneIdx, FUN::GetCardIntID(LADD), 0xb | (0 << 8));
 
         return 0;
     }
 
 }
-uint32_t __cdecl Condition_LADD(unsigned int* param, int param2, int param3)
+uint32_t __cdecl Condition_LADD(unsigned int* self, unsigned int* source, int mode)
 {
-    FUN::Param funParam(param);
+    FUN::Param selfParam(self);
 
-    if (funParam.location == 0xe) return 1;
-    if (param3 != 0) return 0;
-	if (param2 == 0) return 0;
-
-    uint16_t* target = (uint16_t*)param2;
+    if (selfParam.location == 0xe) return 1;
+    //if (mode != 0) return 0;
+	if (source == 0) return 0;
 
     //Checks for location, it's not needed here
-    //if (0x14 < (target[1] & 0x3e)) return 0;
+    //if (0x14 < (sourceParam.block16[1] & 0x3e)) return 0;
 
-	uint16_t tCardID = FUN::GetCardID(target[0] & 0xFFF);
+	FUN::Param sourceParam(source);
+	uint16_t tCardID = FUN::GetCardID(sourceParam.cardIntID);
 
-	if (FUN::GetSpellSpeed(tCardID) > 2) return 0;
+	if (FUN::GetSpellSpeed(sourceParam.cardIntID) > 2) return 0;
 	if (tCardID == LADD || tCardID == Cards::SPIRITUALISM) return 0;
 
-	int atk = FUN::GetCurrentATK(funParam.playerIdx, funParam.zoneIdx);
-	int def = FUN::GetCurrentDEF(funParam.playerIdx, funParam.zoneIdx);
+	int atk = FUN::GetCurrentATK(selfParam.playerIdx, selfParam.zoneIdx);
+	int def = FUN::GetCurrentDEF(selfParam.playerIdx, selfParam.zoneIdx);
 
 	if (atk < 500 || def < 500) return 0;
 
 
     return 1;
 }
-uint32_t __cdecl Cost_LADD(unsigned int* param, int param2, int param3)
+uint32_t __cdecl Target_LADD(unsigned int* self, unsigned int* source, int mode)
 {
-    FUN::Param funParam(param);
-
-	if (funParam.location == 0xe) return 1;
-    
-	FUN::W_AddEffectEntityToZone(funParam.playerIdx, funParam.zoneIdx, FUN::GetCardIntID(LADD), 0xb | (0 << 8));
-
-    return 1;
-}
-uint32_t __cdecl Target_LADD(unsigned int* param, int param2, int param3)
-{
-	FUN::Param funParam(param);
-	if (funParam.location != 0xe) return 1;
+	FUN::Param selfParam(self);
+	if (selfParam.location != 0xe) return 1;
 
     uint8_t sub = GameData::GetEffectSubState();
 
@@ -159,7 +140,7 @@ uint32_t __cdecl Target_LADD(unsigned int* param, int param2, int param3)
     {
         case 0:
         {
-			FUN::PopulateSelectionList(funParam.playerIdx, Cards::MONSTER_REBORN, 0);
+			FUN::PopulateSelectionList(selfParam.playerIdx, Cards::PREMATURE_BURIAL, 0);
             if (FUN::GetSelectionListCount() < 1)
             {
 				GameData::SetEffectSubState(0);
@@ -178,7 +159,7 @@ uint32_t __cdecl Target_LADD(unsigned int* param, int param2, int param3)
         }
         case 2:
         {
-			FUN::InitiateSelectionList(funParam.playerIdx, 6, Cards::PREMATURE_BURIAL, 0);
+			FUN::InitiateSelectionList(selfParam.playerIdx, 6, Cards::PREMATURE_BURIAL, 0);
 
 			GameData::SetEffectSubState(3);
 			return 0;
@@ -208,8 +189,8 @@ uint32_t __cdecl Target_LADD(unsigned int* param, int param2, int param3)
             FUN::QueueCommand(sideBit | 0x08, owner, 0x0E, 0);  // 0x0E = GY
 
             // Store targets
-            FUN::StoreTarget((int)param, (uint16_t)dword);
-            FUN::StoreTarget((int)param, (uint16_t)(dword >> 16));
+            FUN::StoreTarget((int)self, (uint16_t)dword);
+            FUN::StoreTarget((int)self, (uint16_t)(dword >> 16));
 
             GameData::SetEffectSubState(0);
             return 1;
@@ -228,6 +209,35 @@ void __stdcall StatChange_LADD(uint32_t statAddress, uint32_t playerIdx, uint32_
 
     // Modify stats
     // 0x20 = ATK, 0x24 = DEF
-    Utils::WriteInt32((void*)(statAddress + 0x20), count * 500 * -1);
-    Utils::WriteInt32((void*)(statAddress + 0x24), count * 500 * -1);
+    uint32_t& refATK = *(uint32_t*)(statAddress + 0x20);
+    uint32_t& refDEF = *(uint32_t*)(statAddress + 0x24);
+
+    refATK = refATK += 500 * count * -1;
+    refDEF = refDEF += 500 * count * -1;
+
+}
+void __stdcall EffectActivated_LADD(unsigned int* srcParam, uint8_t respondingSide)
+{
+    for (uint8_t j = 0; j < 5; j++)
+    {
+        uint16_t cardIntID = duel->players[respondingSide].monsterZones[j].card.GetIntID();
+		if (cardIntID == 0) continue;
+
+        uint16_t cardID = FUN::GetCardID(cardIntID);
+        if (cardID == LADD && duel->players[respondingSide].monsterZones[j].IsFaceUp())
+        {
+            int atk = FUN::GetCurrentATK(respondingSide, j);
+            int def = FUN::GetCurrentDEF(respondingSide, j);
+
+            if (atk >= 500 && def >= 500)
+            {
+                FUN::FlashCardPortrait(respondingSide, cardIntID, j);
+
+                uint32_t pack = ((uint32_t)(j & 0x1F) | ((uint32_t)respondingSide << 0xf) | 0x0A20u) << 16 | cardIntID;
+                FUN::RespondToEffect(pack, duel->players[respondingSide].monsterZones[j].card.GetInstance(), srcParam, 1);
+
+            }
+
+        }
+    }
 }

@@ -15,6 +15,7 @@ using Condition1 = bool(__stdcall*)(uint8_t side, uint8_t zone);
 using Event = void(__stdcall*)();
 using Event1 = void(__stdcall*)(uint32_t playerIdx, uint32_t zoneIdx);
 using LeavingFieldEvent = bool(__stdcall*)(uint32_t side, uint32_t zone, uint32_t* dest, uint32_t* flags, uint32_t* effectIntID);
+using EffectActivatedEvent = void(__stdcall*)(unsigned int* srcParam, uint8_t respondingSide);
 using State = uint32_t(__stdcall*)();
 using StatChange = void(__stdcall*)(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 using EffectScript = Utils::EffectScript;
@@ -64,4 +65,5 @@ extern "C"
 	MOD_API void Register_CanBeSummonedByEffect(uint16_t cardID, bool canBeSpecialSummoned);
 	MOD_API void Register_OnCardLeavingField(LeavingFieldEvent event);
 	MOD_API void Register_UnAffectedBySpells(Condition1 condition);
+	MOD_API void Register_OnEffectActivated(EffectActivatedEvent event);
 }

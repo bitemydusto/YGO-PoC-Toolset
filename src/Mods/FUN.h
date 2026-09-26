@@ -211,7 +211,9 @@ namespace FUN
 
 	inline auto SummonMonster = reinterpret_cast<void(__cdecl*)()>(0x005ad890);
 
-	inline auto InvokeEffect = reinterpret_cast<void(__cdecl*)(unsigned int param, unsigned int param2, unsigned int param3)>(0x005ba500);
+	inline auto InvokeEffect = reinterpret_cast<void(__cdecl*)(unsigned int pack, unsigned int inst, unsigned int extra)>(0x005ba500);
+
+	inline auto RespondToEffect = reinterpret_cast<void(__cdecl*)(unsigned int pack, unsigned int inst, unsigned int* source, unsigned int extra)>(0x005ba720);
 
 	inline auto DrawCards = reinterpret_cast<void(__cdecl*)(unsigned int playerIdx, unsigned int amount)>(0x00578ab0);
 

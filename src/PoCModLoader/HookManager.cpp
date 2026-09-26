@@ -35,6 +35,7 @@ namespace
 	void* gCardHoverTrampoline3 = nullptr;
 	void* gOnCardLeavingFieldTrampoline = nullptr;
 	void* gUnaffectedBySpellsTrampoline = nullptr;
+	void* gOnEffectActivatedTrampoline = nullptr;
 }
 
 void HookManager::InstallHooks()
@@ -126,6 +127,9 @@ void HookManager::InstallHooks()
 
 	hUnAffectedBySpell = Utils::InstallHook((void*)0x0056c460, 5, PatchUnAffectedBySpell);
 	gUnaffectedBySpellsTrampoline = hUnAffectedBySpell.Trampoline;
+
+	hOnEffectActivated = Utils::InstallHook((void*)0x0057ef00, 5, PatchOnEffectActivated);
+	gOnEffectActivatedTrampoline = hOnEffectActivated.Trampoline;
 
 
 	PatchLoader::LoadPatches();
@@ -610,6 +614,31 @@ __declspec(naked) void PatchCardLeavingField()
 		RET
 	hook_end :
 		JMP[gOnCardLeavingFieldTrampoline]
+	}
+}
+void HookManager::Register_OnEffectActivated(EffectActivatedEvent event)
+{
+	onEffectActivatedHooks.push_back({ event });
+}
+void HookManager::Dispatch_OnEffectActivated(unsigned int* srcParam, uint8_t respondingSide)
+{
+	for (const auto& event : onEffectActivatedHooks)
+	{
+		event(srcParam, respondingSide);
+	}
+}
+__declspec(naked) void PatchOnEffectActivated()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH DWORD PTR DS : [ESP + 0xc]
+		PUSH DWORD PTR DS : [ESP + 0xc]
+		CALL HookManager::Dispatch_OnEffectActivated
+		POP EAX
+	hook_end:
+		JMP[gOnEffectActivatedTrampoline]
 	}
 }
 void HookManager::Register_CanBeSummonedByEffect(uint16_t cardID, bool canBeSpecialSummoned)

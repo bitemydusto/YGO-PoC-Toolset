@@ -45,6 +45,7 @@ namespace FUN
 	struct Param
 	{
 		uint8_t* block;
+		uint16_t* block16;
 
 
 		uint8_t finishedResolving;
@@ -53,12 +54,14 @@ namespace FUN
 		uint8_t zoneIdx;
 		uint8_t  location;
 		uint32_t instance;
+		uint16_t responseWindow;
 		uint32_t targetCount;
 		uint16_t* fieldTargets;
 		uint32_t* outerTargets;
 		Param(unsigned int* param)
 		{
 			block = (uint8_t*)param;
+			block16 = (uint16_t*)param;
 
 			finishedResolving = block[4] & 4;
 			cardIntID = *(uint16_t*)(block + 0) & 0xFFF;
@@ -66,6 +69,7 @@ namespace FUN
 			zoneIdx = *(uint8_t*)(block + 2) >> 1 & 0x7;
 			location = (block[2] >> 1) & 0x1F;
 			instance = (*(uint16_t*)(block + 4) & 0x1FE0) >> 5;
+			responseWindow = (block16[1] & 0xfc0) >> 6;
 			targetCount = *(uint16_t*)(block + 4) >> 13;
 			fieldTargets = (uint16_t*)(block + 6);
 			outerTargets = (uint32_t*)(block + 6);
@@ -377,7 +381,7 @@ namespace FUN
 
 
 		// CMD 0x8E = move
-		FUN::QueueCommand(0x8E, src, dest, 0);
+		QueueCommand(0x8E, src, dest, 0);
 
 	}
 	void W_NegateActivation(unsigned int* source, bool destroy)
@@ -391,7 +395,7 @@ namespace FUN
 
 		uint16_t place = src.location;
 
-		FUN::QueueCommand(opcode, place, 1, 0);
+		QueueCommand(opcode, place, 1, 0);
 
 		src.block[4] |= 0x0E; // cancel resolve on their block
 
@@ -401,7 +405,7 @@ namespace FUN
 			maskGen.zones[src.playerIdx][src.zoneIdx] = true;
 
 			uint8_t block[32] = {};
-			FUN::SendCardFromField(block, maskGen.GenerateMask(), 0xe, 2);
+			SendCardFromField(block, maskGen.GenerateMask(), 0xe, 2);
 		}
 	}
 	void W_HighlightAndStoreTarget(unsigned int param, unsigned int* entry, Location location)

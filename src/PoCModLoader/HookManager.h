@@ -140,6 +140,7 @@ void PatchSpellSpeed();
 void PatchHasEffectInHand();
 void PatchHasEffectInHand2();
 void PatchCanBeRevived();
+void PatchCanBeTargeted();
 void PatchResponse();
 void PatchCanBeSpecialSummonedByEffect();
 void PatchCardHover();
@@ -235,6 +236,9 @@ public:
 	static void Register_UnRevivable(uint16_t cardID);
 	static bool __stdcall Dispatch_UnRevivable(uint16_t cardIntID);
 
+	static void Register_UnTargetable(uint16_t cardID);
+	static bool __stdcall Dispatch_UnTargetable(uint8_t side, uint8_t zone);
+
 	static void Register_MandatoryResponse(uint16_t cardID, ScriptFUN condition);
 	static void __stdcall Dispatch_MandatoryResponse(uint32_t cardDword);
 
@@ -299,6 +303,7 @@ private:
 	static inline std::vector<SpellSpeedHook> spellSpeedHooks;
 	static inline std::vector<uint16_t> hasEffectInHandHooks;
 	static inline std::vector<uint16_t> unRevivableHooks;
+	static inline std::vector<uint16_t> unTargetableHooks;
 	static inline std::vector<CanBeSpecialSummonedByEffectHook> canBeSpecialSummonedByEffectHooks;
 	static inline std::vector<LeavingFieldEvent> onCardLeavingFieldHooks;
 	static inline std::vector<Condition1> unAffectedBySpellHooks;
@@ -337,6 +342,7 @@ private:
 	static inline Utils::Hook hHasEffectInHand;
 	static inline Utils::Hook hHasEffectInHand2;
 	static inline Utils::Hook hCanBeRevived;
+	static inline Utils::Hook hCanBeTargeted;
 	static inline Utils::Hook hResponse;
 	static inline Utils::Hook hCanBeSpecialSummonedByEffect;
 	static inline Utils::Hook hListClicked;

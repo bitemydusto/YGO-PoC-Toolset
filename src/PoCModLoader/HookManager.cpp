@@ -26,6 +26,7 @@ namespace
 	void* gHasEffectInHandTrampoline = nullptr;
 	void* gHasEffectInHandTrampoline2 = nullptr;
 	void* gCanBeRevivedTrampoline = nullptr;
+	void* gCanBeTargetedTrampoline = nullptr;
 	void* gResponseTrampoline = nullptr;
 	void* gCanBeSpecialSummonedByEffectTrampoline = nullptr;
 	void* gListClickedTrampoline = nullptr;
@@ -107,6 +108,9 @@ void HookManager::InstallHooks()
 
 	hCanBeRevived = Utils::InstallHook((void*)0x00568bd8, 5, PatchCanBeRevived);
 	gCanBeRevivedTrampoline = hCanBeRevived.Trampoline;
+
+	hCanBeTargeted = Utils::InstallHook((void*)0x0056c510, 6, PatchCanBeTargeted);
+	gCanBeTargetedTrampoline = hCanBeTargeted.Trampoline;
 
 	hCanBeSpecialSummonedByEffect = Utils::InstallHook((void*)0x00570ac1, 5, PatchCanBeSpecialSummonedByEffect);
 	gCanBeSpecialSummonedByEffectTrampoline = hCanBeSpecialSummonedByEffect.Trampoline;
@@ -1725,6 +1729,46 @@ __declspec(naked) void PatchCanBeRevived()
 		RET
 	hook_end :
 		JMP[gCanBeRevivedTrampoline]
+	}
+}
+void HookManager::Register_UnTargetable(uint16_t cardID)
+{
+	// Check if the card ID is already registered
+	for (const auto& id : unTargetableHooks)
+	{
+		if (id == cardID) return;
+	}
+	unTargetableHooks.push_back(cardID);
+}
+bool __stdcall HookManager::Dispatch_UnTargetable(uint8_t side, uint8_t zone)
+{
+	uint16_t cardID = GameData::GetDuel()->players[side].monsterZones[zone].card.GetCardID();
+	for (const auto& id : unTargetableHooks)
+	{
+		if (id == cardID)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+__declspec(naked) void PatchCanBeTargeted()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH DWORD PTR DS : [ESP + 0xc]
+		PUSH DWORD PTR DS : [ESP + 0xc]
+		CALL HookManager::Dispatch_UnTargetable // I could probably just use __cdecl for these, but I don't care
+		TEST AL, AL
+		POP EAX
+		JZ hook_end
+		XOR EAX, EAX
+		PUSH 0x0056c547
+		RET
+	hook_end :
+		JMP[gCanBeTargetedTrampoline]
 	}
 }
 // Card Effect Scripts

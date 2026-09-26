@@ -138,6 +138,10 @@ extern "C"
 	{
 		HookManager::Register_UnRevivable(cardID);
 	}
+	void Register_UnTargetable(uint16_t cardID)
+	{
+		HookManager::Register_UnTargetable(cardID);
+	}
 	void Register_CanBeSummonedByEffect(uint16_t cardID, bool canBeSpecialSummoned)
 	{
 		HookManager::Register_CanBeSummonedByEffect(cardID, canBeSpecialSummoned);

@@ -26,17 +26,17 @@ static Tribute tributes[3];
 
 void Start();
 
-uint32_t __cdecl Effect_Slifer(unsigned int* param, int param2, int param3);
-uint32_t __cdecl Condition_Slifer(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Effect_Slifer(unsigned int* self, unsigned int* source, int mode);
+uint32_t __cdecl Condition_Slifer(unsigned int* self, unsigned int* source, int mode);
 
 uint32_t __cdecl Effect_Ra(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Condition_Ra(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Cost_Ra(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Target_Ra(unsigned int* param, int param2, int param3);
 
-uint32_t __cdecl Effect_Obelisk(unsigned int* self, unsigned int* source, int window);
-uint32_t __cdecl Condition_Obelisk(unsigned int* self, unsigned int* source, int window);
-uint32_t __cdecl Cost_Obelisk(unsigned int* self, unsigned int* source, int window);
+uint32_t __cdecl Effect_Obelisk(unsigned int* self, unsigned int* source, int mode);
+uint32_t __cdecl Condition_Obelisk(unsigned int* self, unsigned int* source, int mode);
+uint32_t __cdecl Cost_Obelisk(unsigned int* self, unsigned int* source, int mode);
 
 
 bool CanBeSummoned(uint32_t playerIdx);
@@ -107,14 +107,16 @@ void Start()
 	Register_StatChangeEffect(Cards::SLIFER_THE_SKY_DRAGON, SliferStatReduce);
 
     Register_SpellSpeed(Cards::SLIFER_THE_SKY_DRAGON, 2);
-    Register_SpellSpeed(Cards::OBELISK_THE_TORMENTOR, 2);
 
 	Register_CustomSpecialSummonTrigger(Cards::SLIFER_THE_SKY_DRAGON, OnSpecialSummon);
 	Register_CustomSpecialSummonTrigger(Cards::OBELISK_THE_TORMENTOR, OnSpecialSummon);
 	Register_CustomSpecialSummonTrigger(Cards::THE_WINGED_DRAGON_OF_RA, OnSpecialSummon);
 
-	Register_OnCardLeavingField(TrapProtection);
+	Register_UnTargetable(Cards::SLIFER_THE_SKY_DRAGON);
+	Register_UnTargetable(Cards::OBELISK_THE_TORMENTOR);
+	Register_UnTargetable(Cards::THE_WINGED_DRAGON_OF_RA);
 
+	Register_OnCardLeavingField(TrapProtection);
 
 	Register_Phase(5, EndPhase);
 
@@ -149,31 +151,29 @@ void Start()
 	Register_EffectScript(scriptRa);
 
 }
-uint32_t __cdecl Effect_Slifer(unsigned int* param, int param2, int param3)
+uint32_t __cdecl Effect_Slifer(unsigned int* self, unsigned int* source, int mode)
 {
-    FUN::Param funParam(param);
+    FUN::Param selfParam(self);
 	duel = GameData::GetDuel();
 
-    uint16_t* block = (uint16_t*)param;
+    uint16_t* block = (uint16_t*)self;
 
     uint16_t t_zoneIdx = (block[8] >> 9) & 0xf;
     uint16_t t_playerIdx = (block[8] >> 8) & 1;
 
-    if (funParam.finishedResolving) return 0;
+    if (selfParam.finishedResolving) return 0;
 
 	if (t_zoneIdx > 4) return 0;
     if (duel->players[t_playerIdx].monsterZones[t_zoneIdx].card.GetIntID() == 0) return 0;
 
-    uint8_t x = Utils::ReadUint8((void*)(GameData::BASE_PLAYER_ADDRESS + GameData::PLAYER_OFFSET * t_playerIdx + 0x10 + t_zoneIdx * 0x90 + 0x6));
-    if ((x & 2) == 0) return 0;
+    if (!duel->players[t_playerIdx].monsterZones[t_zoneIdx].IsFaceUp()) return 0;
 
     if (FUN::GetCurrentATK(t_playerIdx, t_zoneIdx) <= 2000)
     {
-        uint8_t* block8 = (uint8_t*)param;
-        uint32_t y = FUN::FUN_005777D0(block8, t_playerIdx, t_zoneIdx);
+		FUN::FieldMaskGenerator maskGen;
+		maskGen.zones[t_playerIdx][t_zoneIdx] = true;
 
-        return y & 0xffff0000;
-
+        FUN::SendCardFromField(selfParam.block, maskGen.GenerateMask(), Location::GRAVE, 2);
     }
     else
     {
@@ -185,89 +185,61 @@ uint32_t __cdecl Effect_Slifer(unsigned int* param, int param2, int param3)
 
     return 0;
 }
-uint32_t __cdecl Condition_Slifer(unsigned int* param, int param2, int param3)
-{
-    FUN::Param funParam(param);
-
-    uint16_t* block = (uint16_t*)param;
-
-    uint16_t t_zoneIdx = (block[8] >> 9) & 0xf;
-    uint16_t t_playerIdx = (block[8] >> 8) & 1;
-
-	if (t_zoneIdx > 4) return 0;
-
-	uint16_t rWindow = (block[1] & 0xfc0) >> 6;
-    if (rWindow != 5 && rWindow != 6 && rWindow != 7) return 0; // Normal/Flip/Special summon response window
-
-    if ((duel->players[t_playerIdx].monsterZones[t_zoneIdx].card.GetIntID() & 0xfff) == 0) return 0;
-
-	uint8_t x = Utils::ReadUint8((void*)(GameData::BASE_PLAYER_ADDRESS + GameData::PLAYER_OFFSET * t_playerIdx + 0x10 + t_zoneIdx * 0x90 + 0x6));
-	if ((x & 2) == 0) return 0;
-
-	if (FUN::FUN_0056C510(t_playerIdx, t_zoneIdx) == 0) return 0;
-
-    if (t_playerIdx == funParam.playerIdx) return 0;
-
-	return 1;
-}
-uint32_t __cdecl Effect_Obelisk(unsigned int* self, unsigned int* source, int window)
+uint32_t __cdecl Condition_Slifer(unsigned int* self, unsigned int* source, int mode)
 {
     FUN::Param selfParam(self);
 
-	if (source == nullptr)
-	{
-        if (obeliskEffectChoice == 0)
-        {
-            auto effect = reinterpret_cast<uint32_t(__cdecl*)(unsigned int* param, unsigned int* param2, int param3)>(0x00584C40);
+    uint16_t t_zoneIdx = (selfParam.block16[8] >> 9) & 0xf;
+    uint16_t t_playerIdx = (selfParam.block16[8] >> 8) & 1;
 
-            return effect(self, source, window);
-        }
-        else
-        {
-            FUN::W_AddEffectEntityToZone(selfParam.playerIdx, selfParam.zoneIdx, FUN::GetCardIntID(Cards::OBELISK_THE_TORMENTOR), 0xb | (0 << 8));
+	if (t_zoneIdx > 4) return 0;
 
-            return 0;
-        }
-	}
-	else
-	{
-		FUN::W_NegateActivation(source, false);
+    if (selfParam.responseWindow < 5 || selfParam.responseWindow > 7) return 0; // Normal/Flip/Special summon response window
 
-		return 0;
-	}
+    if ((duel->players[t_playerIdx].monsterZones[t_zoneIdx].card.GetIntID() & 0xfff) == 0) return 0;
+
+	if (!duel->players[t_playerIdx].monsterZones[t_zoneIdx].IsFaceUp()) return 0;
+
+	if (FUN::CanCardBeTargeted(t_playerIdx, t_zoneIdx) == 0) return 0;
+
+    if (t_playerIdx == selfParam.playerIdx) return 0;
+
+	return 1;
 }
-uint32_t __cdecl Condition_Obelisk(unsigned int* self, unsigned int* source, int window)
+uint32_t __cdecl Effect_Obelisk(unsigned int* self, unsigned int* source, int mode)
 {
-	FUN::Param selfParam(self);
+    FUN::Param selfParam(self);
 
-    if (source == nullptr || window != 0)
+    if (obeliskEffectChoice == 0)
     {
-		if (GameData::GetTurnPlayer() != selfParam.playerIdx) return 0;
-		if (GameData::GetPhase() != 2 && GameData::GetPhase() != 4) return 0;
-        if (NumOfMonster(selfParam.playerIdx) >= 3) return 1;
+		FUN::FieldMaskGenerator maskGen;
+		for (int i = 0; i < 5; i++)
+		{
+			if (duel->players[selfParam.playerIdx ^ 1].monsterZones[i].card.GetIntID() != 0)
+			{
+				maskGen.zones[selfParam.playerIdx ^ 1][i] = true;
+			}
+		}
+		FUN::SendCardFromField(selfParam.block, maskGen.GenerateMask(), Location::GRAVE, 2);
     }
     else
     {
-		FUN::Param sourceParam(source);
-
-        if (sourceParam.targetCount == 0) return 0;
-		for (int i = 0; i < sourceParam.targetCount; i++)
-		{
-			uint8_t tSide = sourceParam.GetFieldTargetSide(i);
-			uint8_t tZone = sourceParam.GetFieldTargetZone(i);
-			uint16_t tCardID = duel->players[tSide].monsterZones[tZone].card.GetCardID();
-			
-            if (tSide == selfParam.playerIdx && tZone == selfParam.zoneIdx && tCardID == Cards::OBELISK_THE_TORMENTOR) return 1;
-		}
+        FUN::W_AddEffectEntityToZone(selfParam.playerIdx, selfParam.zoneIdx, FUN::GetCardIntID(Cards::OBELISK_THE_TORMENTOR), 0xb | (0 << 8));
     }
+
+    return 0;
+}
+uint32_t __cdecl Condition_Obelisk(unsigned int* self, unsigned int* source, int mode)
+{
+	FUN::Param selfParam(self);
+
+    if (NumOfMonster(selfParam.playerIdx) >= 3) return 1;
 
 	return 0;
 }
-uint32_t __cdecl Cost_Obelisk(unsigned int* self, unsigned int* source, int window)
+uint32_t __cdecl Cost_Obelisk(unsigned int* self, unsigned int* source, int mode)
 {
     FUN::Param funParam(self);
-
-	if (source != nullptr) return 1;
 
     uint8_t sub = GameData::GetEffectSubState();
 

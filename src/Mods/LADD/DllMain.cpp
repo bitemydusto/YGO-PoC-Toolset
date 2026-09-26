@@ -41,7 +41,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
 
 void Start()
 {
-	//Register_ActivatableEffect(LADD);
 	Register_UnRevivable(LADD);
 	Register_StatChange(LADD, StatChange_LADD);
 	Register_SpellSpeed(LADD, 2);

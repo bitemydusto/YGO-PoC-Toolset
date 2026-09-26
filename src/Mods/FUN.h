@@ -66,7 +66,7 @@ namespace FUN
 			finishedResolving = block[4] & 4;
 			cardIntID = *(uint16_t*)(block + 0) & 0xFFF;
 			playerIdx = block[2] & 0x1;
-			zoneIdx = *(uint8_t*)(block + 2) >> 1 & 0x7;
+			zoneIdx = *(uint8_t*)(block + 2) >> 1 & 0xf;
 			location = (block[2] >> 1) & 0x1F;
 			instance = (*(uint16_t*)(block + 4) & 0x1FE0) >> 5;
 			responseWindow = (block16[1] & 0xfc0) >> 6;

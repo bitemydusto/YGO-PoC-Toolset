@@ -13,7 +13,7 @@ const uint16_t Z_METAL_TANK = Cards::MASKED_CLOWN;
 auto duel = GameData::GetDuel();
 auto battleResult = GameData::GetBattleResult();
 int innerState = 0;
-uint8_t destZoneYZ = 0;
+int destZoneYZ = 0;
 
 struct Material
 {

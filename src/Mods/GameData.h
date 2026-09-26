@@ -320,6 +320,97 @@ namespace GameData
 	}
 	uint8_t GetPhase()
 	{
-		return Utils::ReadUint8((void*)0x00a577fa);
+		return Utils::ReadUint8((void*)0x00a577fa) >> 1;
 	}
+
+	struct Combination
+	{
+		uint8_t side;
+		uint8_t mask;
+		vector<uint16_t> cards;
+
+		Combination(uint8_t _side, uint8_t _mask)
+		{
+			side = _side;
+			mask = _mask;
+
+			auto player = GameData::GetDuel()->players[side];
+			for (uint8_t i = 0; i < 5; i++)
+			{
+				if (mask & (1 << i))
+				{
+					uint16_t intID = player.monsterZones[i].card.GetIntID();
+					if (intID != 0)
+					{
+						cards.push_back(player.monsterZones[i].card.GetCardID());
+					}
+				}
+			}
+		}
+		bool operator==(const Combination& other) const
+		{
+			return side == other.side && mask == other.mask;
+		}
+		uint8_t GetSize()
+		{
+			return cards.size();
+		}
+		uint8_t GetNumOfTuners()
+		{
+			uint8_t count = 0;
+			for (auto card : cards)
+			{
+				if (IsTunerMonster(card)) count++;
+			}
+			return count;
+		}
+		uint8_t GetCombinedLevel()
+		{
+			uint8_t level = 0;
+			for (auto card : cards)
+			{
+				level += FUN::GetMonsterLevel(card);
+			}
+			return level;
+		}
+	};
+	// HOW TO USE:
+	// Upon creating an instance of MaterialCombinator, it will automatically generate all possible combinations of monsters on the field
+	// for the specified side (0 or 1). You can then access the combinations vector to retrieve the generated combinations and their properties,
+	// such as size, number of tuners, and combined level. Use these or your own logic to filter the combinations as needed for your
+	// fusion/synchro etc. summoning or other card effects.
+	struct MaterialCombinator
+	{
+		vector<Combination> combinations;
+
+		MaterialCombinator(uint8_t side)
+		{
+			auto player = GameData::GetDuel()->players[side];
+
+			// Get all possible combinations of monsters on the field
+			// Generate all combinations using bitmasking (1 to 31 = 2^5 - 1)
+			// For example, zone 0 and 1 = 00011 = 3, zone 0,2 and 3 = 01101 = 13, etc.
+			for (uint8_t mask = 1; mask < 32; mask++)
+			{
+				Combination combo(side, mask);
+
+
+				if (combo.GetSize() >= 2)
+				{
+					combinations.push_back(combo);
+				}
+			}
+		}
+		void Filter(bool(*filterFunction)(Combination combo))
+		{
+			for (auto& item : combinations)
+			{
+				if (!filterFunction(item))
+				{
+					combinations.erase(std::remove(combinations.begin(), combinations.end(), item), combinations.end());
+				}
+			}
+		}
+	};
+
 }

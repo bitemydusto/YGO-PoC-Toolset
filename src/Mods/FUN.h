@@ -1,6 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include "HookAPI.h"
+
+using namespace std;
 
 // 0-4: Monster Zones
 // 5-9: Spell/Trap Zones
@@ -23,17 +26,90 @@ enum SubType : uint8_t
 
 namespace FUN
 {
-    template <typename T>
-    inline T GetFunction(std::uintptr_t address)
-    {
-        return reinterpret_cast<T>(address);
-    }
+	// Helper structs
+	struct FieldMaskGenerator
+	{
+		bool zones[2][11] = {};
 
-    inline auto GetMonsterType = reinterpret_cast<uint32_t(__cdecl*)(uint16_t intID)>(0x004025D0);
+		uint32_t GenerateMask()
+		{
+			uint32_t mask = 0;
+			for (int i = 0; i < 11; i++)
+			{
+				if (zones[0][i]) mask |= (1 << i);
+				if (zones[1][i]) mask |= (1 << (i + 16));
+			}
+			return mask;
+		}
+	};
+	struct Param
+	{
+		uint8_t* block;
+
+
+		uint8_t finishedResolving;
+		uint16_t cardIntID;
+		uint8_t  playerIdx;
+		uint8_t zoneIdx;
+		uint8_t  location;
+		uint32_t instance;
+		uint32_t targetCount;
+		uint16_t* fieldTargets;
+		uint32_t* outerTargets;
+		Param(unsigned int* param)
+		{
+			block = (uint8_t*)param;
+
+			finishedResolving = block[4] & 4;
+			cardIntID = *(uint16_t*)(block + 0) & 0xFFF;
+			playerIdx = block[2] & 0x1;
+			zoneIdx = *(uint8_t*)(block + 2) >> 1 & 0x7;
+			location = (block[2] >> 1) & 0x1F;
+			instance = (*(uint16_t*)(block + 4) & 0x1FE0) >> 5;
+			targetCount = *(uint16_t*)(block + 4) >> 13;
+			fieldTargets = (uint16_t*)(block + 6);
+			outerTargets = (uint32_t*)(block + 6);
+		}
+		Param()
+		{
+
+		}
+		uint8_t GetFieldTargetSide(uint8_t index)
+		{
+			return fieldTargets[index] & 1;
+		}
+		uint8_t GetFieldTargetZone(uint8_t index)
+		{
+			return (fieldTargets[index] >> 4) & 0xF;
+		}
+	};
+
+	struct EffectBlock
+	{
+		uint16_t cardIntId;   // +0
+		uint16_t location;    // +2  side | (place << 1) | flags
+		uint16_t flags;       // +4  instance in bits 5–12 (0x1FE0), target count bits 13–15, done bit 2
+		uint16_t targets[7];  // +6  field halfwords / room for outer dwords
+
+		EffectBlock(uint8_t _owner, uint16_t _cardIntID, uint8_t _location, uint8_t _side)
+		{
+			cardIntId = (_owner << 12) | (_cardIntID & 0xFFF);
+			location = (_location << 1) | (_side);
+		}
+	};
+
+
+	template <typename T>
+	inline T GetFunction(std::uintptr_t address)
+	{
+		return reinterpret_cast<T>(address);
+	}
+
+	inline auto GetMonsterType = reinterpret_cast<uint32_t(__cdecl*)(uint16_t intID)>(0x004025D0);
 
 	inline auto GetCardSubType = reinterpret_cast<uint32_t(__cdecl*)(uint16_t intID)>(0x00402740);
 
-    inline auto GetMonsterAttribute = reinterpret_cast<uint32_t(__cdecl*)(uint16_t intID)>(0x00402650);
+	inline auto GetMonsterAttribute = reinterpret_cast<uint32_t(__cdecl*)(uint16_t intID)>(0x00402650);
 
 	inline auto GetMonsterLevel = reinterpret_cast<uint32_t(__cdecl*)(uint16_t intID)>(0x004026c0);
 
@@ -49,22 +125,22 @@ namespace FUN
 
 	inline auto GetSpellSpeed = reinterpret_cast<uint32_t(__cdecl*)(uint16_t intID)>(0x0057e030);
 
-    inline auto ShowDialog = reinterpret_cast<void(__cdecl*)(const char*)>(0x005bf860);
+	inline auto ShowDialog = reinterpret_cast<void(__cdecl*)(const char*)>(0x005bf860);
 
 	inline auto ShowDialog2 = reinterpret_cast<void(__cdecl*)(unsigned int)>(0x005bf860);
 
 	inline auto ShowDialogOptions = reinterpret_cast<void(__cdecl*)(unsigned int, unsigned int)>(0x005bfa00);
 
-    inline auto PayLifePoints = reinterpret_cast<void(__cdecl*)(unsigned int playerIdx, unsigned int amount)>(0x005783b0);
+	inline auto PayLifePoints = reinterpret_cast<void(__cdecl*)(unsigned int playerIdx, unsigned int amount)>(0x005783b0);
 
 	inline auto IsCardOnTheField = reinterpret_cast<uint32_t(__cdecl*)(uint16_t cardID)>(0x005699c0);
 
 	// Generates target parameters and saves them to the target pointer
 	inline auto SetTargetParams = reinterpret_cast<uint32_t(__cdecl*)(unsigned int block, int param2, unsigned int* target)>(0x005833e0);
 
-    // Sends the card from the field to the destination based on the zone bit field (16 bit for each field, first 11 bits -> monster/st/fieldspell)
+	// Sends the card from the field to the destination based on the zone bit field (16 bit for each field, first 11 bits -> monster/st/fieldspell)
 	// destCode: 0xb = hand, 0xd = deck, 0xe = grave, 0xf = banish
-    // fxCode: bit field for effect, 0 = no effect, 2 = play destroy sound and visual effect
+	// fxCode: bit field for effect, 0 = no effect, 2 = play destroy sound and visual effect
 	inline auto SendCardFromField = reinterpret_cast<unsigned int(__cdecl*)(uint8_t * block, unsigned int zoneBitField, unsigned int destCode, unsigned int fxCode)>(0x005768b0);
 
 	inline auto DiscardFromHand = reinterpret_cast<unsigned int(__cdecl*)(unsigned int player, unsigned int handIdx, unsigned int flag)>(0x005758c0);
@@ -91,7 +167,7 @@ namespace FUN
 	// Used once for field targets, twice for full card dwords stored in lists
 	inline auto StoreTarget = reinterpret_cast<void(__cdecl*)(int block, uint16_t value)>(0x00592a40);
 
-	inline auto QueueFX = reinterpret_cast<void(__cdecl*)(uint32_t param1, uint32_t param2, uint32_t param3, uint32_t param4)>(0x005b91e0);
+	inline auto QueueCommand = reinterpret_cast<void(__cdecl*)(unsigned short opCode, unsigned int arg0, unsigned int arg1, unsigned int flag)>(0x005b91e0);
 
 	inline auto AddTargetedCardToHand = reinterpret_cast<void(__cdecl*)(uint8_t * block, unsigned int playerIdx, unsigned int* param3)>(0x00575ca0);
 
@@ -207,7 +283,7 @@ namespace FUN
 
 	inline auto GetEmptySpellTrapZoneIdx = reinterpret_cast<int(__cdecl*)(unsigned int playerIdx)>(0x0056a400);
 
-	inline auto MoveCardOnTheField = reinterpret_cast<bool(__cdecl*)(uint8_t* block, int srcSide, char srcZone, int destSide, int destZone)>(0x00577bf0);
+	inline auto MoveCardOnTheField = reinterpret_cast<bool(__cdecl*)(uint8_t * block, int srcSide, char srcZone, int destSide, int destZone)>(0x00577bf0);
 
 	// equipment, target = packed location (zone << 8 | side)
 	// mode = 1 : regular equip, 5 : absorbed monster
@@ -216,6 +292,8 @@ namespace FUN
 	inline auto ClearTributeMarks = reinterpret_cast<void(__cdecl*)()>(0x00486c30);
 
 	inline auto RemoveEffectEntity = reinterpret_cast<void(__cdecl*)(unsigned int side, unsigned int zone, int effectIdx)>(0x005695e0);
+
+	inline auto IndexOfZoneEffect = reinterpret_cast<int(__cdecl*)(unsigned int sideIdx, unsigned int zoneIdx, unsigned int effectID)>(0x0056d990);
 
 
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);
@@ -251,18 +329,18 @@ namespace FUN
 	uint32_t W_RollDice(uint16_t* param, uint8_t diceCmd)
 	{
 		int roll = FUN::GetRandomNumber(6) + 1;
-		FUN::QueueFX((param[1] << 15) | diceCmd, roll, (param[1] >> 1) & 0x1F, 0);
+		FUN::QueueCommand((param[1] << 15) | diceCmd, roll, (param[1] >> 1) & 0x1F, 0);
 
 		return roll;
 	}
 	void W_PutCardFromLocationToDeck(uint32_t playerIdx, Location location, uint32_t idx, bool top)
 	{
 		if (location < 0xa) return;
-		
-		uint32_t* cardDword = (uint32_t*)FUN::GetCardPtrFromLocation(playerIdx, location, idx);
-		byte x = (byte)(*cardDword >> 0xc);
 
-		FUN::QueueFX(
+		uint32_t* cardDword = (uint32_t*)FUN::GetCardPtrFromLocation(playerIdx, location, idx);
+		uint8_t x = (uint8_t)(*cardDword >> 0xc);
+
+		FUN::QueueCommand(
 			0x8e,
 			((((uint16_t)(char)(*cardDword >> 0x18) * 2 + (x & 1)) << 8) | (uint8_t)(char)playerIdx) & 0xff01 | 0x16,
 			((((uint16_t)(top == 0)) << 8) | (uint8_t)x) & 0xff01 | 0x1a,
@@ -273,8 +351,8 @@ namespace FUN
 	{
 		uint32_t* cardDword = (uint32_t*)(0x00A55D64 + sideIdx * 0xd44 + 0x10 + zoneIdx * 0x90);
 
-		byte x = (byte)(*cardDword >> 0xc);
-		FUN::QueueFX(
+		uint8_t x = (uint8_t)(*cardDword >> 0xc);
+		FUN::QueueCommand(
 			0x8e,
 			((((uint16_t)(char)(*cardDword >> 0x18) * 2 + (x & 1)) << 8) | (uint8_t)(char)sideIdx) & 0xff01 | 0x16,
 			((((uint16_t)(top == 0)) << 8) | (uint8_t)x) & 0xff01 | 0x1a,
@@ -284,7 +362,7 @@ namespace FUN
 	uint32_t W_RollDice(uint32_t playerIdx, uint32_t sideIdx, uint8_t diceCmd)
 	{
 		int roll = FUN::GetRandomNumber(6) + 1;
-		FUN::QueueFX((sideIdx << 15) | diceCmd, roll, (playerIdx >> 1) & 0x1F, 0);
+		FUN::QueueCommand((sideIdx << 15) | diceCmd, roll, (playerIdx >> 1) & 0x1F, 0);
 
 		return roll;
 	}
@@ -299,8 +377,32 @@ namespace FUN
 
 
 		// CMD 0x8E = move
-		FUN::IssueCommand(0x8E, src, dest, 0);
+		FUN::QueueCommand(0x8E, src, dest, 0);
 
+	}
+	void W_NegateActivation(unsigned int* source, bool destroy)
+	{
+		Param src(source);
+
+		// Full location halfword (side + place + flags)
+		uint16_t locWord = *(uint16_t*)(src.block + 2);
+
+		uint16_t opcode = (uint16_t)((locWord << 15) | 0xB1);
+
+		uint16_t place = src.location;
+
+		FUN::QueueCommand(opcode, place, 1, 0);
+
+		src.block[4] |= 0x0E; // cancel resolve on their block
+
+		if (destroy)
+		{
+			FieldMaskGenerator maskGen;
+			maskGen.zones[src.playerIdx][src.zoneIdx] = true;
+
+			uint8_t block[32] = {};
+			FUN::SendCardFromField(block, maskGen.GenerateMask(), 0xe, 2);
+		}
 	}
 	void W_HighlightAndStoreTarget(unsigned int param, unsigned int* entry, Location location)
 	{
@@ -312,14 +414,14 @@ namespace FUN
 		uint32_t cardId = FUN::GetCardID(dword & 0xFFF);
 
 		// Highlight / reveal
-		FUN::QueueFX(sideBit | 0xDF, cardId, inst, 0);
-		FUN::QueueFX(sideBit | 0x08, owner, location, 0);
+		FUN::QueueCommand(sideBit | 0xDF, cardId, inst, 0);
+		FUN::QueueCommand(sideBit | 0x08, owner, location, 0);
 
 		// Store targets
 		FUN::StoreTarget((int)param, (uint16_t)dword);
 		FUN::StoreTarget((int)param, (uint16_t)(dword >> 16));
 	}
-	void W_SS_HandToOpp(uint32_t handPlayer,int handIndex, uint32_t destZone, uint32_t extra,int posArg)
+	void W_SS_HandToOpp(uint32_t handPlayer, int handIndex, uint32_t destZone, uint32_t extra, int posArg)
 	{
 		// This is a reimplementation of FUN_SpecialSummonFromHand, but modified so it summons to the opponent's field instead of the player's field.
 
@@ -387,76 +489,4 @@ namespace FUN
 	inline auto DestroyEffect = reinterpret_cast<uint32_t(__cdecl*)(unsigned int* param, int param2, int param3)>(0x00585C10);
 
 	inline auto TargetFieldCard = reinterpret_cast<uint32_t(__cdecl*)(unsigned int* param, int param2, int param3)>(0x00596570);
-
-	// Helper structs
-	struct FieldMaskGenerator
-	{
-		bool zones[2][11] = {};
-
-		uint32_t GenerateMask()
-		{
-			uint32_t mask = 0;
-			for (int i = 0; i < 11; i++)
-			{
-				if (zones[0][i]) mask |= (1 << i);
-				if (zones[1][i]) mask |= (1 << (i + 16));
-			}
-			return mask;
-		}
-	};
-	struct Param
-	{
-		uint8_t* block;
-
-
-		uint8_t finishedResolving;
-		uint16_t cardIntID;
-		uint8_t  playerIdx;
-		uint8_t zoneIdx;
-		uint8_t  location;
-		uint32_t instance;
-		uint32_t targetCount;
-		uint16_t* fieldTargets;
-		uint32_t* outerTargets;
-		Param(unsigned int* param)
-		{
-			block = (uint8_t*)param;
-
-			finishedResolving = block[4] & 4;
-			cardIntID = *(uint16_t*)(block + 0) & 0xFFF;
-			playerIdx = block[2] & 0x1;
-			zoneIdx = *(uint8_t*)(block + 2) >> 1 & 0x7;
-			location = (block[2] >> 1) & 0x1F;
-			instance = (*(uint16_t*)(block + 4) & 0x1FE0) >> 5;
-			targetCount = *(uint16_t*)(block + 4) >> 13;
-			fieldTargets = (uint16_t*)(block + 6);
-			outerTargets = (uint32_t*)(block + 6);
-		}
-		Param()
-		{
-
-		}
-		uint8_t GetFieldTargetSide(uint8_t index)
-		{
-			return fieldTargets[index] & 1;
-		}
-		uint8_t GetFieldTargetZone(uint8_t index)
-		{
-			return (fieldTargets[index] >> 4) & 0xF;
-		}
-	};
-
-	struct EffectBlock
-	{
-		uint16_t cardIntId;   // +0
-		uint16_t location;    // +2  side | (place << 1) | flags
-		uint16_t flags;       // +4  instance in bits 5–12 (0x1FE0), target count bits 13–15, done bit 2
-		uint16_t targets[7];  // +6  field halfwords / room for outer dwords
-
-		EffectBlock(uint8_t _owner, uint16_t _cardIntID, uint8_t _location, uint8_t _side)
-		{
-			cardIntId = (_owner << 12) | (_cardIntID & 0xFFF);
-			location = (_location << 1) | (_side);
-		}
-	};
 }

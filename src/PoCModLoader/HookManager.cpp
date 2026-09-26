@@ -749,7 +749,7 @@ bool __stdcall HookManager::Dispatch_ActivatableStEffect(uint16_t _cardIntID, ui
 		{
 			FUN::EffectBlock block = { turnPlayer, cardIntID, selectedZone, selectedSide };
 
-			byte nullBlock[32] = {};
+			uint8_t nullBlock[32] = {};
 
 			auto condition = reinterpret_cast<bool(__cdecl*)(unsigned int* param, unsigned int* param2, unsigned int* param3)>(effectScripts[cardIntID & 0xfff].Condition);
 

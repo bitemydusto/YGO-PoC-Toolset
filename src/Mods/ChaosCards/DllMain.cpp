@@ -281,8 +281,8 @@ uint32_t __cdecl Target_DMOC(unsigned int* param, int param2, int param3)
 		uint32_t cardId = FUN::GetCardID(dword & 0xFFF);
 
 		// Highlight / reveal
-		FUN::QueueFX(sideBit | 0xDF, cardId, inst, 0);
-		FUN::QueueFX(sideBit | 0x08, owner, Location::GRAVE, 0);
+		FUN::QueueCommand(sideBit | 0xDF, cardId, inst, 0);
+		FUN::QueueCommand(sideBit | 0x08, owner, Location::GRAVE, 0);
 
 		// Store targets
 		FUN::StoreTarget((int)param, (uint16_t)dword);
@@ -462,8 +462,8 @@ uint32_t __cdecl Target_PS(unsigned int* param, int param2, int param3)
 						uint32_t cardId = FUN::GetCardID(dword & 0xFFF);
 						uint32_t inst = owner + ((dword >> 24) & 0x7F) * 2;
 
-						FUN::QueueFX(sideBit | 0xDF, cardId, inst, 0);
-						FUN::QueueFX(sideBit | 0x08, owner, Location::BANISHED, 0);
+						FUN::QueueCommand(sideBit | 0xDF, cardId, inst, 0);
+						FUN::QueueCommand(sideBit | 0x08, owner, Location::BANISHED, 0);
 
 						// One card dword = two target halfwords
 						FUN::StoreTarget((int)param, (uint16_t)dword);

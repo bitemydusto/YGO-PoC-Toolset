@@ -204,8 +204,8 @@ uint32_t __cdecl Target_LADD(unsigned int* param, int param2, int param3)
             uint32_t cardId = FUN::GetCardID(dword & 0xFFF); // match your GetCardID arity
 
             // Highlight / reveal
-            FUN::QueueFX(sideBit | 0xDF, cardId, inst, 0);
-            FUN::QueueFX(sideBit | 0x08, owner, 0x0E, 0);  // 0x0E = GY
+            FUN::QueueCommand(sideBit | 0xDF, cardId, inst, 0);
+            FUN::QueueCommand(sideBit | 0x08, owner, 0x0E, 0);  // 0x0E = GY
 
             // Store targets
             FUN::StoreTarget((int)param, (uint16_t)dword);

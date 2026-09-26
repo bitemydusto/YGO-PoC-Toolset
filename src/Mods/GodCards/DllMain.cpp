@@ -34,9 +34,9 @@ uint32_t __cdecl Condition_Ra(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Cost_Ra(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Target_Ra(unsigned int* param, int param2, int param3);
 
-uint32_t __cdecl Effect_Obelisk(unsigned int* param, int param2, int param3);
-uint32_t __cdecl Condition_Obelisk(unsigned int* param, int param2, int param3);
-uint32_t __cdecl Cost_Obelisk(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Effect_Obelisk(unsigned int* self, unsigned int* source, int window);
+uint32_t __cdecl Condition_Obelisk(unsigned int* self, unsigned int* source, int window);
+uint32_t __cdecl Cost_Obelisk(unsigned int* self, unsigned int* source, int window);
 
 
 bool CanBeSummoned(uint32_t playerIdx);
@@ -107,6 +107,7 @@ void Start()
 	Register_StatChangeEffect(Cards::SLIFER_THE_SKY_DRAGON, SliferStatReduce);
 
     Register_SpellSpeed(Cards::SLIFER_THE_SKY_DRAGON, 2);
+    Register_SpellSpeed(Cards::OBELISK_THE_TORMENTOR, 2);
 
 	Register_CustomSpecialSummonTrigger(Cards::SLIFER_THE_SKY_DRAGON, OnSpecialSummon);
 	Register_CustomSpecialSummonTrigger(Cards::OBELISK_THE_TORMENTOR, OnSpecialSummon);
@@ -130,7 +131,7 @@ void Start()
     Utils::EffectScript scriptObelisk;
     scriptObelisk.CardID = Cards::OBELISK_THE_TORMENTOR;
     scriptObelisk.Effect = reinterpret_cast<uintptr_t>(&Effect_Obelisk);
-    scriptObelisk.AppliesTo = 0x0057A7F0;
+    scriptObelisk.AppliesTo = 0;
     scriptObelisk.Condition = reinterpret_cast<uintptr_t>(&Condition_Obelisk);
     scriptObelisk.Cost = reinterpret_cast<uintptr_t>(&Cost_Obelisk);
     scriptObelisk.Target = 0;
@@ -209,34 +210,64 @@ uint32_t __cdecl Condition_Slifer(unsigned int* param, int param2, int param3)
 
 	return 1;
 }
-uint32_t __cdecl Effect_Obelisk(unsigned int* param, int param2, int param3)
+uint32_t __cdecl Effect_Obelisk(unsigned int* self, unsigned int* source, int window)
 {
-	if (obeliskEffectChoice == 0)
-	{
-		auto effect = reinterpret_cast<uint32_t(__cdecl*)(unsigned int* param, int param2, int param3)>(0x00584C40);
+    FUN::Param selfParam(self);
 
-		return effect(param, param2, param3);
+	if (source == nullptr)
+	{
+        if (obeliskEffectChoice == 0)
+        {
+            auto effect = reinterpret_cast<uint32_t(__cdecl*)(unsigned int* param, unsigned int* param2, int param3)>(0x00584C40);
+
+            return effect(self, source, window);
+        }
+        else
+        {
+            FUN::W_AddEffectEntityToZone(selfParam.playerIdx, selfParam.zoneIdx, FUN::GetCardIntID(Cards::OBELISK_THE_TORMENTOR), 0xb | (0 << 8));
+
+            return 0;
+        }
 	}
 	else
 	{
-		FUN::Param funParam(param);
+		FUN::W_NegateActivation(source, false);
 
-		FUN::W_AddEffectEntityToZone(funParam.playerIdx, funParam.zoneIdx, FUN::GetCardIntID(Cards::OBELISK_THE_TORMENTOR), 0xb | (0 << 8));
-
-        return 0;
+		return 0;
 	}
 }
-uint32_t __cdecl Condition_Obelisk(unsigned int* param, int param2, int param3)
+uint32_t __cdecl Condition_Obelisk(unsigned int* self, unsigned int* source, int window)
 {
-	FUN::Param funParam(param);
+	FUN::Param selfParam(self);
 
-	if (NumOfMonster(funParam.playerIdx) < 3) return 0;
+    if (source == nullptr || window != 0)
+    {
+		if (GameData::GetTurnPlayer() != selfParam.playerIdx) return 0;
+		if (GameData::GetPhase() != 2 && GameData::GetPhase() != 4) return 0;
+        if (NumOfMonster(selfParam.playerIdx) >= 3) return 1;
+    }
+    else
+    {
+		FUN::Param sourceParam(source);
 
-	return 1;
+        if (sourceParam.targetCount == 0) return 0;
+		for (int i = 0; i < sourceParam.targetCount; i++)
+		{
+			uint8_t tSide = sourceParam.GetFieldTargetSide(i);
+			uint8_t tZone = sourceParam.GetFieldTargetZone(i);
+			uint16_t tCardID = duel->players[tSide].monsterZones[tZone].card.GetCardID();
+			
+            if (tSide == selfParam.playerIdx && tZone == selfParam.zoneIdx && tCardID == Cards::OBELISK_THE_TORMENTOR) return 1;
+		}
+    }
+
+	return 0;
 }
-uint32_t __cdecl Cost_Obelisk(unsigned int* param, int param2, int param3)
+uint32_t __cdecl Cost_Obelisk(unsigned int* self, unsigned int* source, int window)
 {
-    FUN::Param funParam(param);
+    FUN::Param funParam(self);
+
+	if (source != nullptr) return 1;
 
     uint8_t sub = GameData::GetEffectSubState();
 
@@ -244,7 +275,7 @@ uint32_t __cdecl Cost_Obelisk(unsigned int* param, int param2, int param3)
     {
         case 0:
         {
-			obeliskEffectChoice = 0;
+			obeliskEffectChoice = 1;
             FUN::ShowDialog("Select @32@0 monsters to Tribute.");
 
             GameData::SetEffectSubState(1);
@@ -669,6 +700,16 @@ void __stdcall EndPhase()
                     cardID == Cards::OBELISK_THE_TORMENTOR ||
                     cardID == Cards::THE_WINGED_DRAGON_OF_RA)
                 {
+                    if (cardID == Cards::OBELISK_THE_TORMENTOR)
+                    {
+                        int index = FUN::IndexOfZoneEffect(i, j, Cards::OBELISK_THE_TORMENTOR);
+
+						if (index >= 0)
+						{
+							FUN::RemoveEffectEntity(i, j, index);
+						}
+                    }
+
 					uint8_t ssFlag = Utils::ReadUint8((void*)(GameData::BASE_PLAYER_ADDRESS + i * GameData::PLAYER_OFFSET + 0x10 + 0x90 * j + 0x45));
                     if (ssFlag == 1)
                     {

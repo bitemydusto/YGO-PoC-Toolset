@@ -108,7 +108,7 @@ uint32_t __cdecl Effect_Mirage(unsigned int* param, int param2, int param3)
 {
 	FUN::Param funParam(param);
 
-	if (GameData::GetPhase() > 3 || funParam.zoneIdx > 9) return 0;
+	if (GameData::GetPhase() > 1 || funParam.zoneIdx > 9) return 0;
 
 	uint16_t cardIntID = duel->players[funParam.playerIdx].monsterZones[funParam.zoneIdx].card.GetIntID();
 	uint16_t cardID = FUN::GetCardID(cardIntID);

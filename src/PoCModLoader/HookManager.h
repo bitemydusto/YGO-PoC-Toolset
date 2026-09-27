@@ -88,11 +88,6 @@ struct SelectionListPopulationHook
 	uint16_t cardID;
 	Event event;
 };
-struct ResponeHook
-{
-	uint16_t cardID;
-	ScriptFUN condition;
-};
 struct CanBeSpecialSummonedByEffectHook
 {
 	uint16_t cardID;
@@ -142,7 +137,6 @@ void PatchHasEffectInHand();
 void PatchHasEffectInHand2();
 void PatchCanBeRevived();
 void PatchCanBeTargeted();
-void PatchResponse();
 void PatchCanBeSpecialSummonedByEffect();
 void PatchCardHover();
 void PatchInputProcess();
@@ -241,9 +235,6 @@ public:
 	static void Register_UnTargetable(uint16_t cardID);
 	static bool __stdcall Dispatch_UnTargetable(uint8_t side, uint8_t zone);
 
-	static void Register_MandatoryResponse(uint16_t cardID, ScriptFUN condition);
-	static void __stdcall Dispatch_MandatoryResponse(uint32_t cardDword);
-
 	static void Register_CanBeSummonedByEffect(uint16_t cardID, bool canBeSpecialSummoned);
 	static uint32_t __stdcall Dispatch_CanBeSummonedByEffect(uint16_t cardID);
 
@@ -285,7 +276,6 @@ private:
 
 
 	static inline std::vector<uint16_t> flipMonsters;
-	static inline std::vector<ResponeHook> mandatoryResponses;
 	static inline std::vector<uint16_t> activatableEffects;
 	static inline std::vector<uint16_t> activatableStEffects;
 	static inline std::vector<uint16_t> inherentSpecialSummons;
@@ -349,7 +339,6 @@ private:
 	static inline Utils::Hook hHasEffectInHand2;
 	static inline Utils::Hook hCanBeRevived;
 	static inline Utils::Hook hCanBeTargeted;
-	static inline Utils::Hook hResponse;
 	static inline Utils::Hook hCanBeSpecialSummonedByEffect;
 	static inline Utils::Hook hListClicked;
 	static inline Utils::Hook hCardHover;

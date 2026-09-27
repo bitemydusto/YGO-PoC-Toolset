@@ -106,6 +106,7 @@ uint32_t __cdecl Condition_Meta(unsigned int* param, int param2, int param3)
     if (FUN::CanPlayerSummon(funParam.playerIdx) == 0) return 0;
 	if (FUN::IsCardOnField(Cards::MASK_OF_RESTRICT) != 0) return 0;
 
+	validLevels.clear();
 	for (size_t i = 0; i < 5; i++)
 	{
         if (player.monsterZones[i].card.GetIntID() != 0)

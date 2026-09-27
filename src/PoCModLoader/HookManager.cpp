@@ -350,6 +350,7 @@ bool __stdcall HookManager::Dispatch_CardHover()
 	GameData::Duel* duel = GameData::GetDuel();
 	uint8_t localSide = GameData::GetLocalSide();
 
+	if (GameData::GetTurnPlayer() != localSide) return false;
 	if (GameData::GetSelectedSide() != localSide) return false;
 	if (GameData::GetSelectedLocation() == Location::EXTRA)
 	{
@@ -391,10 +392,8 @@ __declspec(naked) void PatchCardHover()
 	{
 	hook:
 		PUSH EAX
-		PUSH ESI
 		CALL HookManager::Dispatch_CardHover
 		TEST AL, AL
-		POP ESI
 		POP EAX
 		JZ hook_end
 		OR ESI, 0x8
@@ -409,6 +408,13 @@ __declspec(naked) void PatchInputProcess()
 	__asm
 	{
 	hook:
+		PUSH EAX
+		MOV AL, BYTE PTR DS : [0x00a577fa] // Turn player
+		XOR AL, BYTE PTR DS : [0x00a54e5c] // Local side
+		TEST AL, 0x1
+		POP EAX
+		JNZ hook_end
+
 		CMP BYTE PTR DS : [0x00a55048] , 0xc
 		JE hook_extra
 		CMP HookManager::extraRunning, 0x1
@@ -816,50 +822,6 @@ __declspec(naked) void PatchActivatableStEffect()
 		RET
 	hook_end :
 		JMP[gActivatableStEffectTrampoline]
-	}
-}
-void HookManager::Register_MandatoryResponse(uint16_t cardID, ScriptFUN condition)
-{
-	// Check if the card ID is already registered
-	for (const auto& item : mandatoryResponses)
-	{
-		if (item.cardID == cardID) return;
-	}
-	mandatoryResponses.push_back({ cardID, condition });
-}
-void __stdcall HookManager::Dispatch_MandatoryResponse(uint32_t cardDword)
-{
-	GameData::Duel* duel = GameData::GetDuel();
-
-	for (size_t i = 0; i < 2; i++)
-	{
-		for (size_t j = 0; j < 5; j++)
-		{
-			uint16_t cardIntID = duel->players[i].monsterZones[j].card.GetIntID();
-			if (cardIntID != 0 && duel->players[i].monsterZones[j].IsFaceUp())
-			{
-				uint16_t cardID = FUN::GetCardID(cardIntID);
-				for (const auto& item : mandatoryResponses)
-				{
-					if (item.cardID == cardID)
-					{
-						
-					}
-				}
-			}
-		}
-	}
-}
-__declspec(naked) void PatchResponse()
-{
-	__asm
-	{
-	hook:
-		PUSH EAX
-		PUSH DWORD PTR DS : [ESP + 4]
-		CALL HookManager::Dispatch_MandatoryResponse
-	hook_end :
-		JMP[gResponseTrampoline]
 	}
 }
 void HookManager::Register_InherentSpecialSummon(uint16_t cardID, bool firstOnly)

@@ -66,7 +66,7 @@ namespace FUN
 			finishedResolving = block[4] & 4;
 			cardIntID = *(uint16_t*)(block + 0) & 0xFFF;
 			playerIdx = block[2] & 0x1;
-			zoneIdx = *(uint8_t*)(block + 2) >> 1 & 0xf;
+			zoneIdx = (block[2] >> 1) & 0xF;
 			location = (block[2] >> 1) & 0x1F;
 			instance = (*(uint16_t*)(block + 4) & 0x1FE0) >> 5;
 			responseWindow = (block16[1] & 0xfc0) >> 6;
@@ -235,7 +235,7 @@ namespace FUN
 
 	inline auto ToggleFaceUp = reinterpret_cast<void(__cdecl*)(unsigned int playerIdx, unsigned int zoneIdx, int param3, unsigned int effectIntID)>(0x00574ec0);
 
-	inline auto FlashCardPortrait = reinterpret_cast<void(__cdecl*)(unsigned int zoneIdx, unsigned int cardIntID, unsigned int param3)>(0x005782e0);
+	inline auto FlashCardPortrait = reinterpret_cast<void(__cdecl*)(unsigned int side, unsigned int cardIntID, unsigned int zone)>(0x005782e0);
 
 	inline auto HasEffectEntiry = reinterpret_cast<int(__cdecl*)(unsigned int sideIdx, unsigned int zoneIdx, unsigned int effectID)>(0x0056da20);
 

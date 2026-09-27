@@ -108,6 +108,9 @@ namespace FUN
 	{
 		return reinterpret_cast<T>(address);
 	}
+	inline auto GetCardName = reinterpret_cast<char* (__cdecl*)(uint16_t intID)>(0x00402290);
+
+	inline auto GetCardDescription = reinterpret_cast<char* (__cdecl*)(uint16_t intID)>(0x004022b0);
 
 	inline auto GetMonsterType = reinterpret_cast<uint32_t(__cdecl*)(uint16_t intID)>(0x004025D0);
 

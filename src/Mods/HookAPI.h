@@ -36,6 +36,7 @@ extern "C"
 	MOD_API bool IsTunerMonster(uint16_t cardID);
 	MOD_API void Register_ExtraSummonMonster(uint16_t cardID, Condition summonCondition, State summonState);
 	MOD_API void Register_ActivatableGraveEffect(uint16_t cardID);
+	MOD_API void SetLimitStatus(uint16_t cardID, uint16_t limit);
 
 	MOD_API void Register_FlipMonster(uint16_t cardID);
 	MOD_API void Register_ActivatableEffect(uint16_t cardID);

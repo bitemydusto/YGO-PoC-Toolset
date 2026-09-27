@@ -162,4 +162,8 @@ extern "C"
 	{
 		HookManager::Register_OnEffectActivated(event);
 	}
+	void SetLimitStatus(uint16_t cardID, uint16_t limit)
+	{
+		HookManager::SetLimitStatus(cardID, limit);
+	}
 }

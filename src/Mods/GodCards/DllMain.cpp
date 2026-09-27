@@ -116,6 +116,10 @@ void Start()
 	Register_UnTargetable(Cards::OBELISK_THE_TORMENTOR);
 	Register_UnTargetable(Cards::THE_WINGED_DRAGON_OF_RA);
 
+	SetLimitStatus(Cards::SLIFER_THE_SKY_DRAGON, 1);
+	SetLimitStatus(Cards::OBELISK_THE_TORMENTOR, 1);
+	SetLimitStatus(Cards::THE_WINGED_DRAGON_OF_RA, 1);
+
 	Register_OnCardLeavingField(TrapProtection);
 
 	Register_Phase(5, EndPhase);

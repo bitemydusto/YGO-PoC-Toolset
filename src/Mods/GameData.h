@@ -136,7 +136,6 @@ namespace GameData
         return _duel;
     }
 
-
     void ChangeSelectionList(std::vector<uint32_t> items, uint8_t loc)
     {
         Utils::WriteUint8((void*)SELECTION_LIST_SIZE_ADDRESS, items.size());

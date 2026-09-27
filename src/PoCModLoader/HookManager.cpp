@@ -36,6 +36,7 @@ namespace
 	void* gOnCardLeavingFieldTrampoline = nullptr;
 	void* gUnaffectedBySpellsTrampoline = nullptr;
 	void* gOnEffectActivatedTrampoline = nullptr;
+	void* gLimitStatusTrampoline = nullptr;
 }
 
 void HookManager::InstallHooks()
@@ -200,6 +201,18 @@ void HookManager::InstallHooks()
 	Utils::PatchCall(0x005805f3, M_CanFuse);
 	Utils::PatchCall(0x005922b2, M_CanFuse);
 	Utils::PatchCall(0x0059c190, M_CanFuse);
+
+	// Limits
+	std::fill(cardLimits, cardLimits + 4096, 3); // Default limit is 3 for all cards
+	uint32_t* limitArray = (uint32_t*)0x005efbcc;
+	for (size_t i = 0; i < 38; i++)
+	{
+		uint32_t item = limitArray[i];
+		uint16_t cardID = item & 0xFFF;
+		uint16_t limit = (item >> 16) & 0xFFFF;
+		cardLimits[FUN::GetCardIntID(cardID)] = limit;
+	}
+	hLimitStatus = Utils::InstallHook((void*)0x005be206, 5, PatchLimitStatus);
 
 	Register_SelectionListPopulation(0x1c1, LoadSelectionListExtra);
 	Register_SelectionListPopulation(0x274, LoadSelectionListGrave);
@@ -502,6 +515,29 @@ void HookManager::Register_Fusion3(Fusion3 fusion)
 	fusionRecipes3[index].Materials[0] = fusion.Materials[0];
 	fusionRecipes3[index].Materials[1] = fusion.Materials[1];
 	fusionRecipes3[index].Materials[2] = fusion.Materials[2];
+}
+void HookManager::SetLimitStatus(uint16_t cardID, uint16_t limit)
+{
+	uint32_t cardIntID = FUN::GetCardIntID(cardID);
+	cardLimits[cardIntID] = limit;
+}
+uint16_t __stdcall HookManager::Dispatch_LimitStatus(uint16_t cardIntID)
+{
+	uint16_t limit = cardLimits[cardIntID];
+	uint8_t disallowBanned = *(uint8_t*)0x00a54dae;
+	if (limit == 0 && disallowBanned == 0) limit = 1; // If the card is banned, but the game is set to allow banned cards, treat it as limited instead
+
+	return limit;
+}
+__declspec(naked) void PatchLimitStatus()
+{
+	__asm
+	{
+	hook:
+		CALL HookManager::Dispatch_LimitStatus
+		PUSH 0x005be234
+		RET
+	}
 }
 void HookManager::Register_SpiritMonster(uint16_t cardID)
 {

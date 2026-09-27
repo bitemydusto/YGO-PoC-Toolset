@@ -233,7 +233,7 @@ void __stdcall EffectActivated_LADD(unsigned int* srcParam, uint8_t respondingSi
                 FUN::FlashCardPortrait(respondingSide, cardIntID, j);
 
                 uint32_t pack = ((uint32_t)(j & 0x1F) | ((uint32_t)respondingSide << 0xf) | 0x0A20u) << 16 | cardIntID;
-                FUN::RespondToEffect(pack, duel->players[respondingSide].monsterZones[j].card.GetInstance(), srcParam, 1);
+                FUN::ChainEffect(pack, duel->players[respondingSide].monsterZones[j].card.GetInstance(), srcParam, 1);
 
             }
 

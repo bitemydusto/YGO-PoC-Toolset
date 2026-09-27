@@ -27,7 +27,6 @@ static Tribute tributes[3];
 void Start();
 
 uint32_t __cdecl Effect_Slifer(unsigned int* self, unsigned int* source, int mode);
-uint32_t __cdecl Condition_Slifer(unsigned int* self, unsigned int* source, int mode);
 
 uint32_t __cdecl Effect_Ra(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Condition_Ra(unsigned int* param, int param2, int param3);
@@ -50,6 +49,7 @@ uint32_t __stdcall SummonStates();
 void __stdcall OnSpecialSummon(uint32_t playerIdx, uint32_t zoneIdx);
 void __stdcall EndPhase();
 bool __stdcall TrapProtection(uint32_t side, uint32_t zone, uint32_t* dest, uint32_t* flags, uint32_t* effectIntID);
+void __stdcall OnMonsterSummon();
 
 bool raCondition1(uint8_t playerIdx);
 bool raCondition2(uint8_t playerIdx);
@@ -88,7 +88,6 @@ void Start()
     Utils::WriteBytes((void*)0x0040275a, "\xEB\x0D", 2);
 
 
-    Register_ActivatableEffect(Cards::SLIFER_THE_SKY_DRAGON);
     Register_ActivatableEffect(Cards::OBELISK_THE_TORMENTOR);
     Register_ActivatableEffect(Cards::THE_WINGED_DRAGON_OF_RA);
 
@@ -106,8 +105,6 @@ void Start()
 	Register_StatChange(Cards::THE_WINGED_DRAGON_OF_RA, ChangeRaStat);
 	Register_StatChangeEffect(Cards::SLIFER_THE_SKY_DRAGON, SliferStatReduce);
 
-    Register_SpellSpeed(Cards::SLIFER_THE_SKY_DRAGON, 2);
-
 	Register_CustomSpecialSummonTrigger(Cards::SLIFER_THE_SKY_DRAGON, OnSpecialSummon);
 	Register_CustomSpecialSummonTrigger(Cards::OBELISK_THE_TORMENTOR, OnSpecialSummon);
 	Register_CustomSpecialSummonTrigger(Cards::THE_WINGED_DRAGON_OF_RA, OnSpecialSummon);
@@ -121,6 +118,7 @@ void Start()
 	SetLimitStatus(Cards::THE_WINGED_DRAGON_OF_RA, 1);
 
 	Register_OnCardLeavingField(TrapProtection);
+	Register_OnMonsterSummon(OnMonsterSummon);
 
 	Register_Phase(5, EndPhase);
 
@@ -128,7 +126,7 @@ void Start()
     scriptSlifer.CardID = Cards::SLIFER_THE_SKY_DRAGON;
     scriptSlifer.Effect = reinterpret_cast<uintptr_t>(&Effect_Slifer);
     scriptSlifer.AppliesTo = 0;
-    scriptSlifer.Condition = reinterpret_cast<uintptr_t>(&Condition_Slifer);
+    scriptSlifer.Condition = 0;
     scriptSlifer.Cost = 0;
     scriptSlifer.Target = 0;
 
@@ -172,43 +170,28 @@ uint32_t __cdecl Effect_Slifer(unsigned int* self, unsigned int* source, int mod
 
     if (!duel->players[t_playerIdx].monsterZones[t_zoneIdx].IsFaceUp()) return 0;
 
-    if (FUN::GetCurrentATK(t_playerIdx, t_zoneIdx) <= 2000)
+
+    switch (GameData::GetEffectState())
     {
-		FUN::FieldMaskGenerator maskGen;
-		maskGen.zones[t_playerIdx][t_zoneIdx] = true;
+        case 0x80:
+        {
+            FUN::W_AddEffectEntityToZone(t_playerIdx, t_zoneIdx, selfParam.cardIntID, 0xb);
+            
+            return 0x7f;
+        }
+        case 0x7f:
+        {
+			uint32_t atk = FUN::GetCurrentATK(t_playerIdx, t_zoneIdx);
+            if (atk == 0)
+            {
+                FUN::FieldMaskGenerator maskGen;
+                maskGen.zones[t_playerIdx][t_zoneIdx] = true;
 
-        FUN::SendCardFromField(selfParam.block, maskGen.GenerateMask(), Location::GRAVE, 2);
+                FUN::SendCardFromField(selfParam.block, maskGen.GenerateMask(), Location::GRAVE, 2);
+            }
+            return 0;
+        }
     }
-    else
-    {
-		uint16_t packedEffectEntity = 0xb | (0 << 8);
-
-        uint16_t effectID = FUN::GetCardIntID(Cards::SLIFER_THE_SKY_DRAGON);
-		FUN::W_AddEffectEntityToZone(t_playerIdx, t_zoneIdx, effectID, packedEffectEntity);
-    }
-
-    return 0;
-}
-uint32_t __cdecl Condition_Slifer(unsigned int* self, unsigned int* source, int mode)
-{
-    FUN::Param selfParam(self);
-
-    uint16_t t_zoneIdx = (selfParam.block16[8] >> 9) & 0xf;
-    uint16_t t_playerIdx = (selfParam.block16[8] >> 8) & 1;
-
-	if (t_zoneIdx > 4) return 0;
-
-    if (selfParam.responseWindow < 5 || selfParam.responseWindow > 7) return 0; // Normal/Flip/Special summon response window
-
-    if ((duel->players[t_playerIdx].monsterZones[t_zoneIdx].card.GetIntID() & 0xfff) == 0) return 0;
-
-	if (!duel->players[t_playerIdx].monsterZones[t_zoneIdx].IsFaceUp()) return 0;
-
-	if (FUN::CanCardBeTargeted(t_playerIdx, t_zoneIdx) == 0) return 0;
-
-    if (t_playerIdx == selfParam.playerIdx) return 0;
-
-	return 1;
 }
 uint32_t __cdecl Effect_Obelisk(unsigned int* self, unsigned int* source, int mode)
 {
@@ -717,4 +700,27 @@ bool __stdcall TrapProtection(uint32_t side, uint32_t zone, uint32_t* dest, uint
     }
 
     return false;
+}
+void __stdcall OnMonsterSummon()
+{
+	FUN::SummonParam summonParam;
+
+	if (!summonParam.faceUp) return;
+	for (size_t i = 0; i < 5; i++)
+	{
+		auto zone = duel->players[summonParam.side ^ 1].monsterZones[i];
+		uint16_t intID = zone.card.GetIntID();
+		if (intID != 0)
+		{
+			uint16_t cardID = FUN::GetCardID(intID);
+			if (cardID == Cards::SLIFER_THE_SKY_DRAGON)
+			{
+                uint32_t pack = ((uint32_t)(i & 0x1F) | ((uint32_t)(summonParam.side ^ 1) << 0xf) | 0x0A20u) << 16 | intID;
+
+                uint32_t summonedCtx = ((uint32_t)(summonParam.destZone & 0xF) << 9) | ((uint32_t)(summonParam.side & 1) << 8);
+
+                FUN::QueueEffect(pack, zone.card.GetInstance(), summonedCtx);
+			}
+		}
+	}
 }

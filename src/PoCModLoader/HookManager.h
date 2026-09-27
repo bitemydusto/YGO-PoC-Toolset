@@ -144,6 +144,7 @@ void PatchCardLeavingField();
 void PatchUnAffectedBySpell();
 void PatchOnEffectActivated();
 void PatchLimitStatus();
+void PatchSummonMonster();
 
 void __stdcall LoadSelectionListExtra();
 void __stdcall LoadSelectionListGrave();
@@ -254,6 +255,9 @@ public:
 	static void SetLimitStatus(uint16_t cardID, uint16_t limit);
 	static uint16_t __stdcall Dispatch_LimitStatus(uint16_t cardIntID);
 
+	static void Register_OnMonsterSummon(Event event);
+	static void __stdcall Dispatch_OnMonsterSummon();
+
 	static inline std::vector<uint16_t> spiritMonsters;
 	static inline std::vector<uint16_t> tunerMonsters;
 	static inline std::vector<PhaseHook> phaseHooks;
@@ -308,6 +312,7 @@ private:
 	static inline std::vector<LeavingFieldEvent> onCardLeavingFieldHooks;
 	static inline std::vector<Condition1> unAffectedBySpellHooks;
 	static inline std::vector<EffectActivatedEvent> onEffectActivatedHooks;
+	static inline std::vector<Event> onMonsterSummonHooks;
 
 	static inline Utils::Hook hCardEffectSctript1;
 	static inline Utils::Hook hCardEffectSctript2;
@@ -353,4 +358,5 @@ private:
 	static inline Utils::Hook hUnAffectedBySpell;
 	static inline Utils::Hook hOnEffectActivated;
 	static inline Utils::Hook hLimitStatus;
+	static inline Utils::Hook hSummonMonster;
 };

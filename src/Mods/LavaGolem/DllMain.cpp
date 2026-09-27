@@ -349,7 +349,7 @@ void __stdcall StandbyPhase()
 
 				uint32_t pack = ((uint32_t)(j & 0x1F) | ((uint32_t)i << 0xf) | 0x0A20u) << 16 | cardIntID;
 
-				FUN::InvokeEffect(pack, 0, 0);
+				FUN::QueueEffect(pack, 0, 0);
 			}
 		}
 	}
@@ -378,7 +378,7 @@ void __stdcall StandbyPhaseMirage()
 
 				uint32_t pack = ((uint32_t)(j & 0x1F) | ((uint32_t)i << 0xf) | 0x0A20u) << 16 | cardIntID;
 
-				FUN::InvokeEffect(pack, 0, 0);
+				FUN::QueueEffect(pack, 0, 0);
 			}
 
 		}

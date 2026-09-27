@@ -67,4 +67,5 @@ extern "C"
 	MOD_API void Register_OnCardLeavingField(LeavingFieldEvent event);
 	MOD_API void Register_UnAffectedBySpells(Condition1 condition);
 	MOD_API void Register_OnEffectActivated(EffectActivatedEvent event);
+	MOD_API void Register_OnMonsterSummon(Event event);
 }

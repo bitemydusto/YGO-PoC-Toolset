@@ -166,4 +166,8 @@ extern "C"
 	{
 		HookManager::SetLimitStatus(cardID, limit);
 	}
+	void Register_OnMonsterSummon(Event event)
+	{
+		HookManager::Register_OnMonsterSummon(event);
+	}
 }

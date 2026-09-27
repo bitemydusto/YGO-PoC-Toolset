@@ -37,6 +37,7 @@ namespace
 	void* gUnaffectedBySpellsTrampoline = nullptr;
 	void* gOnEffectActivatedTrampoline = nullptr;
 	void* gLimitStatusTrampoline = nullptr;
+	void* gSummonMonsterTrampoline = nullptr;
 }
 
 void HookManager::InstallHooks()
@@ -131,6 +132,9 @@ void HookManager::InstallHooks()
 
 	hOnEffectActivated = Utils::InstallHook((void*)0x0057ef00, 5, PatchOnEffectActivated);
 	gOnEffectActivatedTrampoline = hOnEffectActivated.Trampoline;
+
+	hSummonMonster = Utils::InstallHook((void*)0x005ad890, 6, PatchSummonMonster);
+	gSummonMonsterTrampoline = hSummonMonster.Trampoline;
 
 
 	PatchLoader::LoadPatches();
@@ -479,7 +483,7 @@ uint32_t HookManager::Dispatch_ActivatableGraveEffect()
 		{
 			uint32_t pack = ((uint32_t)(Location::GRAVE & 0x1F) | ((uint32_t)GameData::GetTurnPlayer() << 0xf) | 0x0A20u) << 16 | HookManager::selectedGraveCard->GetIntID();
 
-			FUN::InvokeEffect(pack, HookManager::selectedGraveCard->GetInstance(), 0);
+			FUN::QueueEffect(pack, HookManager::selectedGraveCard->GetInstance(), 0);
 			HookManager::graveRunning = 0;
 
 			return 1;
@@ -619,6 +623,29 @@ __declspec(naked) void PatchFlipMonster()
 		RET
 	hook_end :
 		JMP[gFlipMonsterTrampoline]
+	}
+}
+void HookManager::Register_OnMonsterSummon(Event event)
+{
+	onMonsterSummonHooks.push_back({ event });
+}
+void __stdcall HookManager::Dispatch_OnMonsterSummon()
+{
+	for (const auto& event : onMonsterSummonHooks)
+	{
+		event();
+	}
+}
+__declspec(naked) void PatchSummonMonster()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		CALL HookManager::Dispatch_OnMonsterSummon
+		POP EAX
+	hook_end :
+		JMP[gSummonMonsterTrampoline]
 	}
 }
 void HookManager::Register_OnCardLeavingField(LeavingFieldEvent event)

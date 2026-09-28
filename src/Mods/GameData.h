@@ -91,6 +91,14 @@ namespace GameData
 		{
 			return (status & 1) == 0;
 		}
+		uint8_t GetTurnCounter()
+		{
+			return (status & 0x3C) >> 2;
+		}
+		uint8_t GetDeathCounter()
+		{
+			return (status & 0x1C0) >> 6;
+		}
     };
     struct Player
     {

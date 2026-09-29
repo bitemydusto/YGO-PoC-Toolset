@@ -3,6 +3,7 @@
 #include "Utils.h"
 #include "PatchLoader.h"
 #include <algorithm>
+#include <string>
 
 namespace GameData
 {
@@ -145,6 +146,7 @@ void PatchUnAffectedBySpell();
 void PatchOnEffectActivated();
 void PatchLimitStatus();
 void PatchSummonMonster();
+void PatchZoneOverlay();
 
 void __stdcall LoadSelectionListExtra();
 void __stdcall LoadSelectionListGrave();
@@ -158,6 +160,10 @@ public:
 	static void InstallHooks();
 
 	static void SetOncePerTurnFlag(uint8_t side, uint8_t zone);
+
+	static void AddSpellCounter(uint8_t side, uint8_t zone);
+	static void RemoveSpellCounter(uint8_t side, uint8_t zone);
+	static uint8_t GetSpellCounters(uint8_t side, uint8_t zone);
 
 	static void Register_EffectScript(EffectScript script);
 	static void Register_Fusion2(Fusion2 fusion);
@@ -258,6 +264,8 @@ public:
 	static void Register_OnMonsterSummon(Event event);
 	static void __stdcall Dispatch_OnMonsterSummon();
 
+	static void __stdcall Dispatch_ZoneOverlay(int actor, int renderer);
+
 	static inline std::vector<uint16_t> spiritMonsters;
 	static inline std::vector<uint16_t> tunerMonsters;
 	static inline std::vector<PhaseHook> phaseHooks;
@@ -272,6 +280,9 @@ public:
 	static inline int innerExtraSummonState;
 	static inline int extraRunning;
 	static inline int graveRunning;
+
+	static void ReadZoneOverlaySprites();
+
 private:
 	static int __cdecl M_GetEffectScriptIndex(uint32_t cardID);
 	static uint32_t __cdecl M_GetNumOfFusionReqs(uint32_t cardIntID);
@@ -282,6 +293,8 @@ private:
 	static inline Fusion2 fusionRecipes2[4096];
 	static inline Fusion3 fusionRecipes3[4096];
 	static inline uint16_t cardLimits[4096] = {3};
+
+	static inline std::vector<std::string> zoneOverlaySprites;
 
 
 	static inline std::vector<uint16_t> flipMonsters;
@@ -359,4 +372,5 @@ private:
 	static inline Utils::Hook hOnEffectActivated;
 	static inline Utils::Hook hLimitStatus;
 	static inline Utils::Hook hSummonMonster;
+	static inline Utils::Hook hZoneOverlay;
 };

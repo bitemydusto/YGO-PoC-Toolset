@@ -7,6 +7,18 @@ extern "C"
 	{
 		HookManager::SetOncePerTurnFlag(side, zone);
 	}
+	void AddSpellCounter(uint8_t side, uint8_t zone)
+	{
+		HookManager::AddSpellCounter(side, zone);
+	}
+	void RemoveSpellCounter(uint8_t side, uint8_t zone)
+	{
+		HookManager::RemoveSpellCounter(side, zone);
+	}
+	uint8_t GetSpellCounters(uint8_t side, uint8_t zone)
+	{
+		return HookManager::GetSpellCounters(side, zone);
+	}
 
 	void Register_EffectScript(EffectScript script)
 	{

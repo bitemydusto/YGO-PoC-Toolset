@@ -227,7 +227,7 @@ namespace FUN
 
 	inline auto SpecialSummon = reinterpret_cast<void(__cdecl*)(unsigned int player, unsigned int* cardPtr, unsigned int posSelectorType, unsigned int flags, unsigned int srcLoc, unsigned int param6)>(0x005adae0);
 
-	inline auto SpecialSummon = reinterpret_cast<void(__cdecl*)(unsigned int player, unsigned int* cardPtr, unsigned int faceUp, unsigned int pos, unsigned int flags, unsigned int srcLoc, unsigned int param7)>(0x005ad9f0);
+	inline auto SpecialSummon2 = reinterpret_cast<void(__cdecl*)(unsigned int player, unsigned int* cardPtr, unsigned int faceUp, unsigned int pos, unsigned int flags, unsigned int srcLoc, unsigned int param7)>(0x005ad9f0);
 
 	inline auto NormalSummon = reinterpret_cast<void(__cdecl*)(unsigned int playerIdx, unsigned int handIdx, unsigned int destZone, unsigned int packedTributes, int set)>(0x005ad710);
 
@@ -530,7 +530,84 @@ namespace FUN
 	}
 
 	// Effects
-	inline auto DestroyEffect = reinterpret_cast<uint32_t(__cdecl*)(unsigned int* param, int param2, int param3)>(0x00585C10);
+	inline auto DestroyEffect = reinterpret_cast<uint32_t(__cdecl*)(unsigned int* param, unsigned int* param2, int param3)>(0x00585C10);
 
 	inline auto TargetFieldCard = reinterpret_cast<uint32_t(__cdecl*)(unsigned int* param, int param2, int param3)>(0x00596570);
+
+	// Misc.
+	void __fastcall DrawSpellCounter(int actor, int renderer, int spriteIndex)
+	{
+		if (!actor) return;
+
+		uint16_t loc = *(uint16_t*)(actor + 0x24);
+		uint8_t  side = loc & 1;
+		uint8_t  place = ((loc & 0x3E) >> 1) + ((loc >> 6) & 0xFF);
+		(void)place;
+
+		if (place > 10) return;
+
+		uint8_t* zone = (uint8_t*)(0x00A55D64 + side * 0xd44 + 0x10 + place * 0x90);
+		uint16_t intId = *(uint16_t*)(zone) & 0xfff;
+		uint16_t status = *(uint8_t*)(zone + 0x6);
+
+		if (intId == 0 || (status & 2) == 0) return;
+
+		uint8_t n = HasEffectEntiry(side, place, 0x96);
+
+		if (n < 1) return;
+
+		int* atlas = *(int**)0x005F2FD8;
+		if (!atlas) return;
+
+		int x = *(int*)(actor + 0x30) - 15 * (1 - (2 * side));
+		int y = *(int*)(actor + 0x34) + 65 * (1 - (2 * side));
+		int local = *(uint8_t*)0x00A54E5C & 1;
+		int flip = ((~local & 1) ^ (~side & 1)) * -2 + 1;
+		y += flip * ((*(int*)0x005F3008) / 2 - 5);
+
+		int id = spriteIndex;
+
+		int* getter = (int*)atlas[0x14];
+		auto select = *(void(__thiscall**)(int*, int*))(*getter);
+		select(getter, &id);
+
+		auto bind = *(void(__thiscall**)(int*, int, int))(*atlas + 8);
+		bind(atlas, id, -1);
+
+		int* flags = (int*)atlas[0x0A];
+		if (flags) flags[id] = 0;
+
+		int table = atlas[0x18];
+		int spriteObj = table ? *(int*)(table + id * 8 + 4) : 0;
+		if (!spriteObj) return;
+
+		if (renderer) {
+			int* rv = *(int**)renderer;
+			auto blit = *(void(__thiscall**)(int, int, int, int, int, int))(rv + 0x50 / 4);
+			blit(renderer, spriteObj, x, y, 0, 0x100);
+		}
+
+		if (actor == 0 || renderer == 0) return;
+
+		if (n == 0) return;
+
+		int fontBox = actor + 0xAC;
+
+		int* fontAtlas = *(int**)0x005F33EC;
+		auto pickStyle = (uint32_t(__thiscall*)(int*, int))0x0040EB30;
+		*(uint32_t*)(fontBox + 4) = pickStyle(fontAtlas, 8);
+		*(int*)(fontBox + 8) = 10;
+
+		auto drawNum = (int(__thiscall*)(
+			int /*this = fontBox*/,
+			int /*renderer*/,
+			int /*x, digits grow left*/,
+			int /*y*/,
+			uint32_t /*value*/,
+			int /*color*/,
+			int /*flag*/,
+			int /*digitW, 0 = auto*/))0x00480470;
+
+		drawNum(fontBox, renderer, x + 16, y - 5, n, 0xA0, 0, 0);
+	}
 }

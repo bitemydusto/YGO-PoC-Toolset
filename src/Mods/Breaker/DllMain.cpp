@@ -4,16 +4,15 @@
 #include "GameData.h"
 #include "HookAPI.h"
 
-using DestroyEffect_t = uint32_t(__cdecl*)(uint32_t paramAddress, int param2, int param3);
-inline DestroyEffect_t DestroyEffect = reinterpret_cast<DestroyEffect_t>(0x00585c10);
-
-Utils::Hook hBreaker;
+const uint16_t BREAKER = 0x96;
 
 void Start();
 
-uint32_t __cdecl Effect_Breaker(uint32_t paramAddress, int param2, int param3);
-uint32_t __cdecl Condition_Breaker(uint32_t paramAddress, int param2, int param3);
-uint32_t __cdecl Cost_Breaker(uint32_t paramAddress, int param2, int param3);
+uint32_t __cdecl Effect_Breaker(unsigned int* self, unsigned int* source, int mode);
+uint32_t __cdecl AppliesTo_Breaker(unsigned int* self, unsigned int* source, int mode);
+uint32_t __cdecl Condition_Breaker(unsigned int* self, unsigned int* source, int mode);
+uint32_t __cdecl Cost_Breaker(unsigned int* self, unsigned int* source, int mode);
+uint32_t __cdecl Target_Breaker(unsigned int* self, unsigned int* source, int mode);
 
 void __stdcall ChangeStat(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 
@@ -37,56 +36,101 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
 }
 void Start()
 {
-	Register_StatChange(0x96, ChangeStat);
-	Register_ActivatableEffect(0x96);
+	Register_StatChange(BREAKER, ChangeStat);
+	Register_ActivatableEffect(BREAKER);
+	Register_NormalSummonTrigger(BREAKER);
 
 
     Utils::EffectScript script;
-    script.CardID = 0x96;
+    script.CardID = BREAKER;
     script.Effect = reinterpret_cast<uintptr_t>(&Effect_Breaker);
-    script.AppliesTo = 0x0057B4A0;
+    script.AppliesTo = reinterpret_cast<uintptr_t>(&AppliesTo_Breaker);
     script.Condition = reinterpret_cast<uintptr_t>(&Condition_Breaker);
     script.Cost = reinterpret_cast<uintptr_t>(&Cost_Breaker);
-    script.Target = 0x005959D0;
+    script.Target = reinterpret_cast<uintptr_t>(&Target_Breaker);
 
     Register_EffectScript(script);
 
 
 }
-uint32_t __cdecl Effect_Breaker(uint32_t paramAddress, int param2, int param3)
+uint32_t __cdecl Effect_Breaker(unsigned int* self, unsigned int* source, int mode)
 {
-    // Original in-game function
-	uint32_t result = DestroyEffect(paramAddress, param2, param3);
+	FUN::Param selfParam(self);
 
+    if (selfParam.responseWindow < 5 || selfParam.responseWindow > 7)
+    {
+        uint32_t result = FUN::DestroyEffect(self, source, mode);
 
-	return result;
+        return result;
+
+    }
+    else
+    {
+		AddSpellCounter(selfParam.playerIdx, selfParam.zoneIdx);
+
+        return 0;
+    }
 }
-uint32_t __cdecl Condition_Breaker(uint32_t paramAddress, int param2, int param3)
+uint32_t __cdecl AppliesTo_Breaker(unsigned int* self, unsigned int* source, int mode)
 {
-    uint8_t zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0xF;
-    uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) &  0x1;
+    FUN::Param selfParam(self);
 
-    if ((Utils::ReadUint8((void*)(0x00a55d64 + 0xD44 * playerIdx + 0x10 + 0x90 * zoneIdx + 0x48)) & 0x1) == 0x1) return 0;
- 
+    if (selfParam.responseWindow < 5 || selfParam.responseWindow > 7)
+    {
+		auto SpellCards = reinterpret_cast<uint32_t(__cdecl*)(unsigned int* param, unsigned int* param2, int param3)>(0x0057B4A0);
+
+		return SpellCards(self, source, mode);
+    }
+
     return 1;
 }
-uint32_t __cdecl Cost_Breaker(uint32_t paramAddress, int param2, int param3)
+uint32_t __cdecl Condition_Breaker(unsigned int* self, unsigned int* source, int mode)
 {
-    // Set flag
-    uint8_t zoneIdx = (Utils::ReadUint8((void*)(paramAddress + 0x2)) >> 1) & 0xF;
-    uint8_t playerIdx = Utils::ReadUint8((void*)(paramAddress + 0x2)) &  0x1;
+    FUN::Param selfParam(self);
 
-    Utils::WriteUint16((void*)(0x00a55d64 + 0xD44 * playerIdx + 0x10 + 0x90 * zoneIdx + 0x48), 0x1);
+    if (selfParam.responseWindow != 5)
+    {
+		uint8_t n = GetSpellCounters(selfParam.playerIdx, selfParam.zoneIdx);
+
+		return n > 0 ? 1 : 0;
+    }
 
     return 1;
+}
+uint32_t __cdecl Cost_Breaker(unsigned int* self, unsigned int* source, int mode)
+{
+    FUN::Param selfParam(self);
+
+    if (selfParam.responseWindow != 5)
+    {
+		RemoveSpellCounter(selfParam.playerIdx, selfParam.zoneIdx);
+
+        return 1;
+    }
+
+    return 1;
+}
+uint32_t __cdecl Target_Breaker(unsigned int* self, unsigned int* source, int mode)
+{
+	FUN::Param selfParam(self);
+
+	if (selfParam.responseWindow != 5)
+	{
+		auto TargetCard = reinterpret_cast<uint32_t(__cdecl*)(unsigned int* param, unsigned int* param2, int param3)>(0x005959D0);
+
+		return TargetCard(self, source, mode);
+	}
+	return 1;
 }
 void __stdcall ChangeStat(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx)
 {
-	// Check Breaker's unique flag to see if the stat change should be applied
-    if (Utils::ReadUint8((void*)(0x00a55d64 + 0xD44 * playerIdx + 0x10 + 0x90 * zoneIdx + 0x48)) == 0x1)
-    {
-        // Modify stats
-		// 0x20 = ATK, 0x24 = DEF
-        Utils::WriteInt32((void*)(statAddress + 0x20), -300);
-    }
+    int count = GetSpellCounters(playerIdx, zoneIdx);
+    if (count == 0) return;
+
+    // Modify stats
+    // 0x20 = ATK, 0x24 = DEF
+    uint32_t& refATK = *(uint32_t*)(statAddress + 0x20);
+
+    refATK = refATK += 300 * count;
+
 }

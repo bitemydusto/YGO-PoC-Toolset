@@ -38,10 +38,13 @@ namespace
 	void* gOnEffectActivatedTrampoline = nullptr;
 	void* gLimitStatusTrampoline = nullptr;
 	void* gSummonMonsterTrampoline = nullptr;
+	void* gZoneOverlayTrampoline = nullptr;
 }
 
 void HookManager::InstallHooks()
 {
+	HookManager::ReadZoneOverlaySprites();
+
 	hFlipMonster = Utils::InstallHook((void*)0x00567632, 5, PatchFlipMonster);
 	gFlipMonsterTrampoline = hFlipMonster.Trampoline;
 
@@ -136,6 +139,9 @@ void HookManager::InstallHooks()
 	hSummonMonster = Utils::InstallHook((void*)0x005ad890, 6, PatchSummonMonster);
 	gSummonMonsterTrampoline = hSummonMonster.Trampoline;
 
+	hZoneOverlay = Utils::InstallHook((void*)0x00419e79, 5, PatchZoneOverlay);
+	gZoneOverlayTrampoline = hZoneOverlay.Trampoline;
+
 
 	PatchLoader::LoadPatches();
 
@@ -226,6 +232,36 @@ void HookManager::SetOncePerTurnFlag(uint8_t side, uint8_t zone)
 {
 	FUN::W_AddEffectEntityToZone(side, zone, 0, 0xf);
 }
+void HookManager::AddSpellCounter(uint8_t side, uint8_t zone)
+{
+	FUN::W_AddEffectEntityToZone(side, zone, FUN::GetCardIntID(0x96), 0xb);
+}
+void HookManager::RemoveSpellCounter(uint8_t side, uint8_t zone)
+{
+	uint8_t index = FUN::IndexOfZoneEffect(side, zone, 0x96);
+	FUN::RemoveEffectEntity(side, zone, index);
+}
+uint8_t HookManager::GetSpellCounters(uint8_t side, uint8_t zone)
+{
+	return FUN::HasEffectEntiry(side, zone, 0x96);
+}
+void HookManager::ReadZoneOverlaySprites()
+{
+	std::ifstream file("data/j/duel/card/card.txt");
+
+	std::string line;
+
+	while (std::getline(file, line))
+	{
+		std::size_t pos = line.find(".bmp");
+
+		if (pos != std::string::npos)
+		{
+			line.erase(pos + 4);
+			zoneOverlaySprites.push_back(line);
+		}
+	}
+}
 void __stdcall ResetOncePerTurnFlags()
 {
 	GameData::Duel* duel = GameData::GetDuel();
@@ -275,6 +311,34 @@ void __stdcall ReturnSpiritsToHand()
 
 	uint8_t block[32] = {};
 	FUN::SendCardFromField(block, maskGen.GenerateMask(), 0xb, 0);
+}
+void __stdcall HookManager::Dispatch_ZoneOverlay(int actor, int renderer)
+{
+	int index = -1;
+	int i = 0;
+	for (const auto& fileName : HookManager::zoneOverlaySprites)
+	{
+		if (fileName == "spell_counter.bmp")
+		{
+			index = i;
+			break;
+		}
+		i++;
+	}
+	if (index < 0) return;
+	FUN::DrawSpellCounter(actor, renderer, index);
+}
+__declspec(naked) void PatchZoneOverlay()
+{
+	__asm
+	{
+	hook:
+		PUSH ESI
+		PUSH EDI
+		CALL HookManager::Dispatch_ZoneOverlay
+	hook_end:
+		JMP[gZoneOverlayTrampoline]
+	}
 }
 uint32_t __stdcall HookManager::ExtraSummonState()
 {

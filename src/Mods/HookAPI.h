@@ -26,6 +26,9 @@ using Fusion3 = Utils::Fusion3;
 extern "C"
 {
 	MOD_API void SetOncePerTurnFlag(uint8_t side, uint8_t zone);
+	MOD_API void AddSpellCounter(uint8_t side, uint8_t zone);
+	MOD_API void RemoveSpellCounter(uint8_t side, uint8_t zone);
+	MOD_API uint8_t GetSpellCounters(uint8_t side, uint8_t zone);
 
 	MOD_API void Register_EffectScript(EffectScript script);
 	MOD_API void Register_Fusion2(Fusion2 fusion);

@@ -182,4 +182,8 @@ extern "C"
 	{
 		HookManager::Register_OnMonsterSummon(event);
 	}
+	void Register_MonsterLosingBattle(LosingBattleEvent event)
+	{
+		HookManager::Register_MonsterLosingBattle(event);
+	}
 }

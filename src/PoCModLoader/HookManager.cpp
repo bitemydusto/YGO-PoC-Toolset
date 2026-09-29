@@ -39,6 +39,7 @@ namespace
 	void* gLimitStatusTrampoline = nullptr;
 	void* gSummonMonsterTrampoline = nullptr;
 	void* gZoneOverlayTrampoline = nullptr;
+	void* gLosingBattleTrampoline = nullptr;
 }
 
 void HookManager::InstallHooks()
@@ -141,6 +142,9 @@ void HookManager::InstallHooks()
 
 	hZoneOverlay = Utils::InstallHook((void*)0x00419e79, 5, PatchZoneOverlay);
 	gZoneOverlayTrampoline = hZoneOverlay.Trampoline;
+
+	hLosingBattle = Utils::InstallHook((void*)0x00577c40, 6, PatchLosingBattle);
+	gLosingBattleTrampoline = hLosingBattle.Trampoline;
 
 
 	PatchLoader::LoadPatches();
@@ -1887,6 +1891,44 @@ __declspec(naked) void PatchCanBeTargeted()
 		RET
 	hook_end :
 		JMP[gCanBeTargetedTrampoline]
+	}
+}
+void HookManager::Register_MonsterLosingBattle(LosingBattleEvent event)
+{
+	monsterLosingBattleHooks.push_back(event);
+}
+bool __stdcall HookManager::Dispatch_MonsterLosingBattle(uint32_t sideIdx, uint32_t zoneIdx, uint32_t* zone, uint32_t param4, uint32_t param5)
+{
+	for (const auto& hook : monsterLosingBattleHooks)
+	{
+		hook(sideIdx, zoneIdx, zone);
+
+		auto FUN_005984d0 = (void(__cdecl*)(uint32_t, uint32_t, uint32_t))0x005984d0;
+		FUN_005984d0(*(uint32_t*)0x00a577fa & 1, 0x15, param5);
+
+		return true;
+	}
+	return false;
+}
+__declspec(naked) void PatchLosingBattle()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH DWORD PTR DS : [ESP + 0x18]
+		PUSH DWORD PTR DS : [ESP + 0x18]
+		PUSH DWORD PTR DS : [ESP + 0x18]
+		PUSH DWORD PTR DS : [ESP + 0x18]
+		PUSH DWORD PTR DS : [ESP + 0x18]
+		CALL HookManager::Dispatch_MonsterLosingBattle
+		TEST AL, AL
+		POP EAX
+		JZ hook_end
+		PUSH 0x00577f65
+		RET
+	hook_end :
+		JMP[gLosingBattleTrampoline]
 	}
 }
 // Card Effect Scripts

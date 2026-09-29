@@ -16,6 +16,7 @@ using ScriptFUN = uint32_t(__cdecl*)(unsigned int* param, int param2, int param3
 using Event = void(__stdcall*)();
 using Event1 = void(__stdcall*)(uint32_t playerIdx, uint32_t zoneIdx);
 using LeavingFieldEvent = bool(__stdcall*)(uint32_t side, uint32_t zone, uint32_t* dest, uint32_t* action, uint32_t* effectIntID);
+using LosingBattleEvent = void(__stdcall*)(uint32_t sideIdx, uint32_t zoneIdx, uint32_t* zone);
 using EffectActivatedEvent = void(__stdcall*)(unsigned int* srcParam, uint8_t respondingSide);
 using State = uint32_t(__stdcall*)();
 using StatChange = void(__stdcall*)(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
@@ -147,6 +148,7 @@ void PatchOnEffectActivated();
 void PatchLimitStatus();
 void PatchSummonMonster();
 void PatchZoneOverlay();
+void PatchLosingBattle();
 
 void __stdcall LoadSelectionListExtra();
 void __stdcall LoadSelectionListGrave();
@@ -261,6 +263,9 @@ public:
 	static void SetLimitStatus(uint16_t cardID, uint16_t limit);
 	static uint16_t __stdcall Dispatch_LimitStatus(uint16_t cardIntID);
 
+	static void Register_MonsterLosingBattle(LosingBattleEvent event);
+	static bool __stdcall Dispatch_MonsterLosingBattle(uint32_t sideIdx, uint32_t zoneIdx, uint32_t* zone, uint32_t param4, uint32_t param5);
+
 	static void Register_OnMonsterSummon(Event event);
 	static void __stdcall Dispatch_OnMonsterSummon();
 
@@ -326,6 +331,7 @@ private:
 	static inline std::vector<Condition1> unAffectedBySpellHooks;
 	static inline std::vector<EffectActivatedEvent> onEffectActivatedHooks;
 	static inline std::vector<Event> onMonsterSummonHooks;
+	static inline std::vector<LosingBattleEvent> monsterLosingBattleHooks;
 
 	static inline Utils::Hook hCardEffectSctript1;
 	static inline Utils::Hook hCardEffectSctript2;
@@ -373,4 +379,5 @@ private:
 	static inline Utils::Hook hLimitStatus;
 	static inline Utils::Hook hSummonMonster;
 	static inline Utils::Hook hZoneOverlay;
+	static inline Utils::Hook hLosingBattle;
 };

@@ -37,6 +37,7 @@ void __stdcall LoadSelectionListBanished();
 void __stdcall EndPhase();
 void __stdcall BLS_DoubleAttack();
 void __stdcall DMOC_BanishOnKill();
+void __stdcall DMOC_BanishOnDeath();
 uint32_t __stdcall SummonStates();
 
 DWORD WINAPI MainThread(LPVOID lpParam)
@@ -524,6 +525,25 @@ void __stdcall DMOC_BanishOnKill()
 	}
 
 
+}
+void __stdcall DMOC_BanishOnDeath()
+{
+	for (size_t side = 0; side < 2; side++)
+	{
+		if ((battleResult->sides[side].ResultFlags & 0x10) != 0)
+		{
+			uint8_t zone = (side == (battleResult->StateFlags & 1)) ? battleResult->GetZone(0) : battleResult->GetZone(1);
+
+			if (duel->players[side].monsterZones[zone].card.GetCardID() == 0x10A)
+			{
+				FUN::FieldMaskGenerator maskGen;
+				maskGen.zones[side][zone] = true;
+				uint8_t block[32] = {};
+
+				FUN::SendCardFromField(block, maskGen.GenerateMask(), 0xf, 0);
+			}
+		}
+	}
 }
 bool CanBeSummoned(uint32_t playerIdx)
 {

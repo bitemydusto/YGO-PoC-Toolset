@@ -6,6 +6,7 @@
 #include "Cards.h"
 
 GameData::Duel* duel = GameData::GetDuel();
+GameData::BattleResult* battleResult = GameData::GetBattleResult();
 
 const uint16_t LAVA_GOLEM = Cards::DARK_TITAN_OF_TERROR;
 const uint16_t MIRAGE_OF_NIGHTMARE = Cards::THE_DRDEK;
@@ -33,8 +34,7 @@ void __stdcall StandbyPhase();
 void __stdcall StandbyPhaseMirage();
 void __stdcall EndPhase();
 bool __stdcall PZ_FieldLeave(uint32_t side, uint32_t zone, uint32_t* dest, uint32_t* action, uint32_t* effectIntID);
-
-
+void __stdcall PZ_BanishOnDeath();
 
 
 DWORD WINAPI MainThread(LPVOID lpParam)
@@ -67,6 +67,7 @@ void Start()
 
 	Register_ActivatableGraveEffect(PLAGUESPREADER_ZOMBIE);
 	Register_OnCardLeavingField(PZ_FieldLeave);
+	Register_AfterDamageCalculation(PZ_BanishOnDeath);
 
 
 	Utils::EffectScript script;
@@ -398,4 +399,23 @@ bool __stdcall PZ_FieldLeave(uint32_t side, uint32_t zone, uint32_t* dest, uint3
 		}
 	}
 	return false;
+}
+void __stdcall PZ_BanishOnDeath()
+{
+	for (size_t side = 0; side < 2; side++)
+	{
+		if ((battleResult->sides[side].ResultFlags & 0x10) != 0)
+		{
+			uint8_t zone = (side == (battleResult->StateFlags & 1)) ? battleResult->GetZone(0) : battleResult->GetZone(1);
+
+			if (duel->players[side].monsterZones[zone].card.GetCardID() == PLAGUESPREADER_ZOMBIE && FUN::HasEffectEntiry(side, zone, PLAGUESPREADER_ZOMBIE) != 0)
+			{
+				FUN::FieldMaskGenerator maskGen;
+				maskGen.zones[side][zone] = true;
+				uint8_t block[32] = {};
+
+				FUN::SendCardFromField(block, maskGen.GenerateMask(), 0xf, 0);
+			}
+		}
+	}
 }

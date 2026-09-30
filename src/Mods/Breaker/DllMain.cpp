@@ -6,6 +6,8 @@
 
 const uint16_t BREAKER = 0x96;
 
+auto* duel = GameData::GetDuel();
+
 void Start();
 
 uint32_t __cdecl Effect_Breaker(unsigned int* self, unsigned int* source, int mode);
@@ -57,7 +59,7 @@ uint32_t __cdecl Effect_Breaker(unsigned int* self, unsigned int* source, int mo
 {
 	FUN::Param selfParam(self);
 
-    if (selfParam.responseWindow < 5 || selfParam.responseWindow > 7)
+    if (selfParam.responseWindow != 5)
     {
         uint32_t result = FUN::DestroyEffect(self, source, mode);
 
@@ -75,7 +77,7 @@ uint32_t __cdecl AppliesTo_Breaker(unsigned int* self, unsigned int* source, int
 {
     FUN::Param selfParam(self);
 
-    if (selfParam.responseWindow < 5 || selfParam.responseWindow > 7)
+    if (selfParam.responseWindow != 5)
     {
 		auto SpellCards = reinterpret_cast<uint32_t(__cdecl*)(unsigned int* param, unsigned int* param2, int param3)>(0x0057B4A0);
 
@@ -94,8 +96,13 @@ uint32_t __cdecl Condition_Breaker(unsigned int* self, unsigned int* source, int
 
 		return n > 0 ? 1 : 0;
     }
+    uint16_t t_zoneIdx = (selfParam.block16[8] >> 9) & 0xf;
+    uint16_t t_playerIdx = (selfParam.block16[8] >> 8) & 1;
 
-    return 1;
+	uint32_t selfInst = duel->players[selfParam.playerIdx].monsterZones[selfParam.zoneIdx].card.GetInstance();
+	uint32_t summonInst = duel->players[t_playerIdx].monsterZones[t_zoneIdx].card.GetInstance();
+
+    return selfInst == summonInst ? 1 : 0;
 }
 uint32_t __cdecl Cost_Breaker(unsigned int* self, unsigned int* source, int mode)
 {

@@ -28,7 +28,7 @@ void Start();
 
 uint32_t __cdecl Effect_Slifer(unsigned int* self, unsigned int* source, int mode);
 
-uint32_t __cdecl Effect_Ra(unsigned int* param, int param2, int param3);
+uint32_t __cdecl Effect_Ra(unsigned int* param, unsigned int* param2, int param3);
 uint32_t __cdecl Condition_Ra(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Cost_Ra(unsigned int* param, int param2, int param3);
 uint32_t __cdecl Target_Ra(unsigned int* param, int param2, int param3);
@@ -305,7 +305,7 @@ uint32_t __cdecl Cost_Obelisk(unsigned int* self, unsigned int* source, int mode
 
     return 0;
 }
-uint32_t __cdecl Effect_Ra(unsigned int* param, int param2, int param3)
+uint32_t __cdecl Effect_Ra(unsigned int* param, unsigned int* param2, int param3)
 {
 	if (raEffectChoice == 0)
 	{

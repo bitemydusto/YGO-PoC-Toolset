@@ -5,7 +5,7 @@ using namespace Utils;
 uint16_t* collection = nullptr;
 uint32_t collectionStart;
 uint32_t collectionEnd;
-uint16_t collectionSize;
+uint16_t collectionSize = 1115;
 
 const uint32_t STOCK_COLLECTION_START = 0x00a53ccc;
 const uint32_t STOCK_COLLECTION_END = 0x00a54582;
@@ -98,7 +98,7 @@ void __stdcall HookManager::M_LoadAlbum(uint32_t album)
 	refCount = 0;
 
 	// Load available cards for this game version
-	for (uint32_t i = 1; i < 1116; i++)
+	for (uint32_t i = 1; i < collectionSize; i++)
 	{
 		uint16_t pack = FUN::GetCardPack(i);
 		if ((pack & thisPack) != 0)
@@ -116,7 +116,7 @@ void __stdcall HookManager::M_LoadAlbum(uint32_t album)
 	int* list = *(int**)(album + 0x448);
 
 	int n = 0;
-	for (uint32_t i = 1; i < 1116; i++)
+	for (uint32_t i = 1; i < collectionSize; i++)
 	{
 		uint16_t pack = FUN::GetCardPack(i);
 		if ((pack & thisPack) != 0)

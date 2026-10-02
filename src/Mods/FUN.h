@@ -23,6 +23,17 @@ enum SubType : uint8_t
 	FUSION = 2,
 	RITUAL = 3,
 };
+enum DialogMode : uint8_t
+{
+	OK = 0,
+	YESNO = 1,
+	OPTION2 = 2,
+	OPTION3 = 3,
+	TYPE = 4,
+	ATTRIBUTE = 5,
+	POSITION = 6,
+	COIN = 7,
+};
 
 namespace FUN
 {
@@ -309,12 +320,15 @@ namespace FUN
 	inline auto PutCardFromHandToDeck = reinterpret_cast<void(__cdecl*)(unsigned int playerIdx, unsigned int handIdx, unsigned int top)>(0x005757f0);
 
 	// SelectionType:
+	// 0 = OK
+	// 1 = Yes/No
 	// 2 = 2-way effect selection
 	// 3 = 3-way effect selection
 	// 4 = card type
 	// 5 = attribute
 	// 6 = atk/def position
-	inline auto SetupSelector = reinterpret_cast<void(__cdecl*)(unsigned int selectionType, unsigned int cardID)>(0x005bfa00);
+	// 7 = coin side
+	inline auto SetupSelector = reinterpret_cast<void(__cdecl*)(uint8_t selectionType, uint16_t cardID)>(0x005bfa00);
 
 	inline auto InitiateSelector = reinterpret_cast<void(__cdecl*)()>(0x005bfa20);
 
@@ -376,6 +390,12 @@ namespace FUN
 
 
 	// Wrapers
+	inline void W_ShowDialog(const char* dlgText, DialogMode mode, uint16_t cardID = 0)
+	{
+		ShowDialog(dlgText);
+		SetupSelector(mode, cardID);
+		InitiateSelector();
+	}
 	inline void W_AddEffectEntityToZone(uint32_t playerIdx, uint32_t zoneIdx, uint32_t effectIntID, uint16_t effect)
 	{
 		FUN::AddEffectEntityToZone((zoneIdx << 8) | playerIdx, effectIntID, effect);

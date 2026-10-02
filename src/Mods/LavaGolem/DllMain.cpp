@@ -158,7 +158,7 @@ uint32_t __cdecl Cost_Tribe(unsigned int* self, unsigned int* source, int mode)
 		}break;
 		case 1:
 		{
-			FUN::ShowDialog2(0xF7);
+			FUN::ShowDialog("Select a monster type:");
 			FUN::SetupSelector(4, 0);
 			FUN::InitiateSelector();
 

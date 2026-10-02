@@ -15,8 +15,8 @@
 
 DWORD WINAPI LoaderThread(LPVOID lpParam)
 {
-    Sleep(200);
-    CRC::CheckGameHash();
+    Sleep(50);
+    //CRC::CheckGameHash();
     ModLoader loader;
     HookManager::InstallHooks();
     loader.LoadMods();

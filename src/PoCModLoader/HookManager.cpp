@@ -41,10 +41,11 @@ namespace
 	void* gZoneOverlayTrampoline = nullptr;
 	void* gLosingBattleTrampoline = nullptr;
 }
-
 void HookManager::InstallHooks()
 {
+	HookManager::InstallLibraryHooks();
 	HookManager::ReadZoneOverlaySprites();
+
 
 	hFlipMonster = Utils::InstallHook((void*)0x00567632, 5, PatchFlipMonster);
 	gFlipMonsterTrampoline = hFlipMonster.Trampoline;
@@ -224,7 +225,8 @@ void HookManager::InstallHooks()
 		uint32_t item = limitArray[i];
 		uint16_t cardID = item & 0xFFF;
 		uint16_t limit = (item >> 16) & 0xFFFF;
-		cardLimits[FUN::GetCardIntID(cardID)] = limit;
+		uint16_t cardIntID = FUN::GetCardIntID(cardID);
+		cardLimits[cardIntID] = limit;
 	}
 	hLimitStatus = Utils::InstallHook((void*)0x005be206, 5, PatchLimitStatus);
 

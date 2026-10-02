@@ -59,8 +59,8 @@ uint32_t __cdecl Effect_TSUKUYOMI(unsigned int* param, int param2, int param3)
     uint32_t zone = funParam.GetFieldTargetZone(0);
 
     if (duel->players[side].monsterZones[zone].card.GetIntID() == 0) return 0;
+	if (FUN::IsCardOnField(Cards::LIGHT_OF_INTERVENTION) != 0) return 0;
 
-	duel = GameData::GetDuel();
     if (duel->players[side].monsterZones[zone].InAttackPosition())
     {
 		FUN::ToggleMonsterPosition(side, zone, 1, 0, 0);

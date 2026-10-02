@@ -10,6 +10,8 @@ namespace PoCTools.Library
     {
         private Dictionary<string, byte[]> binaries = [];
         private List<string> imgNames = [];
+        private ushort[] intIDs = new ushort[4096];
+        private ushort[] sorteng = new ushort[4096];
         private List<Card>? cards;
 
         public List<Card>? Cards => cards;
@@ -76,6 +78,8 @@ namespace PoCTools.Library
             string miniPath = Path.Combine(path, "mini");
             if (!Directory.Exists(miniPath)) Directory.CreateDirectory(miniPath);
 
+            using var idWriter = new BinaryWriter(File.Create(Path.Combine(binPath, "card_id.bin")));
+            using var intIdWriter = new BinaryWriter(File.Create(Path.Combine(binPath, "card_intid.bin")));
             using var nameWriter = new BinaryWriter(File.Create(Path.Combine(binPath, "card_nameeng.bin")));
             using var descWriter = new BinaryWriter(File.Create(Path.Combine(binPath, "card_desceng.bin")));
             using var idxWriter = new BinaryWriter(File.Create(Path.Combine(binPath, "card_indxeng.bin")));
@@ -83,10 +87,12 @@ namespace PoCTools.Library
             using var packWriter = new BinaryWriter(File.Create(Path.Combine(binPath, "card_pack.bin")));
             using var listWriter = new StreamWriter(File.Create(Path.Combine(cardPath, "list_card.txt")));
             using var miniWriter = new StreamWriter(File.Create(Path.Combine(miniPath, "list_card.txt")));
+            using var sortWriter = new BinaryWriter(File.Create(Path.Combine(binPath, "card_sorteng.bin")));
 
-            int n = 0;
+            ushort i = 0;
             foreach (Card card in cards)
             {
+                idWriter.Write(card.ID);
                 nameWriter.Write(card.Name.PadRight(64, '\0').ToCharArray());
                 propWriter.Write(card.PropertyBinary);
                 packWriter.Write(card.VersionBinary);
@@ -100,16 +106,34 @@ namespace PoCTools.Library
                 }
                 // card/list_card.txt
                 listWriter.WriteLine($"// {(string.IsNullOrEmpty(card.Name) ? "Back" : (card.Name))}");
-                listWriter.WriteLine($"// {n.ToString().PadLeft(4, '0')}:[{card.ID.ToString().PadLeft(4, '0')}][0x{card.ID.ToString("X").PadLeft(4, '0')}]");
+                listWriter.WriteLine($"// {i.ToString().PadLeft(4, '0')}:[{card.ID.ToString().PadLeft(4, '0')}][0x{card.ID.ToString("X").PadLeft(4, '0')}]");
                 listWriter.WriteLine(card.ImageName);
                 // mini/list_card.txt
                 miniWriter.WriteLine($"// {(string.IsNullOrEmpty(card.Name) ? "Back" : (card.Name))}");
-                miniWriter.WriteLine($"// {n.ToString().PadLeft(4, '0')}:[{card.ID.ToString().PadLeft(4, '0')}][0x{card.ID.ToString("X").PadLeft(4, '0')}]");
+                miniWriter.WriteLine($"// {i.ToString().PadLeft(4, '0')}:[{card.ID.ToString().PadLeft(4, '0')}][0x{card.ID.ToString("X").PadLeft(4, '0')}]");
                 miniWriter.WriteLine(card.ImageName);
 
-                n++;
+                if (card.ID < 4096) intIDs[card.ID] = i;
+
+                i++;
             }
             while (idxWriter.BaseStream.Length < 8192) idxWriter.Write((uint)0x00);
+
+            foreach (ushort intID in intIDs) intIdWriter.Write(intID);
+
+            var sortedCards = new List<Card>(cards);
+            sortedCards.RemoveAt(0);
+            sortedCards.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+
+            ushort j = 1;
+            foreach (Card card in sortedCards)
+            {
+                ushort intID = intIDs[card.ID];
+                sorteng[intID] = j;
+                j++;
+            }
+            foreach (ushort sort in sorteng) sortWriter.Write(sort);
+
 
         }
         private void LoadCards()
@@ -123,15 +147,15 @@ namespace PoCTools.Library
             using var propReader = new BinaryReader(new MemoryStream(binaries["card_prop.bin"]));
             using var packReader = new BinaryReader(new MemoryStream(binaries["card_pack.bin"]));
 
-            idxReader.ReadBytes(4); // Skip the idx of the first description
-
             int i = 0;
             while (!idReader.BaseStream.Position.Equals(idReader.BaseStream.Length))
             {
                 ushort id = idReader.ReadUInt16();
                 string name = Encoding.UTF8.GetString(nameReader.ReadBytes(64)).TrimEnd('\0');
-                uint nextIdx = idxReader.BaseStream.Position.Equals(idxReader.BaseStream.Length) ? (uint)descReader.BaseStream.Length - 1 : idxReader.ReadUInt32();
-                string desc = nextIdx > descReader.BaseStream.Position ? Encoding.UTF8.GetString(descReader.ReadBytes((int)(nextIdx - descReader.BaseStream.Position))).TrimEnd('\0') : "";
+                uint idx = idxReader.ReadUInt32();
+                descReader.BaseStream.Position = idx;
+                string desc = ReadNullTerminatedString(descReader);
+
                 uint prop = propReader.ReadUInt32();
                 ushort ver = packReader.ReadUInt16();
 
@@ -149,6 +173,18 @@ namespace PoCTools.Library
                 i++;
             }
 
+        }
+        private static string ReadNullTerminatedString(BinaryReader reader)
+        {
+            var bytes = new List<byte>();
+
+            byte b;
+            while ((b = reader.ReadByte()) != 0)
+            {
+                bytes.Add(b);
+            }
+
+            return Encoding.UTF8.GetString(bytes.ToArray());
         }
     }
 }

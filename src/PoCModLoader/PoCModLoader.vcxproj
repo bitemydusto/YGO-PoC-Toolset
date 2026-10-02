@@ -107,11 +107,11 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)src\Mods;$(SolutionDir)include</AdditionalIncludeDirectories>
-      <Optimization>Disabled</Optimization>
+      <Optimization>MaxSpeed</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
@@ -155,6 +155,7 @@
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="HookAPI.cpp" />
     <ClCompile Include="HookManager.cpp" />
+    <ClCompile Include="Lib.cpp" />
     <ClCompile Include="ModLoader.cpp" />
     <ClCompile Include="PatchLoader.cpp" />
   </ItemGroup>

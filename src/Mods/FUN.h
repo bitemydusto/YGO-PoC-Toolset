@@ -163,6 +163,8 @@ namespace FUN
 
 	inline auto GetSpellTrapType = reinterpret_cast<uint32_t(__cdecl*)(uint16_t intID)>(0x00402700);
 
+	inline auto GetCardPack = reinterpret_cast<uint32_t(__cdecl*)(uint16_t intID)>(0x004024e0);
+
 	inline auto GetSpellSpeed = reinterpret_cast<uint32_t(__cdecl*)(uint16_t intID)>(0x0057e030);
 
 	inline auto ShowDialog = reinterpret_cast<void(__cdecl*)(const char*)>(0x005bf860);
@@ -339,6 +341,14 @@ namespace FUN
 
 	inline auto IndexOfZoneEffect = reinterpret_cast<int(__cdecl*)(unsigned int sideIdx, unsigned int zoneIdx, unsigned int effectID)>(0x0056d990);
 
+	inline auto GetVersionMask = reinterpret_cast<int(__cdecl*)()>(0x005beac0);
+
+	inline auto CanAddToDeck = reinterpret_cast<bool(__cdecl*)(uint16_t cardIntID)>(0x005be260);
+
+	inline auto GetLimitedStatus = reinterpret_cast<int(__cdecl*)(uint16_t cardIntID)>(0x005be200);
+
+	inline auto GetThisPack = reinterpret_cast<int(__cdecl*)()>(0x005beaa0);
+
 
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);
 	using FUN_591C90_t = uint32_t(__cdecl*)(uint32_t player, uint32_t packed);
@@ -366,18 +376,18 @@ namespace FUN
 
 
 	// Wrapers
-	void W_AddEffectEntityToZone(uint32_t playerIdx, uint32_t zoneIdx, uint32_t effectIntID, uint16_t effect)
+	inline void W_AddEffectEntityToZone(uint32_t playerIdx, uint32_t zoneIdx, uint32_t effectIntID, uint16_t effect)
 	{
 		FUN::AddEffectEntityToZone((zoneIdx << 8) | playerIdx, effectIntID, effect);
 	}
-	uint32_t W_RollDice(uint16_t* param, uint8_t diceCmd)
+	inline uint32_t W_RollDice(uint16_t* param, uint8_t diceCmd)
 	{
 		int roll = FUN::GetRandomNumber(6) + 1;
 		FUN::QueueCommand((param[1] << 15) | diceCmd, roll, (param[1] >> 1) & 0x1F, 0);
 
 		return roll;
 	}
-	void W_PutCardFromLocationToDeck(uint32_t playerIdx, Location location, uint32_t idx, bool top)
+	inline void W_PutCardFromLocationToDeck(uint32_t playerIdx, Location location, uint32_t idx, bool top)
 	{
 		if (location < 0xa) return;
 
@@ -391,7 +401,7 @@ namespace FUN
 			0
 		);
 	}
-	void W_PutCardFromFieldToDeck(uint32_t sideIdx, uint32_t zoneIdx, bool top)
+	inline void W_PutCardFromFieldToDeck(uint32_t sideIdx, uint32_t zoneIdx, bool top)
 	{
 		uint32_t* cardDword = (uint32_t*)(0x00A55D64 + sideIdx * 0xd44 + 0x10 + zoneIdx * 0x90);
 
@@ -403,14 +413,14 @@ namespace FUN
 			0
 		);
 	}
-	uint32_t W_RollDice(uint32_t playerIdx, uint32_t sideIdx, uint8_t diceCmd)
+	inline uint32_t W_RollDice(uint32_t playerIdx, uint32_t sideIdx, uint8_t diceCmd)
 	{
 		int roll = FUN::GetRandomNumber(6) + 1;
 		FUN::QueueCommand((sideIdx << 15) | diceCmd, roll, (playerIdx >> 1) & 0x1F, 0);
 
 		return roll;
 	}
-	void W_MoveCard(uint32_t cardDword, uint8_t _src, uint8_t _dest)
+	inline void W_MoveCard(uint32_t cardDword, uint8_t _src, uint8_t _dest)
 	{
 		uint8_t owner = (cardDword >> 12) & 1;
 		uint8_t inst = (uint8_t)(((cardDword >> 24) & 0x7F) * 2 + ((cardDword >> 12) & 1));
@@ -424,7 +434,7 @@ namespace FUN
 		QueueCommand(0x8E, src, dest, 0);
 
 	}
-	void W_NegateActivation(unsigned int* source, bool destroy)
+	inline void W_NegateActivation(unsigned int* source, bool destroy)
 	{
 		Param src(source);
 
@@ -448,7 +458,7 @@ namespace FUN
 			SendCardFromField(block, maskGen.GenerateMask(), 0xe, 2);
 		}
 	}
-	void W_HighlightAndStoreTarget(unsigned int param, unsigned int* entry, Location location)
+	inline void W_HighlightAndStoreTarget(unsigned int param, unsigned int* entry, Location location)
 	{
 		uint32_t dword = *entry;
 		uint8_t  owner = (dword >> 12) & 1;
@@ -465,7 +475,7 @@ namespace FUN
 		FUN::StoreTarget((int)param, (uint16_t)dword);
 		FUN::StoreTarget((int)param, (uint16_t)(dword >> 16));
 	}
-	void W_SS_HandToOpp(uint32_t handPlayer, int handIndex, uint32_t destZone, uint32_t extra, int posArg)
+	inline void W_SS_HandToOpp(uint32_t handPlayer, int handIndex, uint32_t destZone, uint32_t extra, int posArg)
 	{
 		// This is a reimplementation of FUN_SpecialSummonFromHand, but modified so it summons to the opponent's field instead of the player's field.
 
@@ -516,14 +526,14 @@ namespace FUN
 		SummonMonster();
 	}
 
-	bool W_BothLocked(uint32_t player, uint16_t a, uint16_t b)
+	inline bool W_BothLocked(uint32_t player, uint16_t a, uint16_t b)
 	{
 		uint32_t idA = FUN_00591C90(player, a) & 0xFFFF;
 		uint32_t idB = FUN_00591C90(player, b) & 0xFFFF;
 		return FUN_00568580(idA) != 0 && FUN_00568580(idB) != 0;
 	}
 
-	bool W_FieldCanFreeZone(uint32_t player, uint16_t packed)
+	inline bool W_FieldCanFreeZone(uint32_t player, uint16_t packed)
 	{
 		if ((packed & 0x4000) == 0) return false;
 		return FUN_00569E10(player, packed & 0xFFF) != 0;
@@ -535,7 +545,7 @@ namespace FUN
 	inline auto TargetFieldCard = reinterpret_cast<uint32_t(__cdecl*)(unsigned int* param, int param2, int param3)>(0x00596570);
 
 	// Misc.
-	void __fastcall DrawSpellCounter(int actor, int renderer, int spriteIndex)
+	inline void __fastcall DrawSpellCounter(int actor, int renderer, int spriteIndex)
 	{
 		if (!actor) return;
 

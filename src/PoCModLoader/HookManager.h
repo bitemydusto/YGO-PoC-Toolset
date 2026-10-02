@@ -380,4 +380,43 @@ private:
 	static inline Utils::Hook hSummonMonster;
 	static inline Utils::Hook hZoneOverlay;
 	static inline Utils::Hook hLosingBattle;
+
+
+	// Library
+
+	static void InstallLibraryHooks();
+
+	static inline uint16_t cardCollection[4096];
+	static uint16_t __stdcall M_GetCardIntID(uint16_t cardID);
+	static uint16_t __stdcall M_GetCardID(uint16_t cardID);
+	static void __stdcall M_LoadAlbum(uint32_t album);
+	static bool __stdcall M_RebuildDeck();
+
+	static void PatchGetCardIntID();
+	static void PatchGetCardID();
+
+	static void PatchRebuildDecks();
+	static void PatchGrantCopy();
+	static void PatchGrantUntil();
+	//static void PatchCanAddToDeck();
+	static void PatchRebuildAlbum();
+	static void PatchDeckBuilder();
+
+	static void PatchLoadAlbum();
+	static void PatchRebuildDeck();
+	static void PatchLoadDeckBuilder();
+
+	static void PatchLoadDeckBuilder1();
+	static void PatchLoadDeckBuilder2();
+	static void PatchLoadDeckBuilder3();
+	static void PatchLoadDeckBuilder4();
+	static void PatchValidateMainDeck();
+	static void PatchValidateSideDeck();
+	static void PatchValidateExtraDeck();
+	static void PatchClearCollectionFlags();
+	static void PatchCanAddToDeck();
+
+	static void PatchRebuildDeck1();
+
+	static void PatchFUN_004673e0();
 };

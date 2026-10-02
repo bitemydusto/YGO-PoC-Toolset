@@ -13,7 +13,7 @@
                 <Button Text="Export Selected" Command="{Binding ExportSelectedCommand}" CornerRadius="0" WidthRequest="130" IsEnabled="{Binding IsLibraryLoaded}"/>
             </HorizontalStackLayout>
             <Grid Grid.Row="1" ColumnDefinitions="auto,*,auto" Margin="10" IsVisible="{Binding IsLibraryLoaded}">
-                <Grid Grid.Column="0" RowDefinitions="auto,auto,auto,*" WidthRequest="350">
+                <Grid Grid.Column="0" RowDefinitions="auto,auto,auto,*,auto" WidthRequest="350">
                     <Grid Grid.Row="0" Margin="0,0,0,5">
                         <HorizontalStackLayout Spacing="5">
                             <Label Text="Results:"/>
@@ -114,6 +114,7 @@
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>
+                    <Button Grid.Row="4" Text="Add" Command="{Binding AddCardCommand}" CornerRadius="0" Margin="0,25,0,0" WidthRequest="300"/>
                 </Grid>
                 <Image Grid.Column="1" Source="{Binding SelectedCard.ImagePath}" Margin="15"/>
                 <Grid Grid.Column="2" RowDefinitions="auto,*" Margin="10" WidthRequest="500" IsVisible="{Binding IsCardSelected}">

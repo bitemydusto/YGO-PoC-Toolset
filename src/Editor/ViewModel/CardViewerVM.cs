@@ -1,17 +1,18 @@
-﻿using System;
+﻿using CommunityToolkit.Maui.Storage;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using PoCTools;
+using PoCTools.Library;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.IO;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Maui.Storage;
-using System.Collections.ObjectModel;
-using PoCTools;
-using PoCTools.Library;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 
 namespace Editor.ViewModel
@@ -25,6 +26,7 @@ namespace Editor.ViewModel
         }
 
         IPoCLibrary _library;
+        string libraryPath = string.Empty;
 
         private List<CardInfoVM> cards = [];
 
@@ -78,6 +80,7 @@ namespace Editor.ViewModel
                 await Shell.Current.DisplayAlert("Error", $"Unexpected error occurred while loading library: {e.Message}", "OK");
                 return;
             }
+            libraryPath = path;
             foreach (var item in _library.Cards!)
             {
                 cards.Add(new CardInfoVM(item, path));
@@ -267,6 +270,61 @@ namespace Editor.ViewModel
         async Task ToggleFilterDisplay()
         {
             ShowFilters = !ShowFilters;
+        }
+        [RelayCommand]
+        async Task AddCard()
+        {
+            if (!IsLibraryLoaded)
+            {
+                await Shell.Current.DisplayAlert("Error", "Library is not loaded. Please load a library before adding cards.", "OK");
+                return;
+            }
+            var result = await Shell.Current.DisplayPromptAsync("Add", "", "OK", "Cancel", "ID");
+            if (result != null)
+            {
+                if (result.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) result = result[2..];
+                if (!int.TryParse(result, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int id))
+                {
+                    await Shell.Current.DisplayAlert("Error", "Invalid ID. Please enter a valid integer ID.", "OK");
+                    return;
+                }
+                if (id < 0 || id > 4095)
+                {
+                    await Shell.Current.DisplayAlert("Error", "ID must be between 0 and 4095 (0x0000 to 0x0FFF).", "OK");
+                    return;
+                }
+                if (cards.Any(c => c.Card.ID == id))
+                {
+                    await Shell.Current.DisplayAlert("Error", "A card with this ID already exists.", "OK");
+                    return;
+                }
+
+                Card card = new()
+                {
+                    ID = (ushort)id,
+                    Name = "",
+                    Description = "",
+                    ImageName = "token_sl.bmp",
+                    PropertyBinary = 0,
+                    VersionBinary = 0,
+                    Type = CardType.Dragon,
+                    Attribute = CardAttribute.Light,
+                    Level = 1,
+                    SpellTrapType = SpellTrapType.Normal,
+                    SubType = CardSubType.Normal,
+                    ATK = 0,
+                    DEF = 0,
+                    VersionYugi = false,
+                    VersionKaiba = false,
+                    VersionJoey = false
+                };
+                var newCard = new CardInfoVM(card, libraryPath);
+                _library.Cards!.Add(card);
+                cards.Add(newCard);
+                Cards.Add(newCard);
+                SelectedCard = Cards.Last();
+            }
+
         }
         partial void OnSearchTextChanged(string value)
         {

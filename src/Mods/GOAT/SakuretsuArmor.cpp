@@ -40,7 +40,8 @@ namespace
 		FUN::Param selfParam(self);
 		inst = duel->players[selfParam.triggerSide].cardZones[selfParam.triggerZone].card.GetInstance();
 
-		return FUN::TargetCard(self, selfParam.triggerSide, selfParam.triggerZone);
+		FUN::TargetCard(self, selfParam.triggerSide, selfParam.triggerZone);
+		return 1;
 	}
 }
 

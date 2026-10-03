@@ -30,7 +30,6 @@ namespace
 			}
 		}
 		FUN::SendCardFromField(selfParam.block, maskGen.GenerateMask(), 0x0E, 2);
-		FUN::W_RevealTopCard(selfParam.playerIdx, 0x777, 0);
 
 		return 0;
 	}

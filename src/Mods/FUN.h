@@ -374,7 +374,7 @@ namespace FUN
 
 	inline auto HasInherentSummon = reinterpret_cast<uint32_t(__cdecl*)(uint16_t cardIntID)>(0x00567a00);
 
-	inline auto TargetCard = reinterpret_cast<uint32_t(__cdecl*)(unsigned int* param, unsigned int side, unsigned int zone)>(0x00592a80);
+	inline auto TargetCard = reinterpret_cast<void(__cdecl*)(unsigned int* param, unsigned int side, unsigned int zone)>(0x00592a80);
 
 
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);

@@ -6,3 +6,5 @@ src/Mods/* linguist-detectable=true
 
 src/Mods/Cards.h linguist-detectable=false
 include/nlohmann/** linguist-vendored
+
+*.h linguist-language=C++

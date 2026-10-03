@@ -1,74 +1,14 @@
-#include <Windows.h>
-#include <algorithm>
-#include <array>
-#include <iterator>
-
-#include "Utils.h"
 #include "Cards.h"
 
-const uint32_t BASE_OFFSET = 0x005ed0a8; // Change this if it's different in your version of the game
-
-void LoadCardEffects();
-void ChangeCardEffects();
 struct EffectScript
 {
-	uint32_t CardID;
-	uint32_t Pointer1;
-	uint32_t Pointer2;
-	uint32_t Pointer3;
-    uint32_t Pointer4;
-	uint32_t Pointer5;
+	uint16_t CardID;
+	uint32_t* Effect;
+	uint32_t* AppliesTo;
+	uint32_t* Condition;
+	uint32_t* Cost;
+	uint32_t* Target;
 };
-
-
-DWORD WINAPI MainThread(LPVOID lpParam)
-{
-	LoadCardEffects(); // Delete or comment this line if you only want to change specific cards
-	//ChangeCardEffect(); // Uncomment this line if you only want to change specific cards
-
-    return 0;
-}
-BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID)
-{
-    if (reason == DLL_PROCESS_ATTACH)
-    {
-        DisableThreadLibraryCalls(hinst);
-        CreateThread(0, 0, &MainThread, 0, 0, NULL);
-    }
-
-    return TRUE;
-}
-void ChangeCardEffects()
-{
-	uint32_t cardID;
-	uint32_t pointer1;
-	uint32_t pointer2;
-	uint32_t pointer3;
-	uint32_t pointer4;
-	uint32_t pointer5;
-	uint32_t index;
-	uint32_t cardOffset;
-
-	// Copy the rest of the function from here if you want to change multiple card effects,
-	// just change the index and the values for each card effect you want to modify
-	cardID = Cards::TIME_WIZARD;
-	pointer1 = 0x00000000;
-	pointer2 = 0x00000000;
-	pointer3 = 0x00000000;
-	pointer4 = 0x00000000;
-	pointer5 = 0x00000000;
-
-	index = 0; // Change this to the index of the card effect you want to modify
-	cardOffset = BASE_OFFSET + (index * sizeof(EffectScript));
-
-	Utils::WriteUint32((void*)(cardOffset), cardID);
-	Utils::WriteUint32((void*)(cardOffset + 4), pointer1);
-	Utils::WriteUint32((void*)(cardOffset + 8), pointer2);
-	Utils::WriteUint32((void*)(cardOffset + 12), pointer3);
-	Utils::WriteUint32((void*)(cardOffset + 16), pointer4);
-	Utils::WriteUint32((void*)(cardOffset + 20), pointer5);
-
-}
 
 EffectScript Effects[] =
 {
@@ -2731,29 +2671,3 @@ EffectScript Effects[] =
 		0x00000000,
 		0x00000000
 };
-void LoadCardEffects()
-{
-	// Sort effects by their ID in ascending order
-	std::sort(std::begin(Effects), std::end(Effects),
-		[](const EffectScript& a, const EffectScript& b)
-		{
-			return a.CardID < b.CardID;
-		});
-	// Write the sorted effects to memory
-	int address = BASE_OFFSET;
-	for (const auto& effect : Effects)
-	{
-		Utils::WriteUint32((void*)address, effect.CardID);
-		address += 4;
-		Utils::WriteUint32((void*)address, effect.Pointer1);
-		address += 4;
-		Utils::WriteUint32((void*)address, effect.Pointer2);
-		address += 4;
-		Utils::WriteUint32((void*)address, effect.Pointer3);
-		address += 4;
-		Utils::WriteUint32((void*)address, effect.Pointer4);
-		address += 4;
-		Utils::WriteUint32((void*)address, effect.Pointer5);
-		address += 4;
-	}
-}

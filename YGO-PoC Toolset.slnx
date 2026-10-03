@@ -6,23 +6,20 @@
   </Configurations>
   <Folder Name="/Mods/">
     <File Path="src/Mods/Cards.h" />
+    <File Path="src/Mods/EffectScripts.h" />
     <File Path="src/Mods/FUN.h" />
     <File Path="src/Mods/GameData.h" />
     <File Path="src/Mods/HookAPI.h" />
     <File Path="src/Mods/Utils.h" />
     <Project Path="src/Mods/Breaker/Breaker.vcxproj" Id="7862ba4a-6ef1-4cb3-a956-e3a0e783f9bc" />
-    <Project Path="src/Mods/CardEffects/CardEffects.vcxproj" Id="14f06872-7743-4608-b311-b637ca2fc6a5" />
     <Project Path="src/Mods/ChaosCards/ChaosCards.vcxproj" Id="51d5441c-53db-49d8-915b-5016ad2bd1dd" />
-    <Project Path="src/Mods/FusionRequirements/FusionRequirements.vcxproj" Id="6186b4bf-7bd0-4881-a035-10c21c87e0d0" />
     <Project Path="src/Mods/GodCards/GodCards.vcxproj" Id="8e7a5a7d-2740-4130-b875-2de787417ee6">
       <Platform Solution="Release|Any CPU" Project="Win32" />
     </Project>
     <Project Path="src/Mods/LADD/LADD.vcxproj" Id="ea5cbafb-b54a-4a80-a7d7-f0f603f5ed45" />
     <Project Path="src/Mods/LavaGolem/LavaGolem.vcxproj" Id="14ccfd03-8442-4afb-a114-985f239b9037" />
     <Project Path="src/Mods/Metamorphosis/Metamorphosis.vcxproj" Id="9f73b0d1-184c-4a78-8ec4-449162a78aec" />
-    <Project Path="src/Mods/PatchLoader/PatchLoader.vcxproj" Id="250a4c34-d26c-4a93-bf1d-010c21e9239f" />
     <Project Path="src/Mods/PoCDebugger/PoCDebugger.vcxproj" Id="02bbb32a-4b03-428a-823a-5961469ebf4f" />
-    <Project Path="src/Mods/ScriptLoader/ScriptLoader.vcxproj" Id="ee89654c-08da-4f1e-8b3e-ea9a514ffb8e" />
     <Project Path="src/Mods/SpiritMonsters/SpiritMonsters.vcxproj" Id="98809c4d-70b9-4cb6-88cd-fffe5c75c15a" />
     <Project Path="src/Mods/XYZ/XYZ.vcxproj" Id="80d34bdb-42f3-4e63-987f-b9b2d554adc1" />
   </Folder>

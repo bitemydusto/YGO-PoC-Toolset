@@ -162,6 +162,7 @@ public:
 	static void InstallHooks();
 
 	static void SetOncePerTurnFlag(uint8_t side, uint8_t zone);
+	static bool UsedEffectThisTurn(uint8_t side, uint8_t zone);
 
 	static void AddSpellCounter(uint8_t side, uint8_t zone);
 	static void RemoveSpellCounter(uint8_t side, uint8_t zone);

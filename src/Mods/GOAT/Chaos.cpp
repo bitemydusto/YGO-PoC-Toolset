@@ -1,0 +1,691 @@
+#include "GOAT.h"
+
+namespace
+{
+	constexpr uint16_t BLS = Cards::ANCIENT_TOOL;
+	constexpr uint16_t CED = Cards::AQUA_SNAKE;
+	constexpr uint16_t DMOC = Cards::UNKNOWN_WARRIOR_OF_FIEND;
+	constexpr uint16_t CS = Cards::ACID_CRAWLER;
+	constexpr uint16_t PS = Cards::FIEND_REFLECTION_No1;
+
+	unsigned int cedDamage;
+	int innerState = 0;
+
+	uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3);
+	uint32_t __cdecl Condition_BLS(unsigned int* param, int param2, int param3);
+	uint32_t __cdecl Cost_BLS(unsigned int* param, int param2, int param3);
+
+	uint32_t __cdecl Effect_CED(unsigned int* param, int param2, int param3);
+	uint32_t __cdecl Condition_CED(unsigned int* param, int param2, int param3);
+	uint32_t __cdecl Cost_CED(unsigned int* param, int param2, int param3);
+
+	uint32_t __cdecl Effect_DMOC(unsigned int* param, int param2, int param3);
+	uint32_t __cdecl Target_DMOC(unsigned int* param, int param2, int param3);
+	uint32_t __cdecl Condition_DMOC(unsigned int* param, int param2, int param3);
+
+	uint32_t __cdecl Effect_PS(unsigned int* param, int param2, int param3);
+	uint32_t __cdecl Condition_PS(unsigned int* param, int param2, int param3);
+	uint32_t __cdecl Target_PS(unsigned int* param, int param2, int param3);
+
+	bool CanBeSummoned(uint32_t playerIdx);
+	void __stdcall LoadSelectionListDark();
+	void __stdcall LoadSelectionListBanished();
+	void __stdcall EndPhase();
+	void __stdcall BLS_DoubleAttack();
+	void __stdcall DMOC_BanishOnKill();
+	void __stdcall DMOC_BanishOnDeath();
+	uint32_t __stdcall SummonStates();
+
+	uint32_t __cdecl Effect_BLS(unsigned int* param, int param2, int param3)
+	{
+		FUN::Param funParam(param);
+
+		if (funParam.finishedResolving) return 0;
+
+		if (funParam.targetCount == 0) return 0;
+
+		uint32_t side = funParam.GetFieldTargetSide(0);
+		uint32_t zone = funParam.GetFieldTargetZone(0);
+
+		if (GameData::GetDuel()->players[side].cardZones[zone].card.GetIntID() == 0) return 0;
+
+		FUN::FieldMaskGenerator maskGen;
+		maskGen.zones[side][zone] = true;
+
+		FUN::SendCardFromField(funParam.block, maskGen.GenerateMask(), 0xf, 0);
+
+		return 0;
+	}
+	uint32_t __cdecl Condition_BLS(unsigned int* param, int param2, int param3)
+	{
+		FUN::Param funParam(param);
+		GameData::Player player = duel->players[funParam.playerIdx];
+
+		if (FUN::IsCardOnSideOfField(funParam.playerIdx ^ 0x1, 0x5E7) > 0) return 0;
+
+		if (funParam.zoneIdx > 4) return 0;
+		// Used its effect this turn
+		if ((player.cardZones[funParam.zoneIdx].effectIDs[31] & 0x1) == 0x1) return 0;
+		// Can't change position
+		if ((player.cardZones[funParam.zoneIdx].stateFlags & 0x20000) != 0)
+		{
+			// Attacked this turn
+			if (((player.alreadyAttackedZones >> funParam.zoneIdx) & 0x1) == 0x1) return 0;
+		}
+
+		return 1;
+	}
+	uint32_t __cdecl Cost_BLS(unsigned int* param, int param2, int param3)
+	{
+		FUN::Param funParam(param);
+
+		if (funParam.zoneIdx > 4) return 0;
+
+		// Make it unable to attack this turn
+		duel->players[funParam.playerIdx].cardZones[funParam.zoneIdx].stateFlags |= 0x40000;
+		// Set custom once per turn flag
+		duel->players[funParam.playerIdx].cardZones[funParam.zoneIdx].effectIDs[31] = 0x1;
+
+		return 1;
+	}
+	uint32_t __cdecl Effect_DMOC(unsigned int* param, int param2, int param3)
+	{
+		FUN::Param funParam(param);
+		if (funParam.finishedResolving) return 0;
+
+		if (funParam.targetCount == 0) return 0;
+
+		uint32_t dword = funParam.outerTargets[0];
+		if ((dword & 0xfff) == 0) return 0;
+
+		uint32_t inst = ((dword >> 12) & 1) + ((dword >> 24) & 0x7F) * 2;
+
+		if (FUN::GetInstIndexInGrave(funParam.playerIdx, inst) < 0) return 0;
+
+		FUN::AddTargetedCardToHand(funParam.block, funParam.playerIdx, &funParam.outerTargets[0]);
+
+		return 0;
+	}
+	uint32_t __cdecl Condition_DMOC(unsigned int* param, int param2, int param3)
+	{
+		FUN::Param funParam(param);
+		GameData::Player player = duel->players[funParam.playerIdx];
+
+		int spells = 0;
+		for (size_t i = 0; i < player.cardsInGrave; i++)
+		{
+			if (FUN::GetMonsterType(player.grave[i].GetIntID()) == 0x16) spells++;
+		}
+		return spells > 0 ? 1 : 0;
+	}
+	uint32_t __cdecl Target_DMOC(unsigned int* param, int param2, int param3)
+	{
+		FUN::Param funParam(param);
+
+		uint8_t sub = GameData::GetEffectSubState();
+
+
+		switch (sub)
+		{
+		case 0:
+		{
+			FUN::ShowDialog("Do you want to add a @2Spell Card@0 from your Graveyard to your hand?");
+			FUN::ShowDialogOptions(1, 0);
+
+			GameData::SetEffectSubState(1);
+			return 0;
+		}
+		case 1:
+		{
+			if (GameData::GetDialogResult() != 0)
+			{
+				GameData::SetEffectSubState(2);
+				return 0;
+			}
+			GameData::SetEffectSubState(0);
+			return 1;
+		}
+		case 2:
+		{
+			// Clear target count bits
+			*(uint16_t*)(funParam.block + 4) &= 0x1FFF;
+
+			FUN::ShowDialog("Select a @2Spell Card@0 from your Graveyard to add to your hand.");
+
+			GameData::SetEffectSubState(3);
+			return 0;
+		}
+		case 3:
+		{
+			FUN::InitiateSelectionList(funParam.playerIdx, 6, 0x1AB, 0);
+
+			GameData::SetEffectSubState(4);
+			return 0;
+		}
+
+		case 4:
+		{
+			uint32_t count = FUN::GetSelectionListCount();
+			if (count == 0)
+			{
+				GameData::SetEffectSubState(0);
+				return 1;
+			}
+
+			uint32_t* entry = (uint32_t*)FUN::GetSelectedItem();
+			if (!entry || (*entry & 0xFFF) == 0) return 0; // not ready
+
+			uint32_t dword = *entry;
+			uint8_t  owner = (dword >> 12) & 1;
+			uint32_t inst = owner + ((dword >> 24) & 0x7F) * 2;
+			uint32_t sideBit = owner ? 0x8000u : 0;
+
+			uint32_t cardId = FUN::GetCardID(dword & 0xFFF);
+
+			// Highlight / reveal
+			FUN::QueueCommand(sideBit | 0xDF, cardId, inst, 0);
+			FUN::QueueCommand(sideBit | 0x08, owner, Location::GRAVE, 0);
+
+			// Store targets
+			FUN::StoreTarget((int)param, (uint16_t)dword);
+			FUN::StoreTarget((int)param, (uint16_t)(dword >> 16));
+
+			GameData::SetEffectSubState(0);
+			return 1;
+		}
+
+		default:
+			GameData::SetEffectSubState(0);
+			return 1;
+		}
+	}
+	uint32_t __cdecl Effect_CED(unsigned int* param, int param2, int param3)
+	{
+		FUN::Param funParam(param);
+
+		// Has effect finished resolving?
+		if (funParam.finishedResolving) return 0;
+
+		uint8_t state = GameData::GetEffectState();
+		uint8_t playerIdx = funParam.playerIdx;
+		uint8_t opp = playerIdx ^ 0x1;
+		duel = GameData::GetDuel();
+
+
+		switch (state)
+		{
+		case 0x80:
+		{
+			unsigned int cardsOnPlayerField = 0;
+			unsigned int cardsOnOppField = 0;
+			for (size_t i = 0; i < 5; i++)
+			{
+				if (duel->players[opp].cardZones[i].card.GetIntID() != 0) cardsOnOppField++;
+				if (duel->players[opp].cardZones[i + 5].card.GetIntID() != 0) cardsOnOppField++;
+				if (duel->players[playerIdx].cardZones[i].card.GetIntID() != 0) cardsOnPlayerField++;
+				if (duel->players[playerIdx].cardZones[i + 5].card.GetIntID() != 0) cardsOnPlayerField++;
+			}
+			if (duel->players[opp].fieldSpellZone().card.GetIntID() != 0) cardsOnOppField++;
+			if (duel->players[playerIdx].fieldSpellZone().card.GetIntID() != 0) cardsOnPlayerField++;
+			cedDamage = (duel->players[opp].cardsInHand + cardsOnOppField + duel->players[playerIdx].cardsInHand + cardsOnPlayerField) * 300;
+
+		}break;
+		case 0x7f:
+		{
+			if (duel->players[1].cardsInHand != 0)
+			{
+				FUN::DiscardFromHand(1, 0, 1);
+				return 0x7f;
+			}
+			return 0x7e;
+		}break;
+		case 0x7e:
+		{
+			if (duel->players[0].cardsInHand != 0)
+			{
+				FUN::DiscardFromHand(0, 0, 1);
+				return 0x7e;
+			}
+			return 0x7d;
+		}break;
+		case 0x7d:
+		{
+			FUN::SendCardFromField(funParam.block, 0x07ff07ff, 0xe, 0);
+			return 0x7c;
+		}break;
+		case 0x7c:
+		{
+			FUN::DealEffectDamage(opp, cedDamage);
+			return 0;
+		}break;
+		}
+
+
+		return 0x7f;
+	}
+	uint32_t __cdecl Condition_CED(unsigned int* param, int param2, int param3)
+	{
+		FUN::Param funParam(param);
+		GameData::Player player = duel->players[funParam.playerIdx];
+
+		if (player.lifePoints <= 1000) return 0;
+
+		return 1;
+	}
+	uint32_t __cdecl Cost_CED(unsigned int* param, int param2, int param3)
+	{
+		FUN::Param funParam(param);
+		GameData::Player player = duel->players[funParam.playerIdx];
+		FUN::PayLifePoints(funParam.playerIdx, 1000);
+		return 1;
+	}
+	uint32_t __cdecl Effect_PS(unsigned int* param, int param2, int param3)
+	{
+		FUN::Param funParam(param);
+
+		// Has effect finished resolving?
+		if (funParam.finishedResolving) return 0;
+		if (funParam.targetCount < 2) return 0;
+
+		uint8_t state = GameData::GetEffectState();
+
+		switch (state)
+		{
+		case 0x80:
+		{
+			FUN::W_MoveCard(funParam.outerTargets[0], Location::BANISHED, Location::HAND);
+			return 0x7f;
+		}
+		case 0x7f:
+		{
+			FUN::W_MoveCard(funParam.outerTargets[1], Location::BANISHED, Location::HAND);
+			return 0;
+		}
+		}
+
+		return 0;
+	}
+	uint32_t __cdecl Condition_PS(unsigned int* param, int param2, int param3)
+	{
+		FUN::Param funParam(param);
+		GameData::Player player = duel->players[funParam.playerIdx];
+
+		if (player.cardsInBanish < 2) return 0;
+		if (FUN::IsCardOnTheField(0x7B) == 0 && FUN::IsCardOnField(0x1BD) == 0) return 0;
+
+		return 1;
+	}
+	uint32_t __cdecl Target_PS(unsigned int* param, int param2, int param3)
+	{
+		FUN::Param funParam(param);
+
+		uint8_t sub = GameData::GetEffectSubState();
+
+		switch (sub)
+		{
+		case 0:
+		{
+			// Clear target count bits
+			*(uint16_t*)(funParam.block + 4) &= 0x1FFF;
+
+			FUN::ShowDialog("Select a @32@0 cards in your banish zone to add to your hand.");
+
+			GameData::SetEffectSubState(1);
+			return 0;
+		}
+		case 1:
+		{
+			FUN::InitiateSelectionList(funParam.playerIdx, 8, 0x252, 0);
+			GameData::SetEffectSubState(2);
+			return 0;
+		}
+		case 2:
+		{
+			if (FUN::SelectionConfirmed() != 0) return 0;
+
+			uint32_t count = FUN::GetSelectionListCount();
+			if (count == 0)
+			{
+				GameData::SetEffectSubState(0);
+				return 1;
+			}
+			for (int pick = 0; pick < 2; pick++)
+			{
+				for (size_t i = 0; i < count; i++)
+				{
+					// List of 2 bytes for every entry in the selection list, first byte = pick number, second byte = flags for things like location
+					uint8_t pickslot = Utils::ReadUint16((void*)(0x00A584A4 + i * 2)) >> 8;
+
+					if (pickslot == pick + 1)
+					{
+						uint32_t dword = Utils::ReadUint32((void*)(0x00a582a4 + i * 4));
+						uint8_t  owner = (dword >> 12) & 1;
+						uint32_t sideBit = owner ? 0x8000u : 0;
+						uint32_t cardId = FUN::GetCardID(dword & 0xFFF);
+						uint32_t inst = owner + ((dword >> 24) & 0x7F) * 2;
+
+						FUN::QueueCommand(sideBit | 0xDF, cardId, inst, 0);
+						FUN::QueueCommand(sideBit | 0x08, owner, Location::BANISHED, 0);
+
+						// One card dword = two target halfwords
+						FUN::StoreTarget((int)param, (uint16_t)dword);
+						FUN::StoreTarget((int)param, (uint16_t)(dword >> 16));
+					}
+				}
+			}
+
+			GameData::SetEffectSubState(0);
+			return 1;
+		}
+		}
+	}
+
+	void __stdcall EndPhase()
+	{
+		for (size_t i = 0; i < 2; i++)
+		{
+			for (size_t j = 0; j < 11; j++)
+			{
+				Utils::WriteUint16((void*)(0x00a55d64 + i * 0xD44 + 0x10 + j * 0x90 + 0x4A), 0x0);
+			}
+		}
+	}
+	void __stdcall BLS_DoubleAttack()
+	{
+		uint8_t attackerIdx = battleResult->StateFlags & 0x1;
+		if (battleResult->sides[attackerIdx].IntID == 0x05 && (battleResult->sides[attackerIdx ^ 0x1].ResultFlags & 0x10) != 0)
+		{
+			duel = GameData::GetDuel();
+			GameData::Player attacker = duel->players[attackerIdx];
+			uint8_t zoneIdx = (battleResult->StateFlags >> 8) & 7;
+			if (zoneIdx > 4) return;
+			if ((attacker.cardZones[zoneIdx].effectIDs[31] & 0x1) == 0)
+			{
+				// Reset attacked flag
+				uint16_t attackedFlag = attacker.alreadyAttackedZones & ~(1 << zoneIdx);
+				Utils::WriteUint16((void*)(0x00a55d64 + attackerIdx * 0xD44 + 0xc), attackedFlag);
+				// Set custom once per turn flag
+				Utils::WriteUint16((void*)(0x00a55d64 + attackerIdx * 0xD44 + 0x10 + 0x90 * zoneIdx + 0x4A), 0x1);
+
+			}
+		}
+	}
+	void __stdcall DMOC_BanishOnKill()
+	{
+		uint8_t attackerIdx = battleResult->StateFlags & 0x1;
+
+		if (FUN::IsCardOnSideOfField(!attackerIdx, 0x5E7) > 0) return;
+		if (battleResult->sides[attackerIdx].IntID == 0x0D && (battleResult->sides[!attackerIdx].ResultFlags & 0x10) != 0)
+		{
+			uint8_t attackedZoneIdx = (battleResult->StateFlags >> 0xB) & 7;
+			uint32_t mask = 1u << ((((int)(char)!attackerIdx) << 4) + (char)attackedZoneIdx & 0x1f);
+			uint8_t block[0x20];
+			memset(block, 0, sizeof(block));
+
+			FUN::SendCardFromField(block, mask, 0xf, 0);
+		}
+
+
+	}
+	void __stdcall DMOC_BanishOnDeath()
+	{
+		for (size_t side = 0; side < 2; side++)
+		{
+			if ((battleResult->sides[side].ResultFlags & 0x10) != 0)
+			{
+				uint8_t zone = (side == (battleResult->StateFlags & 1)) ? battleResult->GetZone(0) : battleResult->GetZone(1);
+
+				if (duel->players[side].cardZones[zone].card.GetCardID() == 0x10A)
+				{
+					FUN::FieldMaskGenerator maskGen;
+					maskGen.zones[side][zone] = true;
+					uint8_t block[32] = {};
+
+					FUN::SendCardFromField(block, maskGen.GenerateMask(), 0xf, 0);
+				}
+			}
+		}
+	}
+	bool CanBeSummoned(uint32_t playerIdx)
+	{
+		if (FUN::IsCardOnSideOfField(playerIdx ^ 0x1, 0x5E7) > 0) return false;
+		GameData::Player player = duel->players[playerIdx];
+
+		int numOfLight = 0;
+		int numOfDark = 0;
+		for (size_t i = 0; i < player.cardsInGrave; i++)
+		{
+			if (FUN::GetMonsterType(player.grave[i].fullValue) < 0x15)
+			{
+				uint32_t attr = FUN::GetMonsterAttribute(player.grave[i].fullValue);
+				if (attr == 0x1) numOfLight++; // Light
+				else if (attr == 0x2) numOfDark++; // Dark
+			}
+		}
+		if (numOfLight > 0 && numOfDark > 0)
+		{
+			if (FUN::NumOfEmptyValidSummonZones(playerIdx) > 0)
+			{
+				if (FUN::CanPlayerSummon(playerIdx) > 0)
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+	uint32_t __stdcall SummonStates()
+	{
+		switch (innerState)
+		{
+		case 0:
+		{
+			FUN::ShowDialog("You must banish @31@0 @2LIGHT@0 and @31@0 @2DARK@0 monster from your Graveyard to summon this monster. Do you wish to @2Summon@0?");
+			FUN::ShowDialogOptions(1, 0);
+			innerState = 0xe;
+		}break;
+		case 0xe:
+		{
+			if (Utils::ReadUint8((void*)0x00a558b4) == 0)
+			{
+				innerState = 0;
+				return 1;
+			}
+			innerState = 1;
+		}break;
+		case 1:
+		{
+			FUN::InitiateSelectionList(GameData::GetTurnPlayer(), 6, 0x5EB, 0); // Original population logic: Soul of Purity and Light
+			innerState = 2;
+		}break;
+		case 2:
+		{
+			uint32_t* entry = (uint32_t*)FUN::GetSelectedItem();
+			if (!entry || (*entry & 0xFFF) == 0) return 0; // not ready
+
+			uint32_t dword = *entry;
+			FUN::BanishCardFromGrave(GameData::GetTurnPlayer(), &dword);
+
+			innerState = 3;
+		}break;
+		case 3:
+		{
+			FUN::InitiateSelectionList(GameData::GetTurnPlayer(), 6, 0x7B, 0); // Use custom population logic
+			innerState = 4;
+		}break;
+		case 4:
+		{
+			uint32_t* entry = (uint32_t*)FUN::GetSelectedItem();
+			if (!entry || (*entry & 0xFFF) == 0) return 0; // not ready
+
+			uint32_t dword = *entry;
+			FUN::BanishCardFromGrave(GameData::GetTurnPlayer(), &dword);
+
+			innerState = 0x5;
+		}break;
+		case 5:
+		{
+			// The commented code below is for manual position selection, but it's not needed when summoning from the hand
+
+			//uint16_t cardID = FUN::GetCardID(Utils::ReadUint16((void*)0x00a57802));
+			//FUN::ShowDialog2(0xF7);
+
+			//FUN::SetupSelector(6, cardID); // FUN_005bfa00
+			//FUN::InitiateSelector(); // FUN_005bfa20
+
+			innerState = 0x6;
+		}break;
+		case 6:
+		{
+			//if (FUN::SelectionConfirmed() != 0) return 0;
+
+			//uint16_t choice = Utils::ReadUint16((void*)0x00A558B4);
+
+			//uint32_t summonParam = Utils::ReadUint32((void*)0x00A55080);
+			//summonParam = (summonParam & 0xFFFF3FFF);
+			//if ((choice & 1) == 0) summonParam |= 0x4000;
+			//else summonParam |= 0x8000;
+
+			//Utils::WriteUint32((void*)0x00A55080, summonParam);
+
+			//Utils::WriteUint8((void*)0x00A558B4, (uint8_t)(choice & 1));
+
+			innerState = 0xf;
+		}break;
+		case 0xf:
+		{
+			uint16_t sel = GameData::GetSelectedSoFar();
+			GameData::SetSelectedSoFar(sel & 0xff00);
+
+			uint32_t summonParam = GameData::GetSummonParam();
+			GameData::SetSummonParam(summonParam & 0xf1ffffff);
+
+			//uint16_t choice = Utils::ReadUint16((void*)0x00A558B4) & 1;
+			uint16_t choice = (Utils::ReadUint8((void*)0x00a57804) >> 3) & 1;
+
+			uint32_t param1 = (GameData::GetSelectedSoFar() & 0x100) >> 8;
+			uint32_t param2 = Utils::ReadUint8((void*)0x00a5780c);
+			uint32_t param3 = FUN::GetSummonZone(GameData::GetTurnPlayer());
+			uint32_t param5 = (choice == 0) ? 1 : 0;
+
+
+
+			FUN::SpecialSummonFromHand(GameData::GetTurnPlayer(), param2, param3, 0, param5);
+
+			uint32_t x = Utils::ReadUint32((void*)0x00a57804);
+			Utils::WriteInt32((void*)0x00a57804, x & 0xfffffffd);
+
+			innerState = 0;
+			return 1;
+		}
+		}
+
+		return 0;
+	}
+	void __stdcall LoadSelectionListDark()
+	{
+		std::vector<uint32_t> darkCards;
+		GameData::Player player = duel->players[GameData::GetTurnPlayer()];
+		for (size_t i = 0; i < player.cardsInGrave; i++)
+		{
+			if (FUN::GetMonsterType(player.grave[i].fullValue) < 0x15)
+			{
+				uint32_t attr = FUN::GetMonsterAttribute(player.grave[i].fullValue);
+				if (attr == 0x2) // Dark
+				{
+					darkCards.push_back(player.grave[i].fullValue);
+				}
+			}
+		}
+
+		GameData::ChangeSelectionList(darkCards, 4);
+	}
+	void __stdcall LoadSelectionListBanished()
+	{
+		std::vector<uint32_t> banishedCards;
+		GameData::Player player = duel->players[GameData::GetTurnPlayer()];
+
+		for (size_t i = 0; i < player.cardsInBanish; i++)
+		{
+			banishedCards.push_back(player.banish[i].fullValue);
+		}
+
+		GameData::ChangeSelectionList(banishedCards, 4);
+	}
+}
+
+void Install_Chaos()
+{
+	Register_ActivatableEffect(BLS);
+	Register_ActivatableEffect(CED);
+	Register_ActivatableEffect(CS);
+
+	Register_InherentSpecialSummon(BLS, true);
+	Register_InherentSpecialSummon(CED, false);
+	Register_InherentSpecialSummon(CS, true);
+
+	Register_SpecialSummonCondition(BLS, CanBeSummoned);
+	Register_SpecialSummonCondition(CED, CanBeSummoned);
+	Register_SpecialSummonCondition(CS, CanBeSummoned);
+
+	Register_Phase(5, EndPhase);
+
+	Register_AfterDamageCalculation(BLS_DoubleAttack);
+	Register_AfterDamageCalculation(DMOC_BanishOnKill);
+
+	Register_NormalSummonTrigger(DMOC);
+	Register_SpecialSummonTrigger(DMOC);
+
+	Register_BanishOnLeavingField(DMOC);
+
+	Register_InitialSummonState(BLS, 0x39, false);
+	Register_InitialSummonState(CED, 0x39, false);
+	Register_InitialSummonState(CS, 0x39, false);
+	Register_SummonState(0x39, SummonStates);
+
+	Register_SelectionListPopulation(0x7B, LoadSelectionListDark);
+	Register_SelectionListPopulation(0x252, LoadSelectionListBanished);
+
+	Register_EffectScript({
+		.CardID = BLS,
+		.Effect = reinterpret_cast<uintptr_t>(&Effect_BLS),
+		.AppliesTo = 0x0057A880,
+		.Condition = reinterpret_cast<uintptr_t>(&Condition_BLS),
+		.Cost = reinterpret_cast<uintptr_t>(&Cost_BLS),
+		.Target = 0x00596570
+		});
+	Register_EffectScript({
+		.CardID = CED,
+		.Effect = reinterpret_cast<uintptr_t>(&Effect_CED),
+		.AppliesTo = 0,
+		.Condition = reinterpret_cast<uintptr_t>(&Condition_CED),
+		.Cost = reinterpret_cast<uintptr_t>(&Cost_CED),
+		.Target = 0
+		});
+	Register_EffectScript({
+		.CardID = DMOC,
+		.Effect = reinterpret_cast<uintptr_t>(&Effect_DMOC),
+		.AppliesTo = 0,
+		.Condition = reinterpret_cast<uintptr_t>(&Condition_DMOC),
+		.Cost = 0,
+		.Target = reinterpret_cast<uintptr_t>(&Target_DMOC)
+		});
+	Register_EffectScript({
+		.CardID = CS,
+		.Effect = reinterpret_cast<uintptr_t>(&Effect_BLS),
+		.AppliesTo = 0x0057A880,
+		.Condition = reinterpret_cast<uintptr_t>(&Condition_BLS),
+		.Cost = reinterpret_cast<uintptr_t>(&Cost_BLS),
+		.Target = 0x00596570
+		});
+	Register_EffectScript({
+		.CardID = PS,
+		.Effect = reinterpret_cast<uintptr_t>(&Effect_PS),
+		.AppliesTo = 0,
+		.Condition = reinterpret_cast<uintptr_t>(&Condition_PS),
+		.Cost = 0,
+		.Target = reinterpret_cast<uintptr_t>(&Target_PS)
+		});
+
+}

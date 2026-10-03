@@ -238,6 +238,20 @@ void HookManager::SetOncePerTurnFlag(uint8_t side, uint8_t zone)
 {
 	FUN::W_AddEffectEntityToZone(side, zone, 0, 0xf);
 }
+bool HookManager::UsedEffectThisTurn(uint8_t side, uint8_t zone)
+{
+	auto duel = GameData::GetDuel();
+	if (duel->players[side].cardZones[zone].effectCount == 0) return false;
+	for (size_t i = 0; i < duel->players[side].cardZones[zone].effectCount; i++)
+	{
+		if (duel->players[side].cardZones[zone].effectEntries[i].type == 0xf)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
 void HookManager::AddSpellCounter(uint8_t side, uint8_t zone)
 {
 	FUN::W_AddEffectEntityToZone(side, zone, FUN::GetCardIntID(0x96), 0xb);
@@ -275,11 +289,11 @@ void __stdcall ResetOncePerTurnFlags()
 	{
 		for (size_t j = 0; j < 11; j++)
 		{
-			if (duel->players[i].monsterZones[j].card.GetIntID() != 0 && duel->players[i].monsterZones[j].effectCount != 0)
+			if (duel->players[i].cardZones[j].card.GetIntID() != 0 && duel->players[i].cardZones[j].effectCount != 0)
 			{
-				for (size_t k = 0; k < duel->players[i].monsterZones[j].effectCount;)
+				for (size_t k = 0; k < duel->players[i].cardZones[j].effectCount;)
 				{
-					if (duel->players[i].monsterZones[j].effectEntries[k].type == 0xf)
+					if (duel->players[i].cardZones[j].effectEntries[k].type == 0xf)
 					{
 						FUN::RemoveEffectEntity(i, j, k);
 					}
@@ -298,8 +312,8 @@ void __stdcall ReturnSpiritsToHand()
 	{
 		for (size_t j = 0; j < 5; j++)
 		{
-			uint16_t cardIntID = duel->players[i].monsterZones[j].card.GetIntID();
-			if (cardIntID != 0 && duel->players[i].monsterZones[j].IsFaceUp())
+			uint16_t cardIntID = duel->players[i].cardZones[j].card.GetIntID();
+			if (cardIntID != 0 && duel->players[i].cardZones[j].IsFaceUp())
 			{
 				uint16_t cardID = FUN::GetCardID(cardIntID);
 				for (const auto& id : HookManager::spiritMonsters)
@@ -1866,7 +1880,7 @@ void HookManager::Register_UnTargetable(uint16_t cardID)
 }
 bool __stdcall HookManager::Dispatch_UnTargetable(uint8_t side, uint8_t zone)
 {
-	uint16_t cardID = GameData::GetDuel()->players[side].monsterZones[zone].card.GetCardID();
+	uint16_t cardID = GameData::GetDuel()->players[side].cardZones[zone].card.GetCardID();
 	for (const auto& id : unTargetableHooks)
 	{
 		if (id == cardID)

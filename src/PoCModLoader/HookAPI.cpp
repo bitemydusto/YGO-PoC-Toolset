@@ -7,6 +7,10 @@ extern "C"
 	{
 		HookManager::SetOncePerTurnFlag(side, zone);
 	}
+	bool UsedEffectThisTurn(uint8_t side, uint8_t zone)
+	{
+		return HookManager::UsedEffectThisTurn(side, zone);
+	}
 	void AddSpellCounter(uint8_t side, uint8_t zone)
 	{
 		HookManager::AddSpellCounter(side, zone);

@@ -116,9 +116,7 @@ namespace GameData
 
         uint16_t padding;
 
-        CardZone monsterZones[5];
-        CardZone spellTrapZones[5];
-		CardZone fieldSpellZone;
+        CardZone cardZones[11];
         uint8_t playerFlags[0x90];
 
         Card hand[80];
@@ -129,22 +127,33 @@ namespace GameData
 
 		uint8_t footer[0xc0];
 
-        Card fieldSpell()
+		CardZone monsterZone(uint8_t index)
+		{
+			if (index > 4) return cardZones[4];
+			return cardZones[index];
+		}
+		CardZone spellTrapZone(uint8_t index)
+		{
+			if (index < 5) return cardZones[5];
+			if (index > 9) return cardZones[9];
+			return cardZones[index];
+		}
+		CardZone fieldSpellZone()
         {
-			return fieldSpellZone.card;
+			return cardZones[10];
         }
     };
     struct Duel
     {
         Player players[2];
     };
-	Duel* _duel = reinterpret_cast<Duel*>(BASE_PLAYER_ADDRESS);
-    Duel* GetDuel()
+	inline Duel* _duel = reinterpret_cast<Duel*>(BASE_PLAYER_ADDRESS);
+    inline Duel* GetDuel()
     {
         return _duel;
     }
 
-    void ChangeSelectionList(std::vector<uint32_t> items, uint8_t loc)
+	inline void ChangeSelectionList(std::vector<uint32_t> items, uint8_t loc)
     {
         Utils::WriteUint8((void*)SELECTION_LIST_SIZE_ADDRESS, items.size());
         for (size_t i = 0; i < items.size(); i++)
@@ -155,7 +164,7 @@ namespace GameData
 
     }
 
-	Utils::EffectScript GetEffectScript(int index)
+	inline Utils::EffectScript GetEffectScript(int index)
 	{
         Utils::EffectScript script;
 
@@ -168,7 +177,7 @@ namespace GameData
 
 		return script;
 	}
-    int GetEffectScriptIndex(uint32_t cardID)
+	inline int GetEffectScriptIndex(uint32_t cardID)
     {
         for (int i = 0; i < 443; i++)
         {
@@ -180,7 +189,7 @@ namespace GameData
         }
         return -1;
     }
-	void SetEffectScript(int index, Utils::EffectScript script)
+	inline void SetEffectScript(int index, Utils::EffectScript script)
 	{
 		Utils::WriteUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(Utils::EffectScript))), script.CardID);
 		Utils::WriteUint32((void*)(EFFECT_SCRIPT_ADDRESS + (index * sizeof(Utils::EffectScript)) + 4), script.Effect);
@@ -214,17 +223,17 @@ namespace GameData
 		}
 	};
 
-	BattleResult* _battleResult = reinterpret_cast<BattleResult*>(BATTLE_RESULT_ADDRESS);
-	BattleResult* GetBattleResult()
+	inline BattleResult* _battleResult = reinterpret_cast<BattleResult*>(BATTLE_RESULT_ADDRESS);
+	inline BattleResult* GetBattleResult()
 	{
 		return _battleResult;
 	}
 
-    uint16_t GetSummonState()
+	inline uint16_t GetSummonState()
     {
 		return Utils::ReadUint16((void*)(0x00a57808));
     }
-    void SetSummonState(uint16_t state)
+	inline void SetSummonState(uint16_t state)
     {
         Utils::WriteUint16((void*)(0x00a57808), state);
     }
@@ -232,36 +241,36 @@ namespace GameData
     // Used by effect functions
     // Starts at 0x80 and changes to what the effect function returns
     // When the effect function returns 0, it is finished resolving
-	uint8_t GetEffectState()
+	inline uint8_t GetEffectState()
 	{
 		return Utils::ReadUint8((void*)(0x00a55c88 + 2));
 	}
 	// Used by target and cost functions
     // Starts at 0 and must be set manually
 	// Make sure to set it back to 0 when the function is done
-	uint8_t GetEffectSubState()
+	inline uint8_t GetEffectSubState()
 	{
 		return Utils::ReadUint8((void*)(0x00a55c8e));
 	}
-	void SetEffectSubState(uint8_t subState)
+	inline void SetEffectSubState(uint8_t subState)
 	{
 		Utils::WriteUint8((void*)(0x00a55c8e), subState);
 	}
 
-    uint8_t GetDialogResult()
+	inline uint8_t GetDialogResult()
     {
         return Utils::ReadUint8((void*)0x00a558b4);
     }
     // Returns the intID of the card last used/summoned
-    uint16_t GetCardUsed()
+	inline uint16_t GetCardUsed()
     {
 		return Utils::ReadUint16((void*)0x00a57802) & 0xfff;
     }
-    uint8_t GetSelectedSide()
+	inline uint8_t GetSelectedSide()
     {
         return Utils::ReadUint8((void*)0x000a55044);
     }
-	uint8_t GetSelectedColumn()
+	inline uint8_t GetSelectedColumn()
 	{
 		return Utils::ReadUint8((void*)0x00a5504c);
 	}
@@ -273,11 +282,11 @@ namespace GameData
 	// 0xd : Deck
 	// 0xe : Graveyard
 	// 0xf : Banish
-    uint8_t GetSelectedLocation()
+	inline uint8_t GetSelectedLocation()
     {
 		return Utils::ReadUint8((void*)0x00a55048);
     }
-	uint8_t GetSelectedZone()
+	inline uint8_t GetSelectedZone()
 	{
 		uint8_t loc = GetSelectedLocation();
 
@@ -286,50 +295,50 @@ namespace GameData
 	}
 	// lower byte = main state
 	// upper byte = summon state
-    uint16_t GetState()
+	inline uint16_t GetState()
     {
        return Utils::ReadUint16((void*)0x00a57808);
     }
-	void SetState(uint16_t state)
+	inline void SetState(uint16_t state)
 	{
 		Utils::WriteUint16((void*)0x00a57808, state);
 	}
-	uint16_t GetSelectedSoFar()
+	inline uint16_t GetSelectedSoFar()
 	{
 		return Utils::ReadUint16((void*)0x00a5780a);
 	}
-	void SetSelectedSoFar(uint16_t value)
+	inline void SetSelectedSoFar(uint16_t value)
 	{
 		Utils::WriteUint16((void*)0x00a5780a, value);
 	}
-    uint32_t GetSummonParam()
+	inline uint32_t GetSummonParam()
     {
         return Utils::ReadUint32((void*)0x00A55080);
     }
-	void SetSummonParam(uint32_t param)
+	inline void SetSummonParam(uint32_t param)
 	{
 		Utils::WriteUint32((void*)0x00A55080, param);
 	}
-	uint8_t GetTurnPlayer()
+	inline uint8_t GetTurnPlayer()
 	{
 		return Utils::ReadUint8((void*)0x00a577fa) & 1;
 	}
-	uint8_t GetLocalSide() {
+	inline uint8_t GetLocalSide() {
 		return Utils::ReadUint8((void*)0x00A54E5C) & 1;
 	}
-    uint16_t GetSelectedHandIndex()
+	inline uint16_t GetSelectedHandIndex()
     {
         return Utils::ReadUint16((void*)0x00a55064);
     }
-	uint16_t GetConfirmedHandIndex()
+	inline uint16_t GetConfirmedHandIndex()
 	{
 		return Utils::ReadUint16((void*)0x00a57822);
 	}
-	uint8_t GetPhase()
+	inline uint8_t GetPhase()
 	{
 		return Utils::ReadUint8((void*)0x00a577fa) >> 1;
 	}
-	bool IsAI(uint8_t side)
+	inline bool IsAI(uint8_t side)
 	{
 		return ((*(uint8_t*)0x00A54E5C >> 1) >> (side & 1) & 1) != 0;
 	}
@@ -350,10 +359,10 @@ namespace GameData
 			{
 				if (mask & (1 << i))
 				{
-					uint16_t intID = player.monsterZones[i].card.GetIntID();
+					uint16_t intID = player.cardZones[i].card.GetIntID();
 					if (intID != 0)
 					{
-						cards.push_back(player.monsterZones[i].card.GetCardID());
+						cards.push_back(player.cardZones[i].card.GetCardID());
 					}
 				}
 			}

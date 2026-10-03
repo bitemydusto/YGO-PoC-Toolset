@@ -329,6 +329,10 @@ namespace GameData
 	{
 		return Utils::ReadUint8((void*)0x00a577fa) >> 1;
 	}
+	bool IsAI(uint8_t side)
+	{
+		return ((*(uint8_t*)0x00A54E5C >> 1) >> (side & 1) & 1) != 0;
+	}
 
 	struct Combination
 	{

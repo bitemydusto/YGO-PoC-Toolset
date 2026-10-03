@@ -95,6 +95,33 @@ void Start()
 			std::cout << "ss <player> <cardID>\n";
             continue;
         }
+        if (command == "disrng")
+        {
+            std::string playerString, amountString;
+			if (!(ss >> playerString >> amountString))
+			{
+				std::cout << "Usage: disrng <player> <amount>\n";
+				continue;
+			}
+			uint8_t player = static_cast<uint8_t>(std::stoull(playerString, nullptr, 0));
+			uint32_t amount = static_cast<uint32_t>(std::stoull(amountString, nullptr, 0));
+			RandomDiscardCommand(player, amount);
+			continue;
+
+        }
+        if (command == "play")
+        {
+			std::string playerIdxString, handIdxString;
+            if (!(ss >> playerIdxString >> handIdxString))
+            {
+				std::cout << "Usage: play <player> <handIdx>\n";
+				continue;
+            }
+			uint8_t playerIdx = static_cast<uint8_t>(std::stoull(playerIdxString, nullptr, 0));
+			uint16_t handIdx = static_cast<uint16_t>(std::stoull(handIdxString, nullptr, 0));
+			PlayCommand(playerIdx, handIdx);
+			continue;
+        }
         if (command == "ss")
         {
 			std::string playerIdxString,cardIDString;
@@ -214,4 +241,17 @@ void SummonCommand(uint8_t player, uint16_t cardID)
 	duel->players[player].deck[0].fullValue = topcard;
 
     FUN::SpecialSummon(player, &(duel->players[player].deck[0].fullValue), 1, 0x20, 0x0d, 0);
+}
+void PlayCommand(uint8_t player, uint16_t handIdx)
+{
+    uint8_t hand = handIdx;
+    uint8_t turn = player;
+
+    uint32_t pack = 0x45C | 0x200000 | (hand << 16) | ((player ^ turn) << 24) | (player << 31);
+
+	FUN::QueueEffect(pack, duel->players[player].hand[hand].GetInstance(), 0);
+}
+void RandomDiscardCommand(uint8_t player, uint32_t amount)
+{
+	FUN::DiscardRandomCard(player, 0, amount);
 }

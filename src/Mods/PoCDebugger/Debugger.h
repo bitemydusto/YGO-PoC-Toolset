@@ -29,3 +29,5 @@ void DrawCommand(uint32_t playerIdx, uint32_t amount);
 void AddCommand(uint8_t player, uint16_t cardID);
 void RollCommand(uint32_t playerIdx, uint32_t sideIdx, uint8_t diceCmd);
 void SummonCommand(uint8_t player, uint16_t cardID);
+void PlayCommand(uint8_t player, uint16_t handIdx);
+void RandomDiscardCommand(uint8_t player, uint32_t amount);

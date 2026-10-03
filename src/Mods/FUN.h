@@ -62,6 +62,7 @@ namespace FUN
 		uint8_t finishedResolving;
 		uint16_t cardIntID;
 		uint8_t  playerIdx;
+		uint8_t oppIdx;
 		uint8_t zoneIdx;
 		uint8_t  location;
 		uint32_t instance;
@@ -77,6 +78,7 @@ namespace FUN
 			finishedResolving = block[4] & 4;
 			cardIntID = *(uint16_t*)(block + 0) & 0xFFF;
 			playerIdx = block[2] & 0x1;
+			oppIdx = playerIdx ^ 1;
 			zoneIdx = (block[2] >> 1) & 0xF;
 			location = (block[2] >> 1) & 0x1F;
 			instance = (*(uint16_t*)(block + 4) & 0x1FE0) >> 5;
@@ -363,6 +365,8 @@ namespace FUN
 
 	inline auto GetThisPack = reinterpret_cast<int(__cdecl*)()>(0x005beaa0);
 
+	inline auto HasInherentSummon = reinterpret_cast<uint32_t(__cdecl*)(uint16_t cardIntID)>(0x00567a00);
+
 
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);
 	using FUN_591C90_t = uint32_t(__cdecl*)(uint32_t player, uint32_t packed);
@@ -390,6 +394,11 @@ namespace FUN
 
 
 	// Wrapers
+	inline void W_RevealTopCard(uint8_t side, uint16_t cardID, uint32_t skip)
+	{
+		FUN::QueueCommand((side ? 0x8000u : 0u) | 0x20, cardID, 0x0D, skip);
+		FUN::QueueCommand((side ? 0x8000u : 0u) | 0xf1, 0x1E, 0, 0);
+	}
 	inline void W_ShowDialog(const char* dlgText, DialogMode mode, uint16_t cardID = 0)
 	{
 		ShowDialog(dlgText);
@@ -400,12 +409,16 @@ namespace FUN
 	{
 		FUN::AddEffectEntityToZone((zoneIdx << 8) | playerIdx, effectIntID, effect);
 	}
-	inline uint32_t W_RollDice(uint16_t* param, uint8_t diceCmd)
+	inline uint32_t W_RollDice(uint16_t* param, uint8_t diceCmd = 0xe2)
 	{
 		int roll = FUN::GetRandomNumber(6) + 1;
 		FUN::QueueCommand((param[1] << 15) | diceCmd, roll, (param[1] >> 1) & 0x1F, 0);
 
 		return roll;
+	}
+	inline void W_RollRiggedDice(uint32_t playerIdx, uint32_t sideIdx, uint8_t roll, uint8_t diceCmd = 0xe2)
+	{
+		FUN::QueueCommand((sideIdx << 15) | diceCmd, roll, (playerIdx >> 1) & 0x1F, 0);
 	}
 	inline void W_PutCardFromLocationToDeck(uint32_t playerIdx, Location location, uint32_t idx, bool top)
 	{
@@ -433,7 +446,7 @@ namespace FUN
 			0
 		);
 	}
-	inline uint32_t W_RollDice(uint32_t playerIdx, uint32_t sideIdx, uint8_t diceCmd)
+	inline uint32_t W_RollDice(uint32_t playerIdx, uint32_t sideIdx, uint8_t diceCmd = 0xe2)
 	{
 		int roll = FUN::GetRandomNumber(6) + 1;
 		FUN::QueueCommand((sideIdx << 15) | diceCmd, roll, (playerIdx >> 1) & 0x1F, 0);

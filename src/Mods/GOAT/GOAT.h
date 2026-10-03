@@ -22,3 +22,4 @@ void Install_LavaGolem();
 void Install_Mirage();
 void Install_Tribe();
 void Install_Reasoning();
+void Install_MonsterGate();

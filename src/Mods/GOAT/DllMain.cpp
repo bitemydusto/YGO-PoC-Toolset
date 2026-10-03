@@ -28,4 +28,5 @@ void Start()
     Install_Mirage();
     Install_Tribe();
     Install_Reasoning();
+    Install_MonsterGate();
 }

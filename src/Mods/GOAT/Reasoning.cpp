@@ -129,6 +129,7 @@ namespace
 		}
 		case 0x7b:
 		{
+			if (duel->players[selfParam.playerIdx].cardsInDeck == 0) return 0;
 			uint16_t cardIntID = duel->players[selfParam.playerIdx].deck[0].GetIntID();
 
 			FUN::W_RevealTopCard(selfParam.playerIdx, FUN::GetCardID(cardIntID), 0);

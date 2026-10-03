@@ -45,7 +45,10 @@
     <ClCompile Include="Reasoning.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MonsterGatecpp.cpp">
+    <ClCompile Include="MonsterGate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SakuretsuArmor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

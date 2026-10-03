@@ -34,6 +34,13 @@ enum DialogMode : uint8_t
 	POSITION = 6,
 	COIN = 7,
 };
+enum ResponseWindow : uint8_t
+{
+	NORMAL_SUMMON = 0x5,
+	FLIP_SUMMON = 0x6,
+	SPECIAL_SUMMON = 0x7,
+	ATTACK_DECLARATION = 0x12
+};
 
 namespace FUN
 {
@@ -55,8 +62,8 @@ namespace FUN
 	};
 	struct Param
 	{
-		uint8_t* block;
-		uint16_t* block16;
+		uint8_t* block = nullptr;
+		uint16_t* block16 = nullptr;
 
 
 		uint8_t finishedResolving;
@@ -70,6 +77,8 @@ namespace FUN
 		uint32_t targetCount;
 		uint16_t* fieldTargets;
 		uint32_t* outerTargets;
+		uint16_t triggerSide;
+		uint16_t triggerZone;
 		Param(unsigned int* param)
 		{
 			block = (uint8_t*)param;
@@ -86,10 +95,8 @@ namespace FUN
 			targetCount = *(uint16_t*)(block + 4) >> 13;
 			fieldTargets = (uint16_t*)(block + 6);
 			outerTargets = (uint32_t*)(block + 6);
-		}
-		Param()
-		{
-
+			triggerSide = (block16[8]) & 1;
+			triggerZone = (block16[8] >> 8) & 0xf;
 		}
 		uint8_t GetFieldTargetSide(uint8_t index)
 		{
@@ -366,6 +373,8 @@ namespace FUN
 	inline auto GetThisPack = reinterpret_cast<int(__cdecl*)()>(0x005beaa0);
 
 	inline auto HasInherentSummon = reinterpret_cast<uint32_t(__cdecl*)(uint16_t cardIntID)>(0x00567a00);
+
+	inline auto TargetCard = reinterpret_cast<uint32_t(__cdecl*)(unsigned int* param, unsigned int side, unsigned int zone)>(0x00592a80);
 
 
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);

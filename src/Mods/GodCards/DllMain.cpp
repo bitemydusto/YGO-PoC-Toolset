@@ -166,9 +166,9 @@ uint32_t __cdecl Effect_Slifer(unsigned int* self, unsigned int* source, int mod
     if (selfParam.finishedResolving) return 0;
 
 	if (t_zoneIdx > 4) return 0;
-    if (duel->players[t_playerIdx].monsterZones[t_zoneIdx].card.GetIntID() == 0) return 0;
+    if (duel->players[t_playerIdx].cardZones[t_zoneIdx].card.GetIntID() == 0) return 0;
 
-    if (!duel->players[t_playerIdx].monsterZones[t_zoneIdx].IsFaceUp()) return 0;
+    if (!duel->players[t_playerIdx].cardZones[t_zoneIdx].IsFaceUp()) return 0;
 
 
     switch (GameData::GetEffectState())
@@ -202,7 +202,7 @@ uint32_t __cdecl Effect_Obelisk(unsigned int* self, unsigned int* source, int mo
 		FUN::FieldMaskGenerator maskGen;
 		for (int i = 0; i < 5; i++)
 		{
-			if (duel->players[selfParam.playerIdx ^ 1].monsterZones[i].card.GetIntID() != 0)
+			if (duel->players[selfParam.playerIdx ^ 1].cardZones[i].card.GetIntID() != 0)
 			{
 				maskGen.zones[selfParam.playerIdx ^ 1][i] = true;
 			}
@@ -427,7 +427,7 @@ bool CanBeTributedObelisk(uint8_t playerIdx, uint8_t zoneIdx, uint8_t selSide, u
     if (selSide != playerIdx) return false;
 	if (selCol == zoneIdx) return false;
     if (selCol > 4) return false;
-    if (player.monsterZones[selCol].card.GetIntID() == 0) return false;
+    if (player.cardZones[selCol].card.GetIntID() == 0) return false;
 	if (FUN::IsMonsterTributable(playerIdx, selSide, selCol) == 0) return false;
 
     return true;
@@ -453,7 +453,7 @@ int NumOfMonster(uint8_t playerIdx)
 	int n = 0;
 	for (size_t i = 0; i < 5; i++)
 	{
-		if (self.monsterZones[i].card.GetIntID() != 0) n++;
+		if (self.cardZones[i].card.GetIntID() != 0) n++;
 	}
     return n;
 }
@@ -651,7 +651,7 @@ void __stdcall EndPhase()
 	{
 		for (size_t j = 0; j < 5; j++)
 		{
-			uint16_t intID = duel->players[i].monsterZones[j].card.GetIntID();
+			uint16_t intID = duel->players[i].cardZones[j].card.GetIntID();
             if (intID != 0)
             {
                 uint16_t cardID = FUN::GetCardID(intID);
@@ -688,7 +688,7 @@ bool __stdcall TrapProtection(uint32_t side, uint32_t zone, uint32_t* dest, uint
 
     if (type == 0x15)
     {
-		uint16_t cardIntID = duel->players[side].monsterZones[zone].card.GetIntID();
+		uint16_t cardIntID = duel->players[side].cardZones[zone].card.GetIntID();
 		uint16_t cardID = FUN::GetCardID(cardIntID);
 
 		if (cardID == Cards::SLIFER_THE_SKY_DRAGON ||
@@ -708,7 +708,7 @@ void __stdcall OnMonsterSummon()
 	if (!summonParam.faceUp) return;
 	for (size_t i = 0; i < 5; i++)
 	{
-		auto zone = duel->players[summonParam.side ^ 1].monsterZones[i];
+		auto zone = duel->players[summonParam.side ^ 1].cardZones[i];
 		uint16_t intID = zone.card.GetIntID();
 		if (intID != 0)
 		{

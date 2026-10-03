@@ -148,8 +148,9 @@
     <ClCompile Include="LavaGolem.cpp" />
     <ClCompile Include="Metamorphosis.cpp" />
     <ClCompile Include="MirageOfNightmare .cpp" />
-    <ClCompile Include="MonsterGatecpp.cpp" />
+    <ClCompile Include="MonsterGate.cpp" />
     <ClCompile Include="Reasoning.cpp" />
+    <ClCompile Include="SakuretsuArmor.cpp" />
     <ClCompile Include="TribeInfectingVirus.cpp" />
     <ClCompile Include="Tsukuyomi.cpp" />
     <ClCompile Include="XYZ.cpp" />

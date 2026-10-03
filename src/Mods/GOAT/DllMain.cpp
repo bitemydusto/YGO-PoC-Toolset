@@ -29,4 +29,5 @@ void Start()
     Install_Tribe();
     Install_Reasoning();
     Install_MonsterGate();
+    Install_SakuretsuArmor();
 }

@@ -47,6 +47,8 @@ namespace
 		FUN::Param selfParam(self);
 
 		if (duel->players[selfParam.playerIdx].cardsInDeck == 0) return 0;
+		if (FUN::CanPlayerSummon(selfParam.playerIdx) == 0) return 0;
+		if (FUN::NumOfEmptyValidSummonZones(selfParam.playerIdx) == 0) return 0;
 		for (int i = 0; i < 5; i++)
 		{
 			auto card = duel->players[selfParam.playerIdx].cardZones[i].card;

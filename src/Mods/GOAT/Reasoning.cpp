@@ -164,6 +164,8 @@ namespace
 		FUN::Param src(srcParam);
 		if (FUN::GetCardID(src.cardIntID) == REASONING)
 		{
+			if (src.playerIdx == respondingSide) return;
+
 			uint16_t cardIntID = FUN::GetCardIntID(REASONING);
 			FUN::FlashCardPortrait(respondingSide ^ 1, cardIntID, src.zoneIdx);
 

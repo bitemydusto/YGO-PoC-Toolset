@@ -21,4 +21,6 @@ void Start()
 {
     Install_PlagueSpreaderZombie();
     Install_LADD();
+    Install_JunkSynchron();
+    Install_StardustDragon();
 }

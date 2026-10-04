@@ -571,7 +571,7 @@ namespace
 
 
 
-			FUN::SpecialSummonFromHand(GameData::GetTurnPlayer(), param2, param3, 0, param5);
+			FUN::SpecialSummon(GameData::GetTurnPlayer(), param2, param3, 0, param5);
 
 			uint32_t x = Utils::ReadUint32((void*)0x00a57804);
 			Utils::WriteInt32((void*)0x00a57804, x & 0xfffffffd);

@@ -46,6 +46,7 @@ void HookManager::InstallHooks()
 	HookManager::InstallLibraryHooks();
 	HookManager::PatchCards();
 	HookManager::ReadZoneOverlaySprites();
+	HookManager::LoadTags();
 
 
 	hFlipMonster = Utils::InstallHook((void*)0x00567632, 5, PatchFlipMonster);
@@ -689,13 +690,13 @@ void HookManager::Register_ExtraSummonMonster(uint16_t cardID, Condition summonC
 	}
 	extraMonsters.push_back({ cardID, summonCondition, summonState });
 }
-void HookManager::AddTag(uint16_t cardID, CardTag tag)
+void HookManager::AddTag(uint16_t cardID, uint16_t tag)
 {
-	cardTags[tag].push_back(cardID);
+	cardTags[CardTag(tag)].push_back(cardID);
 }
-bool HookManager::HasTag(uint16_t cardID, CardTag tag)
+bool HookManager::HasTag(uint16_t cardID, uint16_t tag)
 {
-	for (const auto& id : cardTags[tag])
+	for (const auto& id : cardTags[CardTag(tag)])
 	{
 		if (id == cardID) return true;
 	}

@@ -357,10 +357,15 @@ namespace GameData
 			auto player = GameData::GetDuel()->players[side];
 			for (uint8_t i = 0; i < 5; i++)
 			{
-				if (mask & (1 << i))
+				if (ZoneIncluded(i)) // Is this zone included in the combination?
 				{
-					uint16_t intID = player.cardZones[i].card.GetIntID();
-					if (intID != 0)
+					auto zone = player.cardZones[i];
+					if (zone.card.GetCardID() == 0 || !zone.IsFaceUp())
+					{
+						cards = {}; // If the zone is included but there is no face-up monster in it, this combination is invalid, so clear the cards vector and return
+						return;
+					}
+					else
 					{
 						cards.push_back(player.cardZones[i].card.GetCardID());
 					}
@@ -389,9 +394,13 @@ namespace GameData
 			uint8_t level = 0;
 			for (auto card : cards)
 			{
-				level += FUN::GetMonsterLevel(card);
+				level += FUN::GetMonsterLevel(FUN::GetCardIntID(card));
 			}
 			return level;
+		}
+		bool ZoneIncluded(uint8_t zone)
+		{
+			return (mask & (1 << zone)) != 0;
 		}
 	};
 	// HOW TO USE:
@@ -431,6 +440,123 @@ namespace GameData
 				}
 			}
 		}
-	};
+		bool UseMaterial(uint8_t zone)
+		{
+			bool done = false;
 
+			combinations.erase(std::remove_if(combinations.begin(),combinations.end(),
+					[&](Combination& combo)
+					{
+						if (!combo.ZoneIncluded(zone)) return true;
+						combo.mask &= ~(1 << zone);
+
+						if (combo.mask == 0)
+						{
+							done = true;
+							return true;
+						}
+
+						return false;
+					}),combinations.end());
+
+			return done;
+		}
+		bool ZoneValid(uint8_t zone)
+		{
+			for (auto& combo : combinations)
+			{
+				if (combo.ZoneIncluded(zone))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+	};
+	struct SynchroSummoner
+	{
+		MaterialCombinator combinator;
+		uint8_t level;
+		uint16_t cardID;
+		int innerState = 0;
+
+		SynchroSummoner(uint8_t side, uint16_t _cardID) : combinator(side), cardID(_cardID)
+		{
+			level = FUN::GetMonsterLevel(FUN::GetCardIntID(cardID));
+			combinator.combinations.erase(std::remove_if(combinator.combinations.begin(), combinator.combinations.end(),
+				[&](Combination& combo)
+				{
+					if (combo.GetCombinedLevel() != level || combo.GetNumOfTuners() != 1) return true;
+
+					return false;
+				}), combinator.combinations.end());
+		}
+		bool Standard_Synchro_Condition(uint8_t side)
+		{
+			for (auto& combo : combinator.combinations)
+			{
+				if (combo.GetCombinedLevel() == level && combo.GetNumOfTuners() == 1)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+		uint32_t __stdcall Standard_Synchro_SummonState()
+		{
+			switch (innerState)
+			{
+				case 0:
+				{
+					FUN::ShowDialog("Select the listed materials on your side of the field.");
+					innerState = 1;
+				}break;
+				case 1:
+				{
+					uint8_t side = GameData::GetSelectedSide();
+					uint8_t zone = GameData::GetSelectedColumn() + GameData::GetSelectedLocation();
+
+					if (side != GameData::GetTurnPlayer() || zone > 4) return 0;
+
+					uint16_t intID = _duel->players[side].cardZones[zone].card.GetIntID();
+					if (intID == 0) return 0;
+
+					if (!combinator.ZoneValid(zone)) return 0;
+
+					if (FUN::IsFieldSelectionConfirmed() == 0) return 0;
+
+					bool done = combinator.UseMaterial(zone);
+
+					FUN::FieldMaskGenerator maskGen;
+					maskGen.zones[side][zone] = true;
+
+					uint8_t block[32] = {};
+					FUN::SendCardFromField(block, maskGen.GenerateMask(), 0xe, 0);
+
+					if (done) innerState = 2;
+				}break;
+				case 2:
+				{
+					uint32_t* cardDword = nullptr;
+					for (size_t i = 0; i < _duel->players[GameData::GetTurnPlayer()].cardsInExtra; i++)
+					{
+						uint16_t id = FUN::GetCardID(_duel->players[GameData::GetTurnPlayer()].extra[i].GetIntID());
+						if (id == cardID)
+						{
+							cardDword = &(_duel->players[GameData::GetTurnPlayer()].extra[i].fullValue);
+							break;
+						}
+					}
+
+					FUN::SpecialSummon(1, cardDword, 1, 1, 0x0C, 0);
+
+					innerState = 0;
+					return 1;
+				}
+			}
+
+			return 0;
+		}
+	};
 }

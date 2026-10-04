@@ -312,7 +312,7 @@ namespace
 				}
 			}
 
-			FUN::SpecialSummon(1, cardDword, 1, 0x20, 0x0C, 0);
+			FUN::SpecialSummon(1, cardDword, 1, 1, 0x0C, 0);
 
 			innerState = 0;
 			return 1;

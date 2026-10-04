@@ -143,8 +143,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="DllMain.cpp" />
+    <ClCompile Include="JunkSynchron.cpp" />
     <ClCompile Include="LADD.cpp" />
     <ClCompile Include="PlagueSpreaderZombie.cpp" />
+    <ClCompile Include="StardustDragon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RandomCards.h" />

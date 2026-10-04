@@ -279,12 +279,6 @@ namespace FUN
 
 	inline auto BanishCardFromGrave = reinterpret_cast<void(__cdecl*)(unsigned int playerIdx, unsigned int* cardDword)>(0x00575f30);
 
-	inline auto SpecialSummonFromHand = reinterpret_cast<void(__cdecl*)(unsigned int playerIdx, unsigned int handIdx, unsigned int desZone, unsigned int PackTributes, unsigned int pos)>(0x005adbc0);
-
-	inline auto SpecialSummon = reinterpret_cast<void(__cdecl*)(unsigned int side, unsigned int* cardPtr, unsigned int posSelectorType, unsigned int flags, unsigned int srcLoc, unsigned int owner)>(0x005adae0);
-
-	inline auto SpecialSummon2 = reinterpret_cast<void(__cdecl*)(unsigned int side, unsigned int* cardPtr, unsigned int faceUp, unsigned int pos, unsigned int flags, unsigned int srcLoc, unsigned int owner)>(0x005ad9f0);
-
 	inline auto NormalSummon = reinterpret_cast<void(__cdecl*)(unsigned int playerIdx, unsigned int handIdx, unsigned int destZone, unsigned int packedTributes, int set)>(0x005ad710);
 
 	inline auto GetSummonZone = reinterpret_cast<int(__cdecl*)(unsigned int playerIdx)>(0x0056a030);
@@ -431,12 +425,36 @@ namespace FUN
 	static FUN_579880_t  FUN_00579880 = (FUN_579880_t)0x00579880;
 	static FUN_5b91e0_t  FUN_005b91e0 = (FUN_5b91e0_t)0x005b91e0;
 
+	// From hand
+	inline void SpecialSummon(unsigned int playerIdx, unsigned int handIdx, unsigned int desZone, unsigned int PackTributes, unsigned int pos)
+	{
+		auto fun = reinterpret_cast<void(__cdecl*)(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)>(0x005adbc0);
 
+		fun(playerIdx, handIdx, desZone, PackTributes, pos);
+	}
+	// With position selection
+	inline void SpecialSummon(unsigned int side, unsigned int* cardPtr, unsigned int posSelectorType, unsigned int flags, unsigned int srcLoc, unsigned int owner)
+	{
+		auto fun = reinterpret_cast<void(__cdecl*)(unsigned int, unsigned int*, unsigned int, unsigned int, unsigned int, unsigned int)>(0x005adae0);
 
+		fun(side, cardPtr, posSelectorType, flags, srcLoc, owner);
+	}
+	// With specified position
+	inline void SpecialSummon(unsigned int side, unsigned int* cardPtr, unsigned int faceUp, unsigned int pos, unsigned int flags, unsigned int srcLoc, unsigned int owner)
+	{
+		auto fun = reinterpret_cast<void(__cdecl*)(unsigned int, unsigned int*, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)>(0x005ad9f0);
 
-
+		fun(side, cardPtr, faceUp, pos, flags, srcLoc, owner);
+	}
 
 	// Wrapers
+	inline bool W_CanSummon(uint8_t playerIdx)
+	{
+		if (FUN::CanPlayerSummon(playerIdx) == 0) return false;
+		if (FUN::NumOfEmptyValidSummonZones(playerIdx) == 0) return false;
+
+		return true;
+	}
 	inline void W_RevealTopCard(uint8_t side, uint16_t cardID, uint32_t skip)
 	{
 		FUN::QueueCommand((side ? 0x8000u : 0u) | 0x20, cardID, 0x0D, skip);

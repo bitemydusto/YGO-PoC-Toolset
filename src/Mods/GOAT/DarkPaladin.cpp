@@ -76,6 +76,10 @@ void Install_DarkPaladin()
 	Register_StatChange(DARK_PALADIN, ChangeStat);
 	Register_ActivatableEffect(DARK_PALADIN);
 	Register_SpellSpeed(DARK_PALADIN, 2);
+	Register_Fusion2({
+		.Result = DARK_PALADIN,
+		.Materials = { Cards::BUSTER_BLADER, Cards::DARK_MAGICIAN }
+		});
 
 	Register_EffectScript({
 		.CardID = DARK_PALADIN,

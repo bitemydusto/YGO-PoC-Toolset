@@ -44,6 +44,10 @@ extern "C"
 	{
 		HookManager::Register_TunerMonster(cardID);
 	}
+	void Register_SynchroMonster(uint16_t cardID)
+	{
+		HookManager::Register_SynchroMonster(cardID);
+	}
 	bool IsSpiritMonster(uint16_t cardID)
 	{
 		return HookManager::IsSpiritMonster(cardID);
@@ -52,9 +56,21 @@ extern "C"
 	{
 		return HookManager::IsTunerMonster(cardID);
 	}
+	bool IsSynchroMonster(uint16_t cardID)
+	{
+		return HookManager::IsSynchroMonster(cardID);
+	}
 	void Register_ExtraSummonMonster(uint16_t cardID, Condition summonCondition, State summonState)
 	{
 		HookManager::Register_ExtraSummonMonster(cardID, summonCondition, summonState);
+	}
+	void AddTag(uint16_t cardID, uint16_t tag)
+	{
+		HookManager::AddTag(cardID, tag);
+	}
+	bool HasTag(uint16_t cardID, uint16_t tag)
+	{
+		return HookManager::HasTag(cardID, tag);
 	}
 
 

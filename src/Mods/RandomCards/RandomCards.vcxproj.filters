@@ -24,6 +24,12 @@
     <ClCompile Include="LADD.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="JunkSynchron.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StardustDragon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RandomCards.h">

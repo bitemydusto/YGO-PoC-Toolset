@@ -23,7 +23,6 @@ using EffectScript = Utils::EffectScript;
 using Fusion2 = Utils::Fusion2;
 using Fusion3 = Utils::Fusion3;
 
-
 extern "C"
 {
 	MOD_API void SetOncePerTurnFlag(uint8_t side, uint8_t zone);
@@ -37,11 +36,15 @@ extern "C"
 	MOD_API void Register_Fusion3(Fusion3 fusion);
 	MOD_API void Register_SpiritMonster(uint16_t cardID);
 	MOD_API void Register_TunerMonster(uint16_t cardID);
+	MOD_API void Register_SynchroMonster(uint16_t cardID);
 	MOD_API bool IsSpiritMonster(uint16_t cardID);
 	MOD_API bool IsTunerMonster(uint16_t cardID);
+	MOD_API bool IsSynchroMonster(uint16_t cardID);
 	MOD_API void Register_ExtraSummonMonster(uint16_t cardID, Condition summonCondition, State summonState);
 	MOD_API void Register_ActivatableGraveEffect(uint16_t cardID);
 	MOD_API void SetLimitStatus(uint16_t cardID, uint16_t limit);
+	MOD_API void AddTag(uint16_t cardID, uint16_t tag);
+	MOD_API bool HasTag(uint16_t cardID, uint16_t tag);
 
 	MOD_API void Register_FlipMonster(uint16_t cardID);
 	MOD_API void Register_ActivatableEffect(uint16_t cardID);

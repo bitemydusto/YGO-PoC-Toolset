@@ -4,6 +4,7 @@
 #include "PatchLoader.h"
 #include <algorithm>
 #include <string>
+#include "FUN.h"
 
 namespace GameData
 {
@@ -161,9 +162,13 @@ class HookManager
 public:
 	static void InstallHooks();
 	static void PatchCards();
+	static void LoadTags();
 
 	static void SetOncePerTurnFlag(uint8_t side, uint8_t zone);
 	static bool UsedEffectThisTurn(uint8_t side, uint8_t zone);
+
+	static void AddTag(uint16_t cardID, CardTag tag);
+	static bool HasTag(uint16_t cardID, CardTag tag);
 
 	static void AddSpellCounter(uint8_t side, uint8_t zone);
 	static void RemoveSpellCounter(uint8_t side, uint8_t zone);
@@ -274,6 +279,8 @@ public:
 	static void __stdcall Dispatch_OnMonsterSummon();
 
 	static void __stdcall Dispatch_ZoneOverlay(int actor, int renderer);
+
+	static inline std::unordered_map<CardTag, std::vector<uint16_t>> cardTags;
 
 	static inline std::vector<uint16_t> spiritMonsters;
 	static inline std::vector<uint16_t> tunerMonsters;

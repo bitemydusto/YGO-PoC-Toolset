@@ -23,6 +23,31 @@ enum SubType : uint8_t
 	FUSION = 2,
 	RITUAL = 3,
 };
+enum CardType : uint8_t
+{
+	Dragon = 0x01,
+	Zombie = 0x02,
+	Fiend = 0x03,
+	Pyro = 0x04,
+	SeaSerpent = 0x05,
+	Rock = 0x06,
+	Machine = 0x07,
+	Fish = 0x08,
+	Dinosaur = 0x09,
+	Insect = 0x0A,
+	Beast = 0x0B,
+	BeastWarrior = 0x0C,
+	Plant = 0x0D,
+	Aqua = 0x0E,
+	Warrior = 0x0F,
+	WingedBeast = 0x10,
+	Fairy = 0x11,
+	Spellcaster = 0x12,
+	Thunder = 0x13,
+	Reptile = 0x14,
+	Trap = 0x15,
+	Spell = 0x16
+};
 enum DialogMode : uint8_t
 {
 	OK = 0,
@@ -41,7 +66,11 @@ enum ResponseWindow : uint8_t
 	SPECIAL_SUMMON = 0x7,
 	ATTACK_DECLARATION = 0x12
 };
-
+enum CardTag : uint16_t
+{
+	DESTROY = 0x0,
+	SEARCH = 0x1,
+};
 namespace FUN
 {
 	// Helper structs
@@ -153,6 +182,11 @@ namespace FUN
 			tribSide[1] = (p >> 29) & 1;
 			tribSide[2] = (p >> 30) & 1;
 		}
+	};
+	struct Stats
+	{
+		uint32_t ATK;
+		uint32_t DEF;
 	};
 
 

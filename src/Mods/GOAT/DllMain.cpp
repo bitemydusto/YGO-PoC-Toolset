@@ -30,4 +30,5 @@ void Start()
     Install_Reasoning();
     Install_MonsterGate();
     Install_SakuretsuArmor();
+    Install_DarkPaladin();
 }

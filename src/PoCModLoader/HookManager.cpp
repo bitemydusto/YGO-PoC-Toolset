@@ -689,6 +689,18 @@ void HookManager::Register_ExtraSummonMonster(uint16_t cardID, Condition summonC
 	}
 	extraMonsters.push_back({ cardID, summonCondition, summonState });
 }
+void HookManager::AddTag(uint16_t cardID, CardTag tag)
+{
+	cardTags[tag].push_back(cardID);
+}
+bool HookManager::HasTag(uint16_t cardID, CardTag tag)
+{
+	for (const auto& id : cardTags[tag])
+	{
+		if (id == cardID) return true;
+	}
+	return false;
+}
 void HookManager::Register_FlipMonster(uint16_t cardID)
 {
 	// Check if the card ID is already registered

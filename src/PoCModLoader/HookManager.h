@@ -160,6 +160,7 @@ class HookManager
 {
 public:
 	static void InstallHooks();
+	static void PatchCards();
 
 	static void SetOncePerTurnFlag(uint8_t side, uint8_t zone);
 	static bool UsedEffectThisTurn(uint8_t side, uint8_t zone);
@@ -173,7 +174,9 @@ public:
 	static void Register_Fusion3(Fusion3 fusion);
 	static void Register_SpiritMonster(uint16_t cardID);
 	static void Register_TunerMonster(uint16_t cardID);
+	static void Register_SynchroMonster(uint16_t cardID);
 	static bool IsSpiritMonster(uint16_t cardID);
+	static bool IsSynchroMonster(uint16_t cardID);
 	static bool IsTunerMonster(uint16_t cardID);
 	static void Register_ExtraSummonMonster(uint16_t cardID, Condition summonCondition, State summonState);
 
@@ -274,6 +277,7 @@ public:
 
 	static inline std::vector<uint16_t> spiritMonsters;
 	static inline std::vector<uint16_t> tunerMonsters;
+	static inline std::vector<uint16_t> synchroMonsters;
 	static inline std::vector<PhaseHook> phaseHooks;
 	static inline std::vector<ExtraMonster> extraMonsters;
 	static inline std::vector<uint16_t> activatableGraveEffects;

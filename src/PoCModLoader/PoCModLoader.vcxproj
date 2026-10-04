@@ -158,6 +158,7 @@
     <ClCompile Include="Lib.cpp" />
     <ClCompile Include="ModLoader.cpp" />
     <ClCompile Include="PatchLoader.cpp" />
+    <ClCompile Include="StockCards.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CRC.h" />

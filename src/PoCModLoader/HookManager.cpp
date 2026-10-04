@@ -44,6 +44,7 @@ namespace
 void HookManager::InstallHooks()
 {
 	HookManager::InstallLibraryHooks();
+	HookManager::PatchCards();
 	HookManager::ReadZoneOverlaySprites();
 
 
@@ -657,6 +658,23 @@ void HookManager::Register_TunerMonster(uint16_t cardID)
 bool HookManager::IsTunerMonster(uint16_t cardID)
 {
 	for (const auto& id : tunerMonsters)
+	{
+		if (id == cardID) return true;
+	}
+	return false;
+}
+void HookManager::Register_SynchroMonster(uint16_t cardID)
+{
+	// Check if the card ID is already registered
+	for (const auto& id : synchroMonsters)
+	{
+		if (id == cardID) return;
+	}
+	synchroMonsters.push_back(cardID);
+}
+bool HookManager::IsSynchroMonster(uint16_t cardID)
+{
+	for (const auto& id : synchroMonsters)
 	{
 		if (id == cardID) return true;
 	}

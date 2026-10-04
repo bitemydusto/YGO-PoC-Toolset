@@ -247,9 +247,9 @@ namespace FUN
 
 	inline auto SpecialSummonFromHand = reinterpret_cast<void(__cdecl*)(unsigned int playerIdx, unsigned int handIdx, unsigned int desZone, unsigned int PackTributes, unsigned int pos)>(0x005adbc0);
 
-	inline auto SpecialSummon = reinterpret_cast<void(__cdecl*)(unsigned int player, unsigned int* cardPtr, unsigned int posSelectorType, unsigned int flags, unsigned int srcLoc, unsigned int param6)>(0x005adae0);
+	inline auto SpecialSummon = reinterpret_cast<void(__cdecl*)(unsigned int side, unsigned int* cardPtr, unsigned int posSelectorType, unsigned int flags, unsigned int srcLoc, unsigned int owner)>(0x005adae0);
 
-	inline auto SpecialSummon2 = reinterpret_cast<void(__cdecl*)(unsigned int player, unsigned int* cardPtr, unsigned int faceUp, unsigned int pos, unsigned int flags, unsigned int srcLoc, unsigned int param7)>(0x005ad9f0);
+	inline auto SpecialSummon2 = reinterpret_cast<void(__cdecl*)(unsigned int side, unsigned int* cardPtr, unsigned int faceUp, unsigned int pos, unsigned int flags, unsigned int srcLoc, unsigned int owner)>(0x005ad9f0);
 
 	inline auto NormalSummon = reinterpret_cast<void(__cdecl*)(unsigned int playerIdx, unsigned int handIdx, unsigned int destZone, unsigned int packedTributes, int set)>(0x005ad710);
 

@@ -240,7 +240,7 @@ void SummonCommand(uint8_t player, uint16_t cardID)
     topcard = (topcard & 0xFFFFF000) | (cardIntID & 0xFFF);
 	duel->players[player].deck[0].fullValue = topcard;
 
-    FUN::SpecialSummon(player, &(duel->players[player].deck[0].fullValue), 1, 0x20, 0x0d, 0);
+    FUN::SpecialSummon(player, &(duel->players[player].deck[0].fullValue), 1, 0x20, 0x0d, player);
 }
 void PlayCommand(uint8_t player, uint16_t handIdx)
 {

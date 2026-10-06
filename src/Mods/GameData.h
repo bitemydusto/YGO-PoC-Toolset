@@ -117,7 +117,7 @@ namespace GameData
         uint16_t padding;
 
         CardZone cardZones[11];
-        uint8_t playerFlags[0x90];
+		CardZone playerZone;
 
         Card hand[80];
         Card deck[80];

@@ -13,7 +13,7 @@ namespace
     uint32_t __cdecl Cost_Meta(unsigned int* param, int param2, int param3);
 
     bool CanBeTributed(uint8_t playerIdx, uint8_t side, uint8_t col);
-    void __stdcall LoadSelectionListFusion();
+    void __stdcall LoadSelectionListFusion(uint32_t playerIdx);
 
     uint32_t __cdecl Effect_Meta(unsigned int* param, int param2, int param3)
     {
@@ -137,7 +137,7 @@ namespace
         }
         return false;
     }
-    void __stdcall LoadSelectionListFusion()
+    void __stdcall LoadSelectionListFusion(uint32_t playerIdx)
     {
         std::vector<uint32_t> fusions;
         GameData::Player player = duel->players[GameData::GetTurnPlayer()];

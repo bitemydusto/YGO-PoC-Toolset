@@ -28,8 +28,8 @@ namespace
 	uint32_t __cdecl Target_PS(unsigned int* param, int param2, int param3);
 
 	bool CanBeSummoned(uint32_t playerIdx);
-	void __stdcall LoadSelectionListDark();
-	void __stdcall LoadSelectionListBanished();
+	void __stdcall LoadSelectionListDark(uint32_t playerIdx);
+	void __stdcall LoadSelectionListBanished(uint32_t playerIdx);
 	void __stdcall EndPhase();
 	void __stdcall BLS_DoubleAttack();
 	void __stdcall DMOC_BanishOnKill();
@@ -583,7 +583,7 @@ namespace
 
 		return 0;
 	}
-	void __stdcall LoadSelectionListDark()
+	void __stdcall LoadSelectionListDark(uint32_t playerIdx)
 	{
 		std::vector<uint32_t> darkCards;
 		GameData::Player player = duel->players[GameData::GetTurnPlayer()];
@@ -601,7 +601,7 @@ namespace
 
 		GameData::ChangeSelectionList(darkCards, 4);
 	}
-	void __stdcall LoadSelectionListBanished()
+	void __stdcall LoadSelectionListBanished(uint32_t playerIdx)
 	{
 		std::vector<uint32_t> banishedCards;
 		GameData::Player player = duel->players[GameData::GetTurnPlayer()];

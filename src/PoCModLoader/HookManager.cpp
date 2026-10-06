@@ -40,6 +40,9 @@ namespace
 	void* gSummonMonsterTrampoline = nullptr;
 	void* gZoneOverlayTrampoline = nullptr;
 	void* gLosingBattleTrampoline = nullptr;
+	void* gCorrectResponseWindowTrampoline = nullptr;
+	void* gCanSideStartChainTrampoline = nullptr;
+	void* gChainCardFromHandTrampoline = nullptr;
 }
 void HookManager::InstallHooks()
 {
@@ -149,6 +152,14 @@ void HookManager::InstallHooks()
 	hLosingBattle = Utils::InstallHook((void*)0x00577c40, 6, PatchLosingBattle);
 	gLosingBattleTrampoline = hLosingBattle.Trampoline;
 
+	hCorrectResponseWindow = Utils::InstallHook((void*)0x00597630, 5, PatchCorrectResponseWindow);
+	gCorrectResponseWindowTrampoline = hCorrectResponseWindow.Trampoline;
+
+	hCanSideStartChain = Utils::InstallHook((void*)0x00597a19, 6, PatchCanSideStartChain);
+	gCanSideStartChainTrampoline = hCanSideStartChain.Trampoline;
+	Utils::WriteBytes((void*)0x005979d8, (BYTE*)"\x90\x90\x90\x90\x90\x90", 6);
+	hChainCardFromHand = Utils::InstallHook((void*)0x0059fd00, 6, PatchChainCardFromHand);
+	gChainCardFromHandTrampoline = hChainCardFromHand.Trampoline;
 
 	PatchLoader::LoadPatches();
 
@@ -409,7 +420,7 @@ uint32_t __stdcall HookManager::ExtraSummonState()
 
 	return 0;
 }
-void __stdcall LoadSelectionListExtra()
+void __stdcall LoadSelectionListExtra(uint32_t playerIdx)
 {
 	auto duel = GameData::GetDuel();
 	std::vector<uint32_t> extras;
@@ -430,7 +441,7 @@ void __stdcall LoadSelectionListExtra()
 	GameData::ChangeSelectionList(extras, 8);
 
 }
-void __stdcall LoadSelectionListGrave()
+void __stdcall LoadSelectionListGrave(uint32_t playerIdx)
 {
 	auto duel = GameData::GetDuel();
 	std::vector<uint32_t> graveCards;
@@ -804,12 +815,34 @@ void HookManager::Register_OnEffectActivated(EffectActivatedEvent event)
 {
 	onEffectActivatedHooks.push_back({ event });
 }
-void HookManager::Dispatch_OnEffectActivated(unsigned int* srcParam, uint8_t respondingSide)
+bool __stdcall HookManager::Dispatch_OnEffectActivated(unsigned int* srcParam, uint8_t respondingSide)
 {
+	auto duel = GameData::GetDuel();
+
+	bool skip = false;
+
+	for (size_t i = 0; i < duel->players[respondingSide].cardsInHand; i++)
+	{
+		uint16_t cardIntID = duel->players[respondingSide].hand[i].GetIntID();
+		if (FUN::GetSpellSpeed(cardIntID) > 1)
+		{
+			FUN::EffectBlock self;
+			self.BuildId(cardIntID);
+			self.BuildProperties(respondingSide, Location::HAND, 0, 0, 0);
+			self.BuildFlags(0, duel->players[respondingSide].hand[i].GetInstance(), 0);
+			if (FUN::CanCardRespond(&self, (FUN::EffectBlock*)srcParam))
+			{
+				skip = true;
+			}
+		}
+	}
+
 	for (const auto& event : onEffectActivatedHooks)
 	{
 		event(srcParam, respondingSide);
 	}
+
+	return skip;
 }
 __declspec(naked) void PatchOnEffectActivated()
 {
@@ -820,9 +853,118 @@ __declspec(naked) void PatchOnEffectActivated()
 		PUSH DWORD PTR DS : [ESP + 0xc]
 		PUSH DWORD PTR DS : [ESP + 0xc]
 		CALL HookManager::Dispatch_OnEffectActivated
+		TEST AL, AL
 		POP EAX
+		JZ hook_end
+		MOV EAX, 1
+		PUSH 0x0057f094
+		RET
 	hook_end:
 		JMP[gOnEffectActivatedTrampoline]
+	}
+}
+void  HookManager::Register_ResponseWindow(uint16_t cardIntID, uint8_t responseWindow)
+{
+	for (auto& item : responseWindows)
+	{
+		if (item.cardIntID == cardIntID)
+		{
+			for (const auto& window : (std::vector<uint8_t>)item.windows)
+			{
+				if (responseWindow == window) return;
+			}
+			item.windows.push_back(responseWindow);
+			return;
+		}
+	}
+	std::vector<uint8_t> windows = {};
+	windows.push_back(responseWindow);
+	responseWindows.push_back({ cardIntID, windows });
+}
+bool __stdcall  HookManager::Dispatch_ResponseWindow(uint8_t side, uint16_t cardIntID, uint8_t responseWindow)
+{
+	for (const auto& item : responseWindows)
+	{
+		if (item.cardIntID == cardIntID)
+		{
+			for (const auto& window : item.windows)
+			{
+				if (window == 0x3f) return true;
+				if (window == responseWindow) return true;
+			}
+		}
+	}
+
+	return false;
+}
+__declspec(naked) void PatchCorrectResponseWindow()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH DWORD PTR DS : [ESP + 0x10]
+		PUSH DWORD PTR DS : [ESP + 0x10]
+		PUSH DWORD PTR DS : [ESP + 0x10]
+		CALL HookManager::Dispatch_ResponseWindow
+		TEST AL, AL
+		POP EAX
+		JZ hook_end
+		MOV EAX, 1
+		PUSH 0x00597698
+		RET
+	hook_end:
+		JMP[gCorrectResponseWindowTrampoline]
+	}
+}
+bool __stdcall HookManager::Dispatch_CanSideStartChain(uint16_t cardIntID, uint8_t side)
+{
+	if (GameData::GetTurnPlayer() != side && FUN::GetSpellSpeed(cardIntID) < 2) return false;
+
+	return true; // Continue
+}
+__declspec(naked) void PatchCanSideStartChain()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		AND EDI, 0xfff
+		PUSH DWORD PTR DS : [ESP + 0x8]
+		PUSH EDI
+		CALL HookManager::Dispatch_CanSideStartChain
+		TEST AL, AL
+		POP EAX
+		JZ hook_end
+		JMP[gCanSideStartChainTrampoline]
+	hook_end :
+		PUSH 0x00597a56
+		RET
+	}
+}
+bool __stdcall HookManager::Dispatch_ChainCardFromHand(uint32_t* card)
+{
+	if (card == nullptr) return false;
+	uint16_t cardIntID = *card & 0xfff;
+	if (FUN::GetMonsterType(cardIntID) < 0x15) return true;
+
+	return false;
+}
+__declspec(naked) void PatchChainCardFromHand()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH DWORD PTR DS : [ESP + 0x10]
+		CALL HookManager::Dispatch_ChainCardFromHand
+		TEST AL, AL
+		POP EAX
+		JZ hook_end
+		PUSH 0x0059fd20
+		RET
+	hook_end:
+		JMP[gChainCardFromHandTrampoline]
 	}
 }
 void HookManager::Register_CanBeSummonedByEffect(uint16_t cardID, bool canBeSpecialSummoned)
@@ -964,13 +1106,17 @@ bool __stdcall HookManager::Dispatch_ActivatableStEffect(uint16_t _cardIntID, ui
 	{
 		if (id == cardID)
 		{
-			FUN::EffectBlock block = { turnPlayer, cardIntID, selectedZone, selectedSide };
+			FUN::EffectBlock block;
+			block.BuildId(cardIntID);
+			block.BuildProperties(selectedSide, selectedZone, 0, 0, 0);
+			block.BuildFlags(0, GameData::GetDuel()->players[selectedSide].cardZones[selectedZone].card.GetInstance(), 0);
+
 
 			uint8_t nullBlock[32] = {};
 
-			auto condition = reinterpret_cast<bool(__cdecl*)(unsigned int* param, unsigned int* param2, unsigned int* param3)>(effectScripts[cardIntID & 0xfff].Condition);
+			auto condition = reinterpret_cast<bool(__cdecl*)(unsigned int*, unsigned int*, unsigned int)>(effectScripts[cardIntID & 0xfff].Condition);
 
-			if (condition && condition((unsigned int*)&block, (unsigned int*)&nullBlock, (unsigned int*)&nullBlock))
+			if (condition && condition((unsigned int*)&block, (unsigned int*)&nullBlock, 0))
 			{
 				return true;
 			}
@@ -1697,7 +1843,7 @@ __declspec(naked) void PatchSummonState()
 		RET
 	}
 }
-void HookManager::Register_SelectionListPopulation(uint16_t cardID, Event event)
+void HookManager::Register_SelectionListPopulation(uint16_t cardID, Event2 event)
 {
 	// Check if the card ID is already registered
 	for (const auto& hook : selectionListPopulationHooks)
@@ -1706,13 +1852,13 @@ void HookManager::Register_SelectionListPopulation(uint16_t cardID, Event event)
 	}
 	selectionListPopulationHooks.push_back({ cardID, event });
 }
-bool __stdcall HookManager::Dispatch_SelectionListPopulation(uint16_t cardID)
+bool __stdcall HookManager::Dispatch_SelectionListPopulation(uint16_t cardID, uint32_t playerIdx)
 {
 	for (const auto& hook : selectionListPopulationHooks)
 	{
 		if (hook.cardID == cardID)
 		{
-			hook.event();
+			hook.event(playerIdx & 1);
 			return true;
 		}
 	}
@@ -1728,6 +1874,7 @@ __declspec(naked) void PatchSelectionListPopulation()
 		PUSH ECX
 		PUSH EDX
 		PUSH EAX
+		PUSH DWORD PTR DS : [ESP + 0x1c]
 		PUSH EBX
 		CALL HookManager::Dispatch_SelectionListPopulation
 		TEST AL, AL

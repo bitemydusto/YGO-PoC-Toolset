@@ -14,6 +14,7 @@ using Condition = bool(*)(uint32_t playerIdx);
 using Condition1 = bool(__stdcall*)(uint8_t side, uint8_t zone);
 using Event = void(__stdcall*)();
 using Event1 = void(__stdcall*)(uint32_t playerIdx, uint32_t zoneIdx);
+using Event2 = void(__stdcall*)(uint32_t playerIdx);
 using LeavingFieldEvent = bool(__stdcall*)(uint32_t side, uint32_t zone, uint32_t* dest, uint32_t* flags, uint32_t* effectIntID);
 using LosingBattleEvent = void(__stdcall*)(uint32_t sideIdx, uint32_t zoneIdx, uint32_t* zone);
 using EffectActivatedEvent = void(__stdcall*)(unsigned int* srcParam, uint8_t respondingSide);
@@ -66,7 +67,7 @@ extern "C"
 	MOD_API void Register_InitialSummonState(uint16_t cardID, uint8_t stateCode, bool useDefaultNS);
 	MOD_API void Register_SummonState(uint8_t stateCode, State state);
 	MOD_API void Register_SummonStateByID(uint16_t cardID, State state, bool useDefaultNS);
-	MOD_API void Register_SelectionListPopulation(uint16_t cardID, Event event);
+	MOD_API void Register_SelectionListPopulation(uint16_t cardID, Event2 event);
 	MOD_API void Register_SpellSpeed(uint32_t cardID, uint32_t speed);
 	MOD_API void Register_HasEffectInHand(uint16_t cardID);
 	MOD_API void Register_UnRevivable(uint16_t cardID);
@@ -77,4 +78,5 @@ extern "C"
 	MOD_API void Register_OnEffectActivated(EffectActivatedEvent event);
 	MOD_API void Register_OnMonsterSummon(Event event);
 	MOD_API void Register_MonsterLosingBattle(LosingBattleEvent event);
+	MOD_API void Register_ResponseWindow(uint16_t cardIntID, uint8_t responseWindow);
 }

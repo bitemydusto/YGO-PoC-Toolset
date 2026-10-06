@@ -8,6 +8,7 @@
 #include "Cards.h"
 
 using EffectScript = Utils::EffectScript;
+using EffectBlock = FUN::EffectBlock;
 inline auto* duel = GameData::GetDuel();
 inline auto* battleResult = GameData::GetBattleResult();
 
@@ -17,3 +18,4 @@ void Install_PlagueSpreaderZombie();
 void Install_LADD();
 void Install_JunkSynchron();
 void Install_StardustDragon();
+void Install_DDCrow();

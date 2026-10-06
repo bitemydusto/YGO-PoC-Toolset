@@ -154,7 +154,7 @@ extern "C"
 	{
 		HookManager::Register_SummonState(cardID, state, useDefaultNS);
 	}
-	void Register_SelectionListPopulation(uint16_t cardID, Event event)
+	void Register_SelectionListPopulation(uint16_t cardID, Event2 event)
 	{
 		HookManager::Register_SelectionListPopulation(cardID, event);
 	}
@@ -205,5 +205,9 @@ extern "C"
 	void Register_MonsterLosingBattle(LosingBattleEvent event)
 	{
 		HookManager::Register_MonsterLosingBattle(event);
+	}
+	void Register_ResponseWindow(uint16_t cardIntID, uint8_t responseWindow)
+	{
+		HookManager::Register_ResponseWindow(cardIntID, responseWindow);
 	}
 }

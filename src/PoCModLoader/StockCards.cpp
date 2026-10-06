@@ -6,7 +6,7 @@ namespace
 {
 	auto* duel = GameData::GetDuel();
 
-	void __stdcall LoadSelectionListFusion()
+	void __stdcall LoadSelectionListFusion(uint32_t playerIdx)
 	{
 		std::vector<uint32_t> fusions;
 		GameData::Player player = duel->players[GameData::GetTurnPlayer()];

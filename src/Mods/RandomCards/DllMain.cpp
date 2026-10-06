@@ -23,4 +23,5 @@ void Start()
     Install_LADD();
     Install_JunkSynchron();
     Install_StardustDragon();
+    Install_DDCrow();
 }

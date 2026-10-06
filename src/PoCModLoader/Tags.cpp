@@ -67,6 +67,30 @@ void HookManager::LoadTags()
 	cards_destroy.push_back(Cards::DESTRUCTION_PUNCH); // 0x5ff
 	cards_destroy.push_back(Cards::BLIND_DESTRUCTION); // 0x600
 	cards_destroy.push_back(Cards::EKIBYO_DRAKMORD); // 0x60c}
-
 	HookManager::cardTags[CardTag::DESTROY] = cards_destroy;
+
+	// Search
+	vector<uint16_t> cards_search;
+
+	cards_search.push_back(Cards::SANGAN);
+	cards_search.push_back(Cards::WITCH_OF_THE_BLACK_FOREST);
+	cards_search.push_back(Cards::SENJU_OF_THE_THOUSAND_HANDS);
+	cards_search.push_back(Cards::SONIC_BIRD);
+	cards_search.push_back(Cards::THUNDER_DRAGON);
+	cards_search.push_back(Cards::FUSION_SAGE);
+	cards_search.push_back(Cards::PAINFUL_CHOICE);
+	cards_search.push_back(Cards::DARK_SAGE);
+	HookManager::cardTags[CardTag::SEARCH] = cards_search;
+
+	// Draw
+	vector<uint16_t> cards_draw;
+
+	cards_draw.push_back(Cards::SKELENGEL); // 0x21b
+	cards_draw.push_back(Cards::MORPHING_JAR); // 0x24e
+	cards_draw.push_back(Cards::GRACEFUL_CHARITY); // 0x3c8
+	cards_draw.push_back(Cards::POT_OF_GREED); // 0x3f2
+	cards_draw.push_back(Cards::UPSTART_GOBLIN); // 0x429
+	cards_draw.push_back(Cards::CARD_DESTRUCTION); // 0x4c5
+	cards_draw.push_back(Cards::JAR_OF_GREED); // 0x5a7
+	HookManager::cardTags[CardTag::DRAW] = cards_draw;
 }

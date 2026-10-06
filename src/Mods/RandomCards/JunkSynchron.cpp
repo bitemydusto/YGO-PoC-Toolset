@@ -109,7 +109,7 @@ namespace
 
 		return 0;
 	}
-	void __stdcall SL_JunkSynchron()
+	void __stdcall SL_JunkSynchron(uint32_t playerIdx)
 	{
 		std::vector<uint32_t> grave;
 		auto& player = duel->players[GameData::GetTurnPlayer()];

@@ -70,6 +70,7 @@ enum CardTag : uint16_t
 {
 	DESTROY = 0x0,
 	SEARCH = 0x1,
+	DRAW = 0x2,
 };
 namespace FUN
 {
@@ -139,15 +140,101 @@ namespace FUN
 
 	struct EffectBlock
 	{
-		uint16_t cardIntId;   // +0
-		uint16_t location;    // +2  side | (place << 1) | flags
-		uint16_t flags;       // +4  instance in bits 5–12 (0x1FE0), target count bits 13–15, done bit 2
-		uint16_t targets[7];  // +6  field halfwords / room for outer dwords
+		uint16_t id = 0;
+		uint16_t properties = 0;
+		uint16_t flags = 0;
+		uint8_t targets[10] = {};
+		uint32_t eventInfo = 0;
 
-		EffectBlock(uint8_t _owner, uint16_t _cardIntID, uint8_t _location, uint8_t _side)
+		void BuildId(uint16_t cardIntID)
 		{
-			cardIntId = (_owner << 12) | (_cardIntID & 0xFFF);
-			location = (_location << 1) | (_side);
+			this->id = cardIntID;
+		}
+		void BuildProperties(uint8_t side, uint8_t location, uint8_t responseWindow, uint8_t kind, uint8_t alreadyUsed)
+		{
+			side &= 1;
+			location &= 0x1f;
+			responseWindow &= 0x3f;
+			kind &= 3;
+			alreadyUsed &= 1;
+			this->properties = (alreadyUsed << 14) | (kind << 12) | (responseWindow << 6) | (location << 1) | (side);
+		}
+		void BuildFlags(uint8_t finishedResolving, uint8_t instance, uint8_t targetCount)
+		{
+			finishedResolving &= 1;
+			instance &= 0xff;
+			targetCount &= 7;
+			this->flags = (targetCount << 13) | (instance << 5) | (finishedResolving << 2);
+		}
+		void BuildEventInfo(uint8_t eventSide, uint8_t eventLocation)
+		{
+			eventSide &= 1;
+			eventLocation &= 0x1f;
+			this->eventInfo = (eventLocation << 8) | (eventSide);
+		}
+		void AddInstanceTarget(uint16_t inst)
+		{
+			if (this->GetTargetCount() > 5) return;
+			((uint16_t*)targets)[this->GetTargetCount()] = inst;
+		}
+		void AddFullTarget(uint32_t dword)
+		{
+			if (this->GetTargetCount() > 2) return;
+			((uint32_t*)targets)[this->GetTargetCount()] = dword;
+		}
+		uint8_t GetIntID()
+		{
+			return id & 0xFFF;
+		}
+		uint8_t GetSide()
+		{
+			return properties & 1;
+		}
+		uint8_t GetLocation()
+		{
+			return (properties >> 1) & 0x1F;
+		}
+		uint8_t GetResponseWindow()
+		{
+			return (properties >> 6) & 0x3F;
+		}
+		uint8_t GetKind()
+		{
+			return (properties >> 12) & 3;
+		}
+		bool GetAlreadyUsed()
+		{
+			return (properties >> 14) & 1;
+		}
+		bool GetFinishedResolving()
+		{
+			return (flags >> 2) & 1;
+		}
+		uint8_t  GetInstance()
+		{
+			return (flags >> 5) & 0xff;
+		}
+		uint8_t GetTargetCount()
+		{
+			return (flags >> 13) & 7;
+		}
+		uint16_t GetInstanceTarget(uint8_t index)
+		{
+			if (index >= this->GetTargetCount()) return 0;
+			return ((uint16_t*)targets)[index];
+		}
+		uint32_t  GetFullTarget(uint8_t index)
+		{
+			if (index >= this->GetTargetCount()) return 0;
+			return ((uint32_t*)targets)[index];
+		}
+		uint8_t GetEventSide()
+		{
+			return eventInfo & 1;
+		}
+		uint8_t GetEventLocation()
+		{
+			return (eventInfo >> 8) & 0x1F;
 		}
 	};
 	struct SummonParam {
@@ -329,6 +416,8 @@ namespace FUN
 
 	inline auto GetInstIndexInGrave = reinterpret_cast<int(__cdecl*)(unsigned int playerIdx, int inst)>(0x00568ad0);
 
+	inline auto GetInstIndexInHand = reinterpret_cast<int(__cdecl*)(unsigned int playerIdx, int inst)>(0x00568b30);
+
 	inline auto MillCards = reinterpret_cast<void(__cdecl*)(unsigned int playerIdx, unsigned int amount, int fxFlag)>(0x00578b00);
 
 	inline auto CanBeSummonedByEffect = reinterpret_cast<uint32_t(__cdecl*)(unsigned int playerIdx, unsigned int cardIntID)>(0x00570ac0);
@@ -402,7 +491,10 @@ namespace FUN
 
 	inline auto HasInherentSummon = reinterpret_cast<uint32_t(__cdecl*)(uint16_t cardIntID)>(0x00567a00);
 
+	// Highlights and stores a target from the field
 	inline auto TargetCard = reinterpret_cast<void(__cdecl*)(unsigned int* param, unsigned int side, unsigned int zone)>(0x00592a80);
+
+	inline auto CanCardRespond = reinterpret_cast<uint32_t(__cdecl*)(EffectBlock* self, EffectBlock * source)>(0x0057e5c0);
 
 
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);
@@ -552,22 +644,48 @@ namespace FUN
 			SendCardFromField(block, maskGen.GenerateMask(), 0xe, 2);
 		}
 	}
-	inline void W_HighlightAndStoreTarget(unsigned int param, unsigned int* entry, Location location)
+	inline void W_StoreFieldTarget(unsigned int* param, uint16_t target)
 	{
-		uint32_t dword = *entry;
-		uint8_t  owner = (dword >> 12) & 1;
-		uint32_t inst = owner + ((dword >> 24) & 0x7F) * 2;
-		uint32_t sideBit = owner ? 0x8000u : 0;
-
-		uint32_t cardId = FUN::GetCardID(dword & 0xFFF);
-
-		// Highlight / reveal
-		FUN::QueueCommand(sideBit | 0xDF, cardId, inst, 0);
-		FUN::QueueCommand(sideBit | 0x08, owner, location, 0);
-
-		// Store targets
+		FUN::StoreTarget((int)param, target);
+	}
+	inline void W_StoreListTarget(unsigned int* param, uint32_t dword)
+	{
 		FUN::StoreTarget((int)param, (uint16_t)dword);
 		FUN::StoreTarget((int)param, (uint16_t)(dword >> 16));
+	}
+	inline uint8_t W_GetZoneSide(unsigned int* zoneAddress)
+	{
+		uint32_t offset = (uint32_t)zoneAddress - 0x00A55D74;
+
+		return offset / 0xD44;
+	}
+	inline uint8_t W_GetZoneIndex(unsigned int* zoneAddress)
+	{
+		uint32_t offset = (uint32_t)zoneAddress - 0x00A55D74;
+
+		return (offset % 0xD44) / 0x90;
+	}
+	inline void W_HighlightAndStoreTarget(unsigned int* param, unsigned int* cardAddress, Location location)
+	{
+		if (location > Location::FIELDZONE)
+		{
+			uint32_t dword = *cardAddress;
+			uint8_t  owner = (dword >> 12) & 1;
+			uint32_t inst = owner + ((dword >> 24) & 0x7F) * 2;
+			uint32_t sideBit = owner ? 0x8000u : 0;
+
+			uint32_t cardId = FUN::GetCardID(dword & 0xFFF);
+
+			// Highlight / reveal
+			FUN::QueueCommand(sideBit | 0xDF, cardId, inst, 0);
+			FUN::QueueCommand(sideBit | 0x08, owner, location, 0);
+
+			FUN::W_StoreListTarget(param, dword);
+		}
+		else
+		{
+			FUN::TargetCard(param, W_GetZoneSide(cardAddress), W_GetZoneIndex(cardAddress));
+		}
 	}
 	inline void W_SS_HandToOpp(uint32_t handPlayer, int handIndex, uint32_t destZone, uint32_t extra, int posArg)
 	{

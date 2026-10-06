@@ -4,6 +4,8 @@
 #include "PatchLoader.h"
 #include <algorithm>
 #include <string>
+#include <unordered_map>
+#include <vector>
 #include "FUN.h"
 
 namespace GameData
@@ -16,6 +18,7 @@ using Condition1 = bool(__stdcall*)(uint8_t side, uint8_t zone);
 using ScriptFUN = uint32_t(__cdecl*)(unsigned int* param, int param2, int param3);
 using Event = void(__stdcall*)();
 using Event1 = void(__stdcall*)(uint32_t playerIdx, uint32_t zoneIdx);
+using Event2 = void(__stdcall*)(uint32_t playerIdx);
 using LeavingFieldEvent = bool(__stdcall*)(uint32_t side, uint32_t zone, uint32_t* dest, uint32_t* action, uint32_t* effectIntID);
 using LosingBattleEvent = void(__stdcall*)(uint32_t sideIdx, uint32_t zoneIdx, uint32_t* zone);
 using EffectActivatedEvent = void(__stdcall*)(unsigned int* srcParam, uint8_t respondingSide);
@@ -89,7 +92,7 @@ struct SummonStateHook2
 struct SelectionListPopulationHook
 {
 	uint16_t cardID;
-	Event event;
+	Event2 event;
 };
 struct CanBeSpecialSummonedByEffectHook
 {
@@ -101,6 +104,11 @@ struct ExtraMonster
 	uint16_t cardID;
 	Condition summonCondition;
 	State summonState;
+};
+struct CorrectResponseWindows
+{
+	uint16_t cardIntID;
+	vector<uint8_t> windows;
 };
 
 void PatchCardEffectScript1();
@@ -150,9 +158,12 @@ void PatchLimitStatus();
 void PatchSummonMonster();
 void PatchZoneOverlay();
 void PatchLosingBattle();
+void PatchCorrectResponseWindow();
+void PatchCanSideStartChain();
+void PatchChainCardFromHand();
 
-void __stdcall LoadSelectionListExtra();
-void __stdcall LoadSelectionListGrave();
+void __stdcall LoadSelectionListExtra(uint32_t playerIdx);
+void __stdcall LoadSelectionListGrave(uint32_t playerIdx);
 
 void __stdcall ResetOncePerTurnFlags();
 void __stdcall ReturnSpiritsToHand();
@@ -239,8 +250,8 @@ public:
 	static void Register_SummonState(uint16_t cardID, State state, bool useDefaultNS);
 	static uint8_t __stdcall Dispatch_SummonState(uint8_t stateCode);
 
-	static void Register_SelectionListPopulation(uint16_t cardID, Event event);
-	static bool __stdcall Dispatch_SelectionListPopulation(uint16_t cardID);
+	static void Register_SelectionListPopulation(uint16_t cardID, Event2 event);
+	static bool __stdcall Dispatch_SelectionListPopulation(uint16_t cardID, uint32_t playerIdx);
 
 	static void Register_SpellSpeed(uint32_t cardID, uint32_t speed);
 	static uint32_t __stdcall Dispatch_SpellSpeed(uint32_t cardID);
@@ -267,10 +278,13 @@ public:
 	static uint32_t __stdcall Dispatch_ActivatableGraveEffect();
 
 	static void Register_OnEffectActivated(EffectActivatedEvent event);
-	static void __stdcall Dispatch_OnEffectActivated(unsigned int* srcParam, uint8_t respondingSide);
+	static bool __stdcall Dispatch_OnEffectActivated(unsigned int* srcParam, uint8_t respondingSide);
 
 	static void SetLimitStatus(uint16_t cardID, uint16_t limit);
 	static uint16_t __stdcall Dispatch_LimitStatus(uint16_t cardIntID);
+
+	static void Register_ResponseWindow(uint16_t cardIntID, uint8_t responseWindow);
+	static bool __stdcall Dispatch_ResponseWindow(uint8_t side, uint16_t cardIntID, uint8_t responseWindow);
 
 	static void Register_MonsterLosingBattle(LosingBattleEvent event);
 	static bool __stdcall Dispatch_MonsterLosingBattle(uint32_t sideIdx, uint32_t zoneIdx, uint32_t* zone, uint32_t param4, uint32_t param5);
@@ -279,6 +293,8 @@ public:
 	static void __stdcall Dispatch_OnMonsterSummon();
 
 	static void __stdcall Dispatch_ZoneOverlay(int actor, int renderer);
+	static bool __stdcall Dispatch_CanSideStartChain(uint16_t cardIntID, uint8_t side);
+	static bool __stdcall Dispatch_ChainCardFromHand(uint32_t* card);
 
 	static inline std::unordered_map<CardTag, std::vector<uint16_t>> cardTags;
 
@@ -305,6 +321,7 @@ private:
 	static uint32_t __cdecl M_GetNumOfFusionReqs(uint32_t cardIntID);
 	static int __cdecl M_GetFusionMaterial(uint32_t cardIntID, uint32_t materialIndex);
 	static int  __cdecl M_CanFuse(uint32_t player, uint32_t fusionIntId, uint16_t* out);
+	static uint32_t __cdecl M_CanSideRespond(unsigned int*, unsigned int respondingSide);
 
 	static inline EffectScript effectScripts[4096];
 	static inline Fusion2 fusionRecipes2[4096];
@@ -344,6 +361,7 @@ private:
 	static inline std::vector<EffectActivatedEvent> onEffectActivatedHooks;
 	static inline std::vector<Event> onMonsterSummonHooks;
 	static inline std::vector<LosingBattleEvent> monsterLosingBattleHooks;
+	static inline std::vector<CorrectResponseWindows> responseWindows;
 
 	static inline Utils::Hook hCardEffectSctript1;
 	static inline Utils::Hook hCardEffectSctript2;
@@ -392,6 +410,9 @@ private:
 	static inline Utils::Hook hSummonMonster;
 	static inline Utils::Hook hZoneOverlay;
 	static inline Utils::Hook hLosingBattle;
+	static inline Utils::Hook hCorrectResponseWindow;
+	static inline Utils::Hook hCanSideStartChain;
+	static inline Utils::Hook hChainCardFromHand;
 
 
 	// Library

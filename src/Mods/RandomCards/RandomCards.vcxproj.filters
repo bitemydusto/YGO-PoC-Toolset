@@ -30,6 +30,9 @@
     <ClCompile Include="StardustDragon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DDCrow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RandomCards.h">

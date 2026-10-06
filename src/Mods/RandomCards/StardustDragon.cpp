@@ -6,7 +6,6 @@ namespace
 
 	GameData::SynchroSummoner* summoner = nullptr;
 	std::vector<uint32_t> tribtedInstances;
-	uint32_t inst = 0;
 
 	bool CanBeSummoned(uint32_t playerIdx)
 	{
@@ -31,20 +30,18 @@ namespace
 		return result;
 	}
 
-	uint32_t __cdecl Effect_StardustDragon(unsigned int* self, unsigned int* source, int mode)
+	uint32_t __cdecl Effect_StardustDragon(EffectBlock* self, EffectBlock* source, int mode)
 	{
-		FUN::Param selfParam(self);
-		
-		if (selfParam.finishedResolving) return 0;
-		if (selfParam.location == Location::GRAVE)
+		if (self->GetFinishedResolving()) return 0;
+		if (self->GetLocation() == Location::GRAVE)
 		{
-			auto state = GameData::GetState();
+			auto state = GameData::GetEffectState();
 
 			switch (state)
 			{
 				case 0x80:
 				{
-					FUN::ShowDialog("Do you want to @2Summon@0 a monster from your Graveyard to your graveyard?");
+					FUN::ShowDialog("Do you want to @2Summon@0 @3Stardust Dragon@0 from your Graveyard?");
 					FUN::ShowDialogOptions(1, 0);
 
 					return 0x7f;
@@ -59,30 +56,29 @@ namespace
 				}
 				case 0x7e:
 				{
-					auto card = GameData::Card{ .fullValue = self[0] };
-
-					int index = FUN::GetInstIndexInGrave(selfParam.playerIdx, card.GetInstance());
+					int index = FUN::GetInstIndexInGrave(self->GetSide(), self->GetInstance());
 					if (index < 0) return 0;
+					uint32_t* card = FUN::GetCardPtrFromLocation(self->GetSide(), Location::GRAVE, index);
 
-					FUN::SpecialSummon(selfParam.playerIdx, &(duel->players[selfParam.playerIdx].grave[index].fullValue), 1, 1, 0x20, 0xE, selfParam.playerIdx);
+					FUN::SpecialSummon(self->GetSide(), card, 1, 0x20, 0xE, self->GetSide());
 
 					return 0;
 				}
 			}
 		}
+		else
+		{
+			FUN::W_NegateActivation((unsigned int*)source, true);
+			tribtedInstances.push_back(self->GetInstance());
 
-		if (selfParam.finishedResolving) return 0;
-
-		FUN::W_NegateActivation(source, true);
-		tribtedInstances.push_back(inst);
-
-		return 0;
+			return 0;
+		}
 	}
 	uint32_t __cdecl Condition_StardustDragon(unsigned int* self, unsigned int* source, int mode)
 	{
 		FUN::Param selfParam(self);
 
-		if (selfParam.location == Location::GRAVE) return 1;
+		if (selfParam.location == Location::GRAVE) return FUN::CanPlayerSummon(selfParam.playerIdx) != 0;
 
 		if (source == nullptr) return 0;
 		if (mode != 0) return 0;
@@ -95,31 +91,13 @@ namespace
 
 		return 0;
 	}
-	uint32_t __cdecl Cost_StardustDragon(unsigned int* self, unsigned int* source, int mode)
+	uint32_t __cdecl Cost_StardustDragon(EffectBlock* self, EffectBlock* source, int mode)
 	{
-		FUN::Param selfParam(self);
+		if (self->GetLocation() == Location::GRAVE) return 1;
 
-		if (selfParam.location == Location::GRAVE) return 1;
+		FUN::TributeSelected(self->GetSide(), self->GetLocation());
 
-		auto sub = GameData::GetEffectSubState();
-
-		if (sub == 0)
-		{
-			FUN::TributeSelected(selfParam.playerIdx, selfParam.zoneIdx);
-
-			GameData::SetEffectSubState(1);
-		}
-		else
-		{
-			uint8_t n = duel->players[selfParam.playerIdx].cardsInGrave;
-			inst = duel->players[selfParam.playerIdx].grave[n - 1].GetInstance();
-
-			GameData::SetEffectSubState(0);
-			return 1;
-		}
-
-
-		return 0;
+		return 1;
 	}
 	void __stdcall EndPhase()
 	{
@@ -128,18 +106,16 @@ namespace
 			for (size_t j = 0; j < duel->players[i].cardsInGrave; j++)
 			{
 				auto& card = duel->players[i].grave[j];
-				if (card.GetCardID() == STARDUST_DRAGON)
+				if (card.GetCardID() == STARDUST_DRAGON && card.WasProperlySummoned())
 				{
 					for (auto item : tribtedInstances)
 					{
 						auto inst = card.GetInstance();
 						if (item == inst)
 						{
-							//uint32_t pack = ((uint32_t)(0xe & 0x1F) | ((uint32_t)i << 0xf) | 0x0A20u) << 16 | card.GetIntID();
+							uint32_t pack = ((uint32_t)(0xe & 0x1F) | ((uint32_t)i << 0xf) | 0x0A20u) << 16 | card.GetIntID();
 
-							//FUN::QueueEffect(pack, card.GetInstance(), 0);
-
-							FUN::SpecialSummon(i, &(duel->players[i].grave[j].fullValue), 1, 0x20, 0xE, i);
+							FUN::QueueEffect(pack, card.GetInstance(), 0);
 						}
 					}
 				}

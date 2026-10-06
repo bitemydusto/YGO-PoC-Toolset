@@ -61,10 +61,21 @@ enum DialogMode : uint8_t
 };
 enum ResponseWindow : uint8_t
 {
+	TURN_START = 0x1,
+	TURN_END = 0x3,
 	NORMAL_SUMMON = 0x5,
 	FLIP_SUMMON = 0x6,
 	SPECIAL_SUMMON = 0x7,
-	ATTACK_DECLARATION = 0x12
+	SET_MONSTER = 0x8,
+	ATTACK_DECLARATION = 0x12,
+	ENTER_MAIN2 = 0x16,
+	SUMMON_ATTEMPT = 0x20,
+	TRAP_ACTIVATION = 0x21,
+	SPELL_ACTIVATION = 0x22,
+	DRAW_CARD = 0x1b,
+	FIELD_DRESTORY = 0x1c,
+	DISCARD = 0x1e,
+	MILL = 0x1d
 };
 enum CardTag : uint16_t
 {
@@ -330,7 +341,7 @@ namespace FUN
 
 	inline auto DealEffectDamage = reinterpret_cast<void(__cdecl*)(unsigned int playerIdx, unsigned int amount)>(0x00578430);
 
-	inline auto GetCardPtrFromLocation = reinterpret_cast<uint32_t * (__cdecl*)(unsigned int playerIdx, unsigned int destCode, unsigned int idx)>(0x00570040);
+	inline auto GetCardPtrFromLocation = reinterpret_cast<uint32_t * (__cdecl*)(unsigned int side, unsigned int location, unsigned int index)>(0x00570040);
 
 	inline auto BanishFromGrave = reinterpret_cast<void(__cdecl*)(unsigned int playerIdx, unsigned int* cardPtr, unsigned int flag)>(0x00575f30);
 

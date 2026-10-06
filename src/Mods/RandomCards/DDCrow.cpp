@@ -15,10 +15,8 @@ namespace
 
 		return 0;
 	}
-	uint32_t __cdecl Condition_DDCrow(unsigned int* self, unsigned int* source, int mode)
+	uint32_t __cdecl Condition_DDCrow(EffectBlock* self, EffectBlock* source, int mode)
 	{
-		FUN::Param selfParam(self);
-
 		if (duel->players[0].cardsInGrave == 0 && duel->players[1].cardsInGrave == 0) return 0;
 
 		return 1;

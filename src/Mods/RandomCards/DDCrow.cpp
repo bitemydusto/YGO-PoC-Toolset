@@ -19,7 +19,7 @@ namespace
 	{
 		FUN::Param selfParam(self);
 
-		if (duel->players[selfParam.oppIdx].cardsInGrave == 0) return 0;
+		if (duel->players[0].cardsInGrave == 0 && duel->players[1].cardsInGrave == 0) return 0;
 
 		return 1;
 	}

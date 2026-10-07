@@ -296,7 +296,7 @@ public:
 
 	static void __stdcall Dispatch_ZoneOverlay(int actor, int renderer);
 	static bool __stdcall Dispatch_CanSideStartChain(uint16_t cardIntID, uint8_t side);
-	static bool __stdcall Dispatch_ChainCardFromHand(uint32_t* card);
+	static bool __stdcall Dispatch_ChainCardFromHand(uint32_t* cards);
 
 	static inline std::unordered_map<CardTag, std::vector<uint16_t>> cardTags;
 

@@ -958,10 +958,11 @@ __declspec(naked) void PatchCanSideStartChain()
 		RET
 	}
 }
-bool __stdcall HookManager::Dispatch_ChainCardFromHand(uint32_t* card)
+bool __stdcall HookManager::Dispatch_ChainCardFromHand(uint32_t* cards)
 {
-	if (card == nullptr) return false;
-	uint16_t cardIntID = *card & 0xfff;
+	if (cards == nullptr) return false;
+
+	uint16_t cardIntID = GameData::GetCardUsed();
 	if (FUN::GetMonsterType(cardIntID) < 0x15) return true;
 
 	return false;

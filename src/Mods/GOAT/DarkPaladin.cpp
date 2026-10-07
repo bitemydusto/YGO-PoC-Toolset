@@ -16,19 +16,12 @@ namespace
 
 		return 0;
 	}
-	uint32_t __cdecl Condition_DarkPaladin(unsigned int* self, unsigned int* source, int mode)
+	uint32_t __cdecl Condition_DarkPaladin(EffectBlock* self, EffectBlock* source, int mode)
 	{
-		FUN::Param selfParam(self);
-
-		if (duel->players[selfParam.playerIdx].cardsInHand == 0) return 0;
+		if (duel->players[self->GetSide()].cardsInHand == 0) return 0;
 		if (source == nullptr) return 0;
-		if (mode != 0) return 0;
-
-		FUN::Param sourceParam(source);
-		uint16_t sourceIntID = sourceParam.cardIntID;
-		if (FUN::GetMonsterType(sourceIntID) != CardType::Spell) return 0;
-
-		if (sourceParam.zoneIdx < 5 || sourceParam.zoneIdx > 10) return 0;
+		if (FUN::GetMonsterType(source->GetIntID()) != CardType::Spell) return 0;
+		if (source->GetActivationType() != 0) return 0;
 
 		return 1;
 	}

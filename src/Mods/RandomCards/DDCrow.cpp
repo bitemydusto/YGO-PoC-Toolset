@@ -95,7 +95,7 @@ void Install_DDCrow()
 	Register_HasEffectInHand(DDCROW);
 	Register_SpellSpeed(DDCROW, 2);
 	Register_SelectionListPopulation(DDCROW, SelectionListPopulation_DDCrow);
-	Register_ResponseWindow(FUN::GetCardIntID(DDCROW), 0x3f);
+	Register_ResponseWindow(DDCROW, 0x3f);
 
 	Register_EffectScript({
 		.CardID = DDCROW,

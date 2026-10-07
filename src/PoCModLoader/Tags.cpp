@@ -93,4 +93,34 @@ void HookManager::LoadTags()
 	cards_draw.push_back(Cards::CARD_DESTRUCTION); // 0x4c5
 	cards_draw.push_back(Cards::JAR_OF_GREED); // 0x5a7
 	HookManager::cardTags[CardTag::DRAW] = cards_draw;
+
+	// Summon from deck
+	vector<uint16_t> cards_summon_from_deck;
+
+	cards_summon_from_deck.push_back(Cards::MAGICAL_HATS);          // 0x3B1
+	cards_summon_from_deck.push_back(Cards::LAST_WILL);             // 0x41E
+	cards_summon_from_deck.push_back(Cards::CYBER_JAR);             // 0x452
+	cards_summon_from_deck.push_back(Cards::GIANT_RAT);             // 0x454
+	cards_summon_from_deck.push_back(Cards::UFO_TURTLE);            // 0x456
+	cards_summon_from_deck.push_back(Cards::GIANT_GERM);            // 0x45A
+	cards_summon_from_deck.push_back(Cards::NIMBLE_MOMONGA);        // 0x45B
+	cards_summon_from_deck.push_back(Cards::SHINING_ANGEL);         // 0x45D
+	cards_summon_from_deck.push_back(Cards::MOTHER_GRIZZLY);        // 0x45F
+	cards_summon_from_deck.push_back(Cards::FLYING_KAMAKIRI_No1);     // 0x460
+	cards_summon_from_deck.push_back(Cards::MYSTIC_TOMATO);         // 0x463
+	cards_summon_from_deck.push_back(Cards::DARK_MAGIC_CURTAIN);    // 0x4BC
+	cards_summon_from_deck.push_back(Cards::INSECT_IMITATION);      // 0x526
+	cards_summon_from_deck.push_back(Cards::BUBONIC_VERMIN);        // 0x51B
+	cards_summon_from_deck.push_back(Cards::DRILL_BUG);             // 0x530
+	HookManager::cardTags[CardTag::SUMMON_DECK] = cards_summon_from_deck;
+
+	// Send from deck
+	vector<uint16_t> cards_send_deck_to_grave;
+
+	cards_send_deck_to_grave.push_back(Cards::NEEDLE_WORM);          // 0x231
+	cards_send_deck_to_grave.push_back(Cards::PAINFUL_CHOICE);      // 0x439
+	cards_send_deck_to_grave.push_back(Cards::GRAVEKEEPERS_SERVANT); // 0x427
+	cards_send_deck_to_grave.push_back(Cards::CYBER_JAR);            // 0x452
+	cards_send_deck_to_grave.push_back(Cards::MORPHING_JAR_No2);       // 0x48B
+	HookManager::cardTags[CardTag::SEND_FROM_DECK] = cards_send_deck_to_grave;
 }

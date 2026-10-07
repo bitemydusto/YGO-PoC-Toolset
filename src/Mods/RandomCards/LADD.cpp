@@ -6,16 +6,12 @@ namespace
 
 	uint32_t* selectedMonster = nullptr;
 
-	uint32_t __cdecl Effect_LADD(unsigned int* self, unsigned int* source, int mode);
-	uint32_t __cdecl Condition_LADD(unsigned int* self, unsigned int* source, int mode);
-	uint32_t __cdecl Target_LADD(unsigned int* self, unsigned int* source, int mode);
-
 	void __stdcall StatChange_LADD(uint32_t statAddress, uint32_t playerIdx, uint32_t zoneIdx);
 	void __stdcall EffectActivated_LADD(unsigned int* srcParam, uint8_t respondingSide);
 
-    uint32_t __cdecl Effect_LADD(unsigned int* self, unsigned int* source, int mode)
+    uint32_t __cdecl Effect_LADD(EffectBlock* self, EffectBlock* source, int mode)
     {
-        FUN::Param selfParam(self);
+        FUN::Param selfParam((unsigned int* )self);
 
         if (selfParam.finishedResolving) return 0;
 
@@ -51,36 +47,31 @@ namespace
         }
         else
         {
-            FUN::W_NegateActivation(source, false);
+            bool destroy = !FUN::IsMonster(source->GetIntID());
+            FUN::W_NegateActivation((unsigned int*)source, destroy);
             FUN::W_AddEffectEntityToZone(selfParam.playerIdx, selfParam.zoneIdx, FUN::GetCardIntID(LADD), 0xb | (0 << 8));
 
             return 0;
         }
 
     }
-    uint32_t __cdecl Condition_LADD(unsigned int* self, unsigned int* source, int mode)
+    uint32_t __cdecl Condition_LADD(EffectBlock* self, EffectBlock* source, int mode)
     {
-        FUN::Param selfParam(self);
-
-        if (selfParam.location == 0xe) return 1;
-        //if (mode != 0) return 0;
+        if (self->GetLocation() == Location::GRAVE) return 1;
         if (source == 0) return 0;
+		if (!FUN::IsMonster(source->GetIntID()) && source->GetActivationType() != 0) return 0;
 
-        //Checks for location, it's not needed here
-        //if (0x14 < (sourceParam.block16[1] & 0x3e)) return 0;
+        uint16_t tCardID = FUN::GetCardID(source->GetIntID());
 
-        FUN::Param sourceParam(source);
-        uint16_t tCardID = FUN::GetCardID(sourceParam.cardIntID);
-
-        if (FUN::GetSpellSpeed(sourceParam.cardIntID) > 2) return 0;
+        if (FUN::GetSpellSpeed(source->GetIntID()) > 2) return 0;
         if (tCardID == LADD || tCardID == Cards::SPIRITUALISM) return 0;
 
-        int atk = FUN::GetCurrentATK(selfParam.playerIdx, selfParam.zoneIdx);
-        int def = FUN::GetCurrentDEF(selfParam.playerIdx, selfParam.zoneIdx);
+        int atk = FUN::GetCurrentATK(self->GetSide(), self->GetLocation());
+        int def = FUN::GetCurrentDEF(self->GetSide(), self->GetLocation());
 
         if (atk < 500 || def < 500) return 0;
 
-
+        FUN::FlashCardPortrait(self->GetSide(), self->GetIntID(), self->GetLocation());
         return 1;
     }
     uint32_t __cdecl Target_LADD(unsigned int* self, unsigned int* source, int mode)
@@ -180,18 +171,8 @@ namespace
             uint16_t cardID = FUN::GetCardID(cardIntID);
             if (cardID == LADD && duel->players[respondingSide].cardZones[j].IsFaceUp())
             {
-                int atk = FUN::GetCurrentATK(respondingSide, j);
-                int def = FUN::GetCurrentDEF(respondingSide, j);
-
-                if (atk >= 500 && def >= 500)
-                {
-                    FUN::FlashCardPortrait(respondingSide, cardIntID, j);
-
-                    uint32_t pack = ((uint32_t)(j & 0x1F) | ((uint32_t)respondingSide << 0xf) | 0x0A20u) << 16 | cardIntID;
-                    FUN::ChainEffect(pack, duel->players[respondingSide].cardZones[j].card.GetInstance(), srcParam, 1);
-
-                }
-
+                uint32_t pack = ((uint32_t)(j & 0x1F) | ((uint32_t)respondingSide << 0xf) | 0x0A20u) << 16 | cardIntID;
+                FUN::ChainEffect(pack, duel->players[respondingSide].cardZones[j].card.GetInstance(), srcParam, 1);
             }
         }
     }

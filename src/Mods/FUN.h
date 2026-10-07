@@ -82,6 +82,8 @@ enum CardTag : uint16_t
 	DESTROY = 0x0,
 	SEARCH = 0x1,
 	DRAW = 0x2,
+	SUMMON_DECK = 0x3,
+	SEND_FROM_DECK = 0x4
 };
 namespace FUN
 {
@@ -170,12 +172,13 @@ namespace FUN
 			alreadyUsed &= 1;
 			this->properties = (alreadyUsed << 14) | (kind << 12) | (responseWindow << 6) | (location << 1) | (side);
 		}
-		void BuildFlags(uint8_t finishedResolving, uint8_t instance, uint8_t targetCount)
+		void BuildFlags(uint8_t leavesAfter, uint8_t finishedResolving, uint8_t instance, uint8_t targetCount)
 		{
+			leavesAfter &= 1;
 			finishedResolving &= 1;
 			instance &= 0xff;
 			targetCount &= 7;
-			this->flags = (targetCount << 13) | (instance << 5) | (finishedResolving << 2);
+			this->flags = (targetCount << 13) | (instance << 5) | (finishedResolving << 2) | (leavesAfter << 1);
 		}
 		void BuildEventInfo(uint8_t eventSide, uint8_t eventLocation)
 		{
@@ -193,10 +196,11 @@ namespace FUN
 			if (this->GetTargetCount() > 2) return;
 			((uint32_t*)targets)[this->GetTargetCount()] = dword;
 		}
-		uint8_t GetIntID()
+		uint16_t GetIntID()
 		{
 			return id & 0xFFF;
 		}
+
 		uint8_t GetSide()
 		{
 			return properties & 1;
@@ -209,13 +213,18 @@ namespace FUN
 		{
 			return (properties >> 6) & 0x3F;
 		}
-		uint8_t GetKind()
+		uint8_t GetActivationType()
 		{
 			return (properties >> 12) & 3;
 		}
 		bool GetAlreadyUsed()
 		{
 			return (properties >> 14) & 1;
+		}
+
+		bool GetLeavesAfter()
+		{
+			return (flags >> 1) & 1;
 		}
 		bool GetFinishedResolving()
 		{
@@ -246,6 +255,14 @@ namespace FUN
 		uint8_t GetEventLocation()
 		{
 			return (eventInfo >> 8) & 0x1F;
+		}
+
+		void SetFinishedResolving(bool finished)
+		{
+			if (finished)
+				flags |= (1 << 2);
+			else
+				flags &= ~(1 << 2);
 		}
 	};
 	struct SummonParam {
@@ -507,6 +524,8 @@ namespace FUN
 
 	inline auto CanCardRespond = reinterpret_cast<uint32_t(__cdecl*)(EffectBlock* self, EffectBlock * source)>(0x0057e5c0);
 
+	inline auto IsMonster = reinterpret_cast<bool(__cdecl*)(uint16_t cardIntID)>(0x00402690);
+
 
 	using FUN_591A00_t = uint32_t(__cdecl*)(uint32_t player, uint32_t matId, uint32_t excl1, uint32_t excl2);
 	using FUN_591C90_t = uint32_t(__cdecl*)(uint32_t player, uint32_t packed);
@@ -637,15 +656,11 @@ namespace FUN
 
 		// Full location halfword (side + place + flags)
 		uint16_t locWord = *(uint16_t*)(src.block + 2);
-
 		uint16_t opcode = (uint16_t)((locWord << 15) | 0xB1);
-
 		uint16_t place = src.location;
 
 		QueueCommand(opcode, place, 1, 0);
-
-		src.block[4] |= 0x0E; // cancel resolve on their block
-
+		src.block[4] |= 0x4;
 		if (destroy)
 		{
 			FieldMaskGenerator maskGen;

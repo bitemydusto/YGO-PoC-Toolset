@@ -28,6 +28,8 @@ extern "C"
 {
 	MOD_API void SetOncePerTurnFlag(uint8_t side, uint8_t zone);
 	MOD_API bool UsedEffectThisTurn(uint8_t side, uint8_t zone);
+	MOD_API void SetHardOncePerTurnFlag(uint16_t cardID, uint8_t side);
+	MOD_API bool CardWasUsedThisTurn(uint16_t cardID, uint8_t side);
 	MOD_API void AddSpellCounter(uint8_t side, uint8_t zone);
 	MOD_API void RemoveSpellCounter(uint8_t side, uint8_t zone);
 	MOD_API uint8_t GetSpellCounters(uint8_t side, uint8_t zone);
@@ -78,5 +80,5 @@ extern "C"
 	MOD_API void Register_OnEffectActivated(EffectActivatedEvent event);
 	MOD_API void Register_OnMonsterSummon(Event event);
 	MOD_API void Register_MonsterLosingBattle(LosingBattleEvent event);
-	MOD_API void Register_ResponseWindow(uint16_t cardIntID, uint8_t responseWindow);
+	MOD_API void Register_ResponseWindow(uint16_t cardID, uint8_t responseWindow);
 }

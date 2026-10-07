@@ -19,3 +19,4 @@ void Install_LADD();
 void Install_JunkSynchron();
 void Install_StardustDragon();
 void Install_DDCrow();
+void Install_Ash();

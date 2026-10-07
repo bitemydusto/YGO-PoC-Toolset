@@ -177,6 +177,8 @@ public:
 
 	static void SetOncePerTurnFlag(uint8_t side, uint8_t zone);
 	static bool UsedEffectThisTurn(uint8_t side, uint8_t zone);
+	static void SetHardOncePerTurnFlag(uint16_t cardID, uint8_t side);
+	static bool CardWasUsedThisTurn(uint16_t cardID, uint8_t side);
 
 	static void AddTag(uint16_t cardID, uint16_t tag);
 	static bool HasTag(uint16_t cardID, uint16_t tag);
@@ -283,7 +285,7 @@ public:
 	static void SetLimitStatus(uint16_t cardID, uint16_t limit);
 	static uint16_t __stdcall Dispatch_LimitStatus(uint16_t cardIntID);
 
-	static void Register_ResponseWindow(uint16_t cardIntID, uint8_t responseWindow);
+	static void Register_ResponseWindow(uint16_t cardID, uint8_t responseWindow);
 	static bool __stdcall Dispatch_ResponseWindow(uint8_t side, uint16_t cardIntID, uint8_t responseWindow);
 
 	static void Register_MonsterLosingBattle(LosingBattleEvent event);
@@ -304,6 +306,7 @@ public:
 	static inline std::vector<PhaseHook> phaseHooks;
 	static inline std::vector<ExtraMonster> extraMonsters;
 	static inline std::vector<uint16_t> activatableGraveEffects;
+	static inline std::vector<uint16_t> hardOPTs[2];
 
 	static bool __stdcall Dispatch_CardHover();
 	static inline uint32_t __stdcall ExtraSummonState();

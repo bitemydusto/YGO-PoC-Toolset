@@ -11,6 +11,14 @@ extern "C"
 	{
 		return HookManager::UsedEffectThisTurn(side, zone);
 	}
+	void SetHardOncePerTurnFlag(uint16_t cardID, uint8_t side)
+	{
+		HookManager::SetHardOncePerTurnFlag(cardID, side);
+	}
+	bool CardWasUsedThisTurn(uint16_t cardID, uint8_t side)
+	{
+		return HookManager::CardWasUsedThisTurn(cardID, side);
+	}
 	void AddSpellCounter(uint8_t side, uint8_t zone)
 	{
 		HookManager::AddSpellCounter(side, zone);
@@ -206,8 +214,8 @@ extern "C"
 	{
 		HookManager::Register_MonsterLosingBattle(event);
 	}
-	void Register_ResponseWindow(uint16_t cardIntID, uint8_t responseWindow)
+	void Register_ResponseWindow(uint16_t cardID, uint8_t responseWindow)
 	{
-		HookManager::Register_ResponseWindow(cardIntID, responseWindow);
+		HookManager::Register_ResponseWindow(cardID, responseWindow);
 	}
 }

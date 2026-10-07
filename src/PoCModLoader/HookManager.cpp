@@ -266,6 +266,18 @@ bool HookManager::UsedEffectThisTurn(uint8_t side, uint8_t zone)
 
 	return false;
 }
+void HookManager::SetHardOncePerTurnFlag(uint16_t cardID, uint8_t side)
+{
+	hardOPTs[side].push_back(cardID);
+}
+bool HookManager::CardWasUsedThisTurn(uint16_t cardID, uint8_t side)
+{
+	for (const auto& id : hardOPTs[side])
+	{
+		if (id == cardID) return true;
+	}
+	return false;
+}
 void HookManager::AddSpellCounter(uint8_t side, uint8_t zone)
 {
 	FUN::W_AddEffectEntityToZone(side, zone, FUN::GetCardIntID(0x96), 0xb);
@@ -316,6 +328,8 @@ void __stdcall ResetOncePerTurnFlags()
 			}
 		}
 	}
+	HookManager::hardOPTs[0].clear();
+	HookManager::hardOPTs[1].clear();
 }
 void __stdcall ReturnSpiritsToHand()
 {
@@ -830,7 +844,7 @@ bool __stdcall HookManager::Dispatch_OnEffectActivated(unsigned int* srcParam, u
 			FUN::EffectBlock self;
 			self.BuildId(cardIntID);
 			self.BuildProperties(respondingSide, Location::HAND, 0, 0, 0);
-			self.BuildFlags(0, duel->players[respondingSide].hand[i].GetInstance(), 0);
+			self.BuildFlags(0, 0, duel->players[respondingSide].hand[i].GetInstance(), 0);
 			if (FUN::CanCardRespond(&self, (FUN::EffectBlock*)srcParam))
 			{
 				skip = true;
@@ -864,8 +878,9 @@ __declspec(naked) void PatchOnEffectActivated()
 		JMP[gOnEffectActivatedTrampoline]
 	}
 }
-void  HookManager::Register_ResponseWindow(uint16_t cardIntID, uint8_t responseWindow)
+void  HookManager::Register_ResponseWindow(uint16_t cardID, uint8_t responseWindow)
 {
+	uint16_t cardIntID = FUN::GetCardIntID(cardID);
 	for (auto& item : responseWindows)
 	{
 		if (item.cardIntID == cardIntID)
@@ -1110,7 +1125,7 @@ bool __stdcall HookManager::Dispatch_ActivatableStEffect(uint16_t _cardIntID, ui
 			FUN::EffectBlock block;
 			block.BuildId(cardIntID);
 			block.BuildProperties(selectedSide, selectedZone, 0, 0, 0);
-			block.BuildFlags(0, GameData::GetDuel()->players[selectedSide].cardZones[selectedZone].card.GetInstance(), 0);
+			block.BuildFlags(0, 0, GameData::GetDuel()->players[selectedSide].cardZones[selectedZone].card.GetInstance(), 0);
 
 
 			uint8_t nullBlock[32] = {};

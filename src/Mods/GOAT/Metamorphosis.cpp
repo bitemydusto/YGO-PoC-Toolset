@@ -75,9 +75,13 @@ namespace
 
                 for (size_t j = 0; j < player.cardsInExtra; j++)
                 {
+					if (IsSynchroMonster(player.extra[j].GetCardID())) continue;
                     int extraLevel = FUN::GetMonsterLevel(player.extra[j].GetIntID());
 
-                    if (fieldLevel == extraLevel && FUN::CanBeSummonedByEffect(funParam.playerIdx, player.extra[j].GetIntID())) validLevels.push_back(fieldLevel);
+                    if (fieldLevel == extraLevel && FUN::CanBeSummonedByEffect(funParam.playerIdx, player.extra[j].GetIntID()))
+                    {
+                        validLevels.push_back(fieldLevel);
+                    }
                 }
             }
         }
@@ -144,6 +148,7 @@ namespace
 
         for (size_t i = 0; i < player.cardsInExtra; i++)
         {
+			if (IsSynchroMonster(player.extra[i].GetCardID())) continue;
             if (FUN::GetMonsterLevel(player.extra[i].GetIntID()) == tributedLevel && FUN::CanBeSummonedByEffect(GameData::GetTurnPlayer(), player.extra[i].GetIntID()))
             {
                 fusions.push_back(player.extra[i].fullValue);

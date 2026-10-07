@@ -246,6 +246,7 @@ void HookManager::InstallHooks()
 	Register_SelectionListPopulation(0x1c1, LoadSelectionListExtra);
 	Register_SelectionListPopulation(0x274, LoadSelectionListGrave);
 	Register_SummonState(0xff, ExtraSummonState);
+	Register_Phase(5, ResetOncePerTurnFlags);
 }
 void HookManager::SetOncePerTurnFlag(uint8_t side, uint8_t zone)
 {

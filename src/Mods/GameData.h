@@ -66,6 +66,10 @@ namespace GameData
 		{
 			return (fullValue >> 0xe & 1) != 0;
 		}
+		uint32_t GetPack(uint8_t side, uint8_t zone)
+		{
+			((uint32_t)(zone & 0x1F) | ((uint32_t)side << 0xf) | 0x0A20u) << 16 | GetIntID();
+		}
     };
     struct EffectEntity
     {

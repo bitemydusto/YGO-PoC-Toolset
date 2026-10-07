@@ -19,6 +19,7 @@ namespace
 		FUN::Param funParam(self);
 
 		FUN::DealEffectDamage(funParam.playerIdx, 1000);
+		SetOncePerTurnFlag(funParam.playerIdx, funParam.zoneIdx);
 
 		return 0;
 	}
@@ -129,20 +130,20 @@ namespace
 	{
 		for (size_t i = 0; i < 2; i++)
 		{
-			for (size_t j = 0; j < 5; j++)
+			if (GameData::GetTurnPlayer() == i)
 			{
-				uint16_t cardIntID = duel->players[i].cardZones[j].card.GetIntID();
-				uint16_t cardID = FUN::GetCardID(cardIntID);
-				if (cardID == LAVA_GOLEM)
+				for (size_t j = 0; j < 5; j++)
 				{
-					if (UsedEffectThisTurn(i, j)) continue;
-					if (GameData::GetTurnPlayer() != i) continue;
-					SetOncePerTurnFlag(i, j);
+					auto card = duel->players[i].cardZones[j].card;
+					if (card.GetCardID() == LAVA_GOLEM)
+					{
+						if (UsedEffectThisTurn(i, j)) continue;
 
-					uint32_t pack = ((uint32_t)(j & 0x1F) | ((uint32_t)i << 0xf) | 0x0A20u) << 16 | cardIntID;
-					uint32_t inst = duel->players[i].cardZones[j].card.GetInstance();
+						uint32_t pack = card.GetPack(i, j);
+						uint32_t inst = duel->players[i].cardZones[j].card.GetInstance();
 
-					FUN::QueueEffect(pack, inst, 0);
+						FUN::QueueEffect(pack, inst, 0);
+					}
 				}
 			}
 		}

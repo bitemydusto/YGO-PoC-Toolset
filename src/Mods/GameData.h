@@ -479,18 +479,27 @@ namespace GameData
 	};
 	struct SynchroSummoner
 	{
+		using ComboCheck = bool(*)(Combination combo);
+
 		MaterialCombinator combinator;
 		uint8_t level;
 		uint16_t cardID;
 		int innerState = 0;
 
-		SynchroSummoner(uint8_t side, uint16_t _cardID) : combinator(side), cardID(_cardID)
+		SynchroSummoner(uint8_t side, uint16_t _cardID, ComboCheck legal = nullptr) : combinator(side), cardID(_cardID)
 		{
 			level = FUN::GetMonsterLevel(FUN::GetCardIntID(cardID));
 			combinator.combinations.erase(std::remove_if(combinator.combinations.begin(), combinator.combinations.end(),
 				[&](Combination& combo)
 				{
-					if (combo.GetCombinedLevel() != level || combo.GetNumOfTuners() != 1) return true;
+					if (legal == nullptr)
+					{
+						if (!Standard_Synchro_Combo_Legal(combo)) return true;
+					}
+					else
+					{
+						if (!legal(combo)) return true;
+					}
 
 					return false;
 				}), combinator.combinations.end());
@@ -506,6 +515,12 @@ namespace GameData
 			}
 
 			return false;
+		}
+		bool Standard_Synchro_Combo_Legal(Combination combo)
+		{
+			if (combo.GetCombinedLevel() != level) return false;
+			if (combo.GetNumOfTuners() != 1) return false;
+			return true;
 		}
 		uint32_t __stdcall Standard_Synchro_SummonState()
 		{

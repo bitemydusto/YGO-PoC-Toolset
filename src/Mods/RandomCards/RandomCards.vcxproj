@@ -142,7 +142,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Ashcpp.cpp" />
+    <ClCompile Include="Ash.cpp" />
     <ClCompile Include="DDCrow.cpp" />
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="JunkSynchron.cpp" />

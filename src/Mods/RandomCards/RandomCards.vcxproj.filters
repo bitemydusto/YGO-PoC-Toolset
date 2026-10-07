@@ -33,7 +33,7 @@
     <ClCompile Include="DDCrow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Ashcpp.cpp">
+    <ClCompile Include="Ash.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -9,4 +9,6 @@ class Command
 public:
 	string name;
 	string usage;
+	int args;
+	uintptr_t fun;
 };

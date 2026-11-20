@@ -10,6 +10,7 @@
 
 #include "GameData.h"
 #include "HookAPI.h"
+#include "Command.h"
 
 
 using Fn0 = uint32_t(__cdecl*)();

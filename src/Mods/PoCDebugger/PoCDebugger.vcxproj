@@ -145,6 +145,7 @@
     <ClCompile Include="DllMain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Command.h" />
     <ClInclude Include="Debugger.h" />
   </ItemGroup>
   <ItemGroup>

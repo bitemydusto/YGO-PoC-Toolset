@@ -71,6 +71,17 @@ void Start()
 
     std::cout << "Debugger ready.\n";
 
+    std::vector<Command> commands;
+
+    commands.push_back({"help", ""});
+    commands.push_back({"disrand", "disrand <player> <amount>"});
+    commands.push_back({"mill", "mill <player> <amount>"});
+    commands.push_back({"draw", "draw <player> <amount>"});
+    commands.push_back({"add", "add <player> <cardID>"});
+    commands.push_back({"roll", "roll <player> <side> <diceCmd>"});
+    commands.push_back({"ss", "ss <player> <cardID>"});
+    commands.push_back({"play", "play <player> <handIdx>"});
+
     std::string line;
 
     while (std::getline(std::cin, line))
@@ -87,20 +98,18 @@ void Start()
 
         if (command == "help")
         {
-            std::cout << "call <address> [arg0] [arg1] ... [arg5]\n";
-			std::cout << "mill <player> <amount>\n";
-			std::cout << "draw <player> <amount>\n";
-            std::cout << "add <cardID>\n";
-            std::cout << "roll <player> <side> <diceCmd>\n";
-			std::cout << "ss <player> <cardID>\n";
+			for (const auto& cmd : commands)
+			{
+				std::cout << cmd.usage << "\n";
+			}
             continue;
         }
-        if (command == "disrng")
+        if (command == "disrand")
         {
             std::string playerString, amountString;
 			if (!(ss >> playerString >> amountString))
 			{
-				std::cout << "Usage: disrng <player> <amount>\n";
+				std::cout << "Usage: disrand <player> <amount>\n";
 				continue;
 			}
 			uint8_t player = static_cast<uint8_t>(std::stoull(playerString, nullptr, 0));

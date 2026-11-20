@@ -479,7 +479,7 @@ namespace GameData
 	};
 	struct SynchroSummoner
 	{
-		using ComboCheck = bool(*)(Combination combo);
+		using ComboCheck = bool(*)(Combination combo, SynchroSummoner* _summoner);
 
 		MaterialCombinator combinator;
 		uint8_t level;
@@ -498,7 +498,7 @@ namespace GameData
 					}
 					else
 					{
-						if (!legal(combo)) return true;
+						if (!legal(combo, this)) return true;
 					}
 
 					return false;

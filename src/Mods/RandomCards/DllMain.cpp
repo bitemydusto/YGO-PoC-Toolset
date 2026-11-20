@@ -25,4 +25,5 @@ void Start()
     Install_StardustDragon();
     Install_DDCrow();
     Install_Ash();
+    Install_Trishula();
 }

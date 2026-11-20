@@ -20,3 +20,4 @@ void Install_JunkSynchron();
 void Install_StardustDragon();
 void Install_DDCrow();
 void Install_Ash();
+void Install_Trishula();

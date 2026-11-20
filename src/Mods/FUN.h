@@ -585,8 +585,38 @@ namespace FUN
 	inline void W_ShowDialog(const char* dlgText, DialogMode mode, uint16_t cardID = 0)
 	{
 		ShowDialog(dlgText);
-		SetupSelector(mode, cardID);
-		InitiateSelector();
+		if (mode != DialogMode::OK)
+		{
+			if (mode == DialogMode::YESNO)
+			{
+				ShowDialogOptions(1, 0);
+			}
+			else
+			{
+				SetupSelector(mode, cardID);
+				InitiateSelector();
+			}
+		}
+	}
+	inline int W_NumOfCardsOnField(uint8_t side)
+	{
+		int count = 0;
+		for (int i = 0; i < 11; i++)
+		{
+			uint16_t cardIntID = *(uint32_t*)(0x00A55D64 + 0x10 + side * 0xd44 + i * 0x90) & 0xfff;
+			if (FUN::GetCardIntID(cardIntID) != 0) count++;
+		}
+		return count;
+	}
+	inline uint8_t W_HighlightRandomCardInHand(uint8_t side, uint8_t cardsInHand)
+	{
+		uint8_t handIndex = FUN::GetRandomNumber(cardsInHand);
+
+		uint32_t flag = (side != 0) ? 0x8000 : 0;
+		FUN::QueueCommand(flag | 0x21, 0, 0, 0);
+		FUN::QueueCommand(flag | 8, side, (uint32_t)(handIndex) << 8 | 0xb, 0);
+
+		return handIndex;
 	}
 	inline void W_AddEffectEntityToZone(uint32_t playerIdx, uint32_t zoneIdx, uint32_t effectIntID, uint16_t effect)
 	{

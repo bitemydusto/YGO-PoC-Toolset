@@ -36,6 +36,9 @@
     <ClCompile Include="Ash.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Trishula.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RandomCards.h">

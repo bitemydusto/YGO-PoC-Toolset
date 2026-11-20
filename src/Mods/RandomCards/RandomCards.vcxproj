@@ -149,6 +149,7 @@
     <ClCompile Include="LADD.cpp" />
     <ClCompile Include="PlagueSpreaderZombie.cpp" />
     <ClCompile Include="StardustDragon.cpp" />
+    <ClCompile Include="Trishula.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RandomCards.h" />

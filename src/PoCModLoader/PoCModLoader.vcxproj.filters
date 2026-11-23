@@ -13,6 +13,21 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Engine">
+      <UniqueIdentifier>{d504a3f1-cd86-4cda-9227-c21e77310c32}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Addresses">
+      <UniqueIdentifier>{c0fdb5d8-7ca6-49f8-98ac-9fb1adbaa0b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Addresses\Data">
+      <UniqueIdentifier>{d39d15f5-9ed2-4a86-aa48-107bb9e4d61a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Addresses\Functions">
+      <UniqueIdentifier>{86bcf78d-976d-423a-969e-4d9e2062d55f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Structures">
+      <UniqueIdentifier>{4032c514-098d-41ca-a2ad-dac96507f318}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DllMain.cpp">
@@ -52,6 +67,36 @@
     </ClInclude>
     <ClInclude Include="CRC.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Addresses\Data\Input.h">
+      <Filter>Engine\Addresses\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Addresses\Data\GameState.h">
+      <Filter>Engine\Addresses\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Structures\Player.h">
+      <Filter>Engine\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Structures\CardZone.h">
+      <Filter>Engine\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Structures\Card.h">
+      <Filter>Engine\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Structures\ZoneEffect.h">
+      <Filter>Engine\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Structures\Duel.h">
+      <Filter>Engine\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Structures\EffectScript.h">
+      <Filter>Engine\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Structures\EffectBlock.h">
+      <Filter>Engine\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Structures\SummonParam.h">
+      <Filter>Engine\Structures</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

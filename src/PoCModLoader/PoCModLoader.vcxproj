@@ -163,6 +163,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CRC.h" />
+    <ClInclude Include="Engine\Addresses\Data\GameState.h" />
+    <ClInclude Include="Engine\Addresses\Data\Input.h" />
+    <ClInclude Include="Engine\Structures\Card.h" />
+    <ClInclude Include="Engine\Structures\CardZone.h" />
+    <ClInclude Include="Engine\Structures\Duel.h" />
+    <ClInclude Include="Engine\Structures\EffectBlock.h" />
+    <ClInclude Include="Engine\Structures\EffectScript.h" />
+    <ClInclude Include="Engine\Structures\Player.h" />
+    <ClInclude Include="Engine\Structures\SummonParam.h" />
+    <ClInclude Include="Engine\Structures\ZoneEffect.h" />
     <ClInclude Include="HookManager.h" />
     <ClInclude Include="ModLoader.h" />
     <ClInclude Include="PatchLoader.h" />

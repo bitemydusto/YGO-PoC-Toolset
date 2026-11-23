@@ -41,19 +41,18 @@ namespace Structures
 		}
 		void AddInstanceTarget(uint16_t inst)
 		{
-			if (this->GetTargetCount() > 5) return;
+			if (this->GetTargetCount() >= 5) return;
 			((uint16_t*)targets)[this->GetTargetCount()] = inst;
 		}
 		void AddFullTarget(uint32_t dword)
 		{
-			if (this->GetTargetCount() > 2) return;
+			if (this->GetTargetCount() >= 2) return;
 			((uint32_t*)targets)[this->GetTargetCount()] = dword;
 		}
 		uint16_t GetIntID()
 		{
 			return id & 0xFFF;
 		}
-
 		uint8_t GetSide()
 		{
 			return properties & 1;
@@ -74,7 +73,6 @@ namespace Structures
 		{
 			return (properties >> 14) & 1;
 		}
-
 		bool GetLeavesAfter()
 		{
 			return (flags >> 1) & 1;
@@ -96,7 +94,7 @@ namespace Structures
 			if (index >= this->GetTargetCount()) return 0;
 			return ((uint16_t*)targets)[index];
 		}
-		uint32_t  GetFullTarget(uint8_t index)
+		uint32_t GetFullTarget(uint8_t index)
 		{
 			if (index >= this->GetTargetCount()) return 0;
 			return ((uint32_t*)targets)[index];
@@ -109,7 +107,6 @@ namespace Structures
 		{
 			return (eventInfo >> 8) & 0x1F;
 		}
-
 		void SetFinishedResolving(bool finished)
 		{
 			if (finished)

@@ -31,22 +31,22 @@ namespace Structures
         Card grave[95];
         Card banish[95];
 
-        uint8_t footer[0xc0];
+		uint8_t footer[0xc0]; // Padding for the rest of the player struct
 
-        CardZone monsterZone(uint8_t index)
+        CardZone* monsterZone(uint8_t index)
         {
-            if (index > 4) return cardZones[4];
-            return cardZones[index];
+            if (index > 4) return &cardZones[4];
+            return &cardZones[index];
         }
-        CardZone spellTrapZone(uint8_t index)
+        CardZone* spellTrapZone(uint8_t index)
         {
-            if (index < 5) return cardZones[5];
-            if (index > 9) return cardZones[9];
-            return cardZones[index];
+            if (index < 5) return &cardZones[5];
+            if (index > 9) return &cardZones[9];
+            return &cardZones[index];
         }
-        CardZone fieldSpellZone()
+        CardZone* fieldSpellZone()
         {
-            return cardZones[10];
+            return &cardZones[10];
         }
     };
 }

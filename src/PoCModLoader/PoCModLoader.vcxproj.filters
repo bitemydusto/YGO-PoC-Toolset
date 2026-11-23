@@ -98,5 +98,11 @@
     <ClInclude Include="Engine\Structures\SummonParam.h">
       <Filter>Engine\Structures</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Addresses\Functions\CardProperty.h">
+      <Filter>Engine\Addresses\Functions</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Addresses\Functions\Action.h">
+      <Filter>Engine\Addresses\Functions</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

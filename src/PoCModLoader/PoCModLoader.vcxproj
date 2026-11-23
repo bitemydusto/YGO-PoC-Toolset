@@ -165,6 +165,8 @@
     <ClInclude Include="CRC.h" />
     <ClInclude Include="Engine\Addresses\Data\GameState.h" />
     <ClInclude Include="Engine\Addresses\Data\Input.h" />
+    <ClInclude Include="Engine\Addresses\Functions\Action.h" />
+    <ClInclude Include="Engine\Addresses\Functions\CardProperty.h" />
     <ClInclude Include="Engine\Structures\Card.h" />
     <ClInclude Include="Engine\Structures\CardZone.h" />
     <ClInclude Include="Engine\Structures\Duel.h" />

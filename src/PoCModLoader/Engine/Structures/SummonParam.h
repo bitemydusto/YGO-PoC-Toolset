@@ -15,9 +15,9 @@ namespace Structures
 		uint8_t  tribSide[3];
 		bool     tribUsed[3];
 
-		SummonParam()
+		SummonParam(uintptr_t paramAddress)
 		{
-			uint32_t p = *(uint32_t*)0x00A55080;
+			uint32_t p = *(uint32_t*)paramAddress;
 
 			side = p & 1;
 			destZone = (p >> 1) & 0x1F;

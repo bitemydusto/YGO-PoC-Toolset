@@ -161,6 +161,7 @@ void PatchLosingBattle();
 void PatchCorrectResponseWindow();
 void PatchCanSideStartChain();
 void PatchChainCardFromHand();
+void PatchCanMonsterAttack();
 
 void __stdcall LoadSelectionListExtra(uint32_t playerIdx);
 void __stdcall LoadSelectionListGrave(uint32_t playerIdx);
@@ -291,6 +292,9 @@ public:
 	static void Register_MonsterLosingBattle(LosingBattleEvent event);
 	static bool __stdcall Dispatch_MonsterLosingBattle(uint32_t sideIdx, uint32_t zoneIdx, uint32_t* zone, uint32_t param4, uint32_t param5);
 
+	static void Register_CanMonsterAttack(Condition1 condition);
+	static bool __stdcall Dispatch_CanMonsterAttack(uint8_t side, uint8_t zone);
+
 	static void Register_OnMonsterSummon(Event event);
 	static void __stdcall Dispatch_OnMonsterSummon();
 
@@ -365,6 +369,7 @@ private:
 	static inline std::vector<Event> onMonsterSummonHooks;
 	static inline std::vector<LosingBattleEvent> monsterLosingBattleHooks;
 	static inline std::vector<CorrectResponseWindows> responseWindows;
+	static inline std::vector<Condition1> canMonsterAttackHooks;
 
 	static inline Utils::Hook hCardEffectSctript1;
 	static inline Utils::Hook hCardEffectSctript2;
@@ -416,6 +421,7 @@ private:
 	static inline Utils::Hook hCorrectResponseWindow;
 	static inline Utils::Hook hCanSideStartChain;
 	static inline Utils::Hook hChainCardFromHand;
+	static inline Utils::Hook hCanMonsterAttack;
 
 
 	// Library

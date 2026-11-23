@@ -81,4 +81,5 @@ extern "C"
 	MOD_API void Register_OnMonsterSummon(Event event);
 	MOD_API void Register_MonsterLosingBattle(LosingBattleEvent event);
 	MOD_API void Register_ResponseWindow(uint16_t cardID, uint8_t responseWindow);
+	MOD_API void Register_CanMonsterAttack(Condition1 condition);
 }

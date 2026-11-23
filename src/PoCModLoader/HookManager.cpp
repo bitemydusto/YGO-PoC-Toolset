@@ -1,6 +1,7 @@
 #include "HookManager.h"
 #include "GameData.h"
 #include "FUN.h"
+#include "ModLoader.h"
 
 namespace
 {
@@ -43,6 +44,7 @@ namespace
 	void* gCorrectResponseWindowTrampoline = nullptr;
 	void* gCanSideStartChainTrampoline = nullptr;
 	void* gChainCardFromHandTrampoline = nullptr;
+	void* gCanMonsterAttackTrampoline = nullptr;
 }
 void HookManager::InstallHooks()
 {
@@ -151,6 +153,9 @@ void HookManager::InstallHooks()
 
 	hLosingBattle = Utils::InstallHook((void*)0x00577c40, 6, PatchLosingBattle);
 	gLosingBattleTrampoline = hLosingBattle.Trampoline;
+
+	hCanMonsterAttack = Utils::InstallHook((void*)0x0056b76e, 7, PatchCanMonsterAttack);
+	gCanMonsterAttackTrampoline = hCanMonsterAttack.Trampoline;
 
 	hCorrectResponseWindow = Utils::InstallHook((void*)0x00597630, 5, PatchCorrectResponseWindow);
 	gCorrectResponseWindowTrampoline = hCorrectResponseWindow.Trampoline;
@@ -1029,6 +1034,38 @@ __declspec(naked) void PatchCanBeSpecialSummonedByEffect()
 	hook_end :
 		POP EAX
 		JMP[gCanBeSpecialSummonedByEffectTrampoline]
+	}
+}
+void HookManager::Register_CanMonsterAttack(Condition1 condition)
+{
+	canMonsterAttackHooks.push_back({ condition });
+}
+bool __stdcall HookManager::Dispatch_CanMonsterAttack(uint8_t side, uint8_t zone)
+{
+	if (side > 1) ModLoader::Log("Invalid side in Dispatch_CanMonsterAttack: %d", side);
+	if (zone > 5) ModLoader::Log("Invalid zone in Dispatch_CanMonsterAttack: %d", zone);
+	for (const auto& item : canMonsterAttackHooks)
+	{
+		return item(side, zone);
+	}
+	return true; // Default to true if no hooks are registered
+}
+__declspec(naked) void PatchCanMonsterAttack()
+{
+	__asm
+	{
+	hook:
+		PUSH EAX
+		PUSH EBX
+		PUSH EDI
+		CALL HookManager::Dispatch_CanMonsterAttack
+		TEST AL, AL
+		POP EAX
+		JNZ hook_end
+		PUSH 0x0056b768 // If the hook returns false, jump to this address to prevent the monster from attacking
+		RET
+	hook_end :
+		JMP[gCanMonsterAttackTrampoline]
 	}
 }
 void HookManager::Register_ActivatableEffect(uint16_t cardID)

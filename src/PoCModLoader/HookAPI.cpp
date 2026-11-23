@@ -218,4 +218,8 @@ extern "C"
 	{
 		HookManager::Register_ResponseWindow(cardID, responseWindow);
 	}
+	void Register_CanMonsterAttack(Condition1 condition)
+	{
+		HookManager::Register_CanMonsterAttack(condition);
+	}
 }

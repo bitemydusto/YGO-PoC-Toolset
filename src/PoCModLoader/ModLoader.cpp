@@ -1,5 +1,7 @@
 #include "ModLoader.h"
 
+const std::string ModLoader::modFolder = ".\\mods";
+
 void ModLoader::LoadMods()
 {
 	Log("ModLoader initialized!", true);

@@ -129,6 +129,7 @@ void Start()
                 }
 
                 CallFunction(cmd.fun, args);
+                break;
             }
         }
         if (!found)
@@ -141,6 +142,7 @@ void HelpCommand()
 {
     for (const auto& cmd : commands)
     {
+		if (cmd.name == "help") continue;
         std::cout << cmd.usage << "\n";
     }
 }

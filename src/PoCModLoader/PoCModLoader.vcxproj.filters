@@ -140,5 +140,8 @@
     <ClInclude Include="Engine\Types\CardTag.h">
       <Filter>Engine\Types</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Types\Attribute.h">
+      <Filter>Engine\Types</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

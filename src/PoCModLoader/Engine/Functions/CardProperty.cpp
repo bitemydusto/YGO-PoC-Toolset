@@ -51,3 +51,4 @@ namespace Engine::Functions::CardProperty
 	{
 		return reinterpret_cast<uint32_t(__cdecl*)(uint16_t)>(Addresses::Functions::CardProperty::CARD_PACK)(intID);
 	}
+}

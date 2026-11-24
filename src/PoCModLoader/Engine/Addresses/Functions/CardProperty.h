@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace Addresses::Functions::CardProperty
+namespace Engine::Addresses::Functions::CardProperty
 {
 	inline constexpr uintptr_t CARD_NAME = 0x00402290;
 	inline constexpr uintptr_t CARD_DESCRIPTION = 0x004022b0;

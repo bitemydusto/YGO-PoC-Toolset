@@ -153,6 +153,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="DllMain.cpp" />
+    <ClCompile Include="Engine\Functions\Action.cpp" />
+    <ClCompile Include="Engine\Functions\CardProperty.cpp" />
     <ClCompile Include="HookAPI.cpp" />
     <ClCompile Include="HookManager.cpp" />
     <ClCompile Include="Lib.cpp" />
@@ -167,6 +169,8 @@
     <ClInclude Include="Engine\Addresses\Data\Input.h" />
     <ClInclude Include="Engine\Addresses\Functions\Action.h" />
     <ClInclude Include="Engine\Addresses\Functions\CardProperty.h" />
+    <ClInclude Include="Engine\Functions\Action.h" />
+    <ClInclude Include="Engine\Functions\CardProperty.h" />
     <ClInclude Include="Engine\Structures\Card.h" />
     <ClInclude Include="Engine\Structures\CardZone.h" />
     <ClInclude Include="Engine\Structures\Duel.h" />
@@ -175,6 +179,12 @@
     <ClInclude Include="Engine\Structures\Player.h" />
     <ClInclude Include="Engine\Structures\SummonParam.h" />
     <ClInclude Include="Engine\Structures\ZoneEffect.h" />
+    <ClInclude Include="Engine\Types\CardSubType.h" />
+    <ClInclude Include="Engine\Types\CardTag.h" />
+    <ClInclude Include="Engine\Types\CardType.h" />
+    <ClInclude Include="Engine\Types\DialogMode.h" />
+    <ClInclude Include="Engine\Types\Location.h" />
+    <ClInclude Include="Engine\Types\ResponseWindow.h" />
     <ClInclude Include="HookManager.h" />
     <ClInclude Include="ModLoader.h" />
     <ClInclude Include="PatchLoader.h" />

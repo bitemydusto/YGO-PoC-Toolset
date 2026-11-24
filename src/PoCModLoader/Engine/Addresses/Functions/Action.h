@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace Addresses::Functions::Action
+namespace Engine::Addresses::Functions::Action
 {
 	inline constexpr uintptr_t PAY_LP = 0x005783b0;
 	inline constexpr uintptr_t SEND_CARD_FROM_FIELD = 0x005768b0;

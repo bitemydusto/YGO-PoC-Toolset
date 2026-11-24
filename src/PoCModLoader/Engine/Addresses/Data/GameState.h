@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace Addresses::Data::GameState
+namespace Engine::Addresses::Data::GameState
 {
 	inline constexpr uintptr_t PLAYER_LIST = 0x00A55D64;
 	inline constexpr uintptr_t BATTLE_RESULT = 0x00a57840;

@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace Addresses::Data::Input
+namespace Engine::Addresses::Data::Input
 {
 	inline constexpr uintptr_t SELECTED_SIDE = 0x000a55044;
 	// 0x0 : Monster Zone

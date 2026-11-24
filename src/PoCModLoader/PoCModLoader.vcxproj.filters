@@ -28,6 +28,12 @@
     <Filter Include="Engine\Structures">
       <UniqueIdentifier>{4032c514-098d-41ca-a2ad-dac96507f318}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Functions">
+      <UniqueIdentifier>{353d7cae-3af4-46eb-b0ef-b58b239af431}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Types">
+      <UniqueIdentifier>{a3aa5fc4-3fe4-438a-9585-b84006b5fc0c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DllMain.cpp">
@@ -53,6 +59,12 @@
     </ClCompile>
     <ClCompile Include="Tags.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Functions\CardProperty.cpp">
+      <Filter>Engine\Functions</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Functions\Action.cpp">
+      <Filter>Engine\Functions</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -103,6 +115,30 @@
     </ClInclude>
     <ClInclude Include="Engine\Addresses\Functions\Action.h">
       <Filter>Engine\Addresses\Functions</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Functions\CardProperty.h">
+      <Filter>Engine\Functions</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Functions\Action.h">
+      <Filter>Engine\Functions</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Types\Location.h">
+      <Filter>Engine\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Types\CardSubType.h">
+      <Filter>Engine\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Types\CardType.h">
+      <Filter>Engine\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Types\DialogMode.h">
+      <Filter>Engine\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Types\ResponseWindow.h">
+      <Filter>Engine\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Types\CardTag.h">
+      <Filter>Engine\Types</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

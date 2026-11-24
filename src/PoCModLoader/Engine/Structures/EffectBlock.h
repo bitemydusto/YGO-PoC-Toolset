@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace Structures
+namespace Engine::Structures
 {
 	struct EffectBlock
 	{

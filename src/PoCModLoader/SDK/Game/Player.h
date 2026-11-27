@@ -13,8 +13,8 @@ namespace YGO
 
 		uint16_t LP();
 		uint8_t handCount();
-		Card* hand(uint8_t index);
-		Zone* zones(uint8_t index);
+		Card hand(uint8_t index);
+		Zone zones(uint8_t index);
 	private:
 		uint8_t playerIndex;
 	};

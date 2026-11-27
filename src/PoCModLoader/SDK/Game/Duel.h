@@ -9,6 +9,6 @@ namespace YGO
 	public:
 		static uint8_t turnPlayer();
 		static uint8_t currentPhase();
-		static Player* getPlayer(uint8_t index);
+		static Player getPlayer(uint8_t index);
 	};
 }

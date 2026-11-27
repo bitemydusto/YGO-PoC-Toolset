@@ -107,11 +107,11 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)src\Mods;$(SolutionDir)include</AdditionalIncludeDirectories>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>Disabled</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
@@ -160,6 +160,7 @@
     <ClCompile Include="Lib.cpp" />
     <ClCompile Include="ModLoader.cpp" />
     <ClCompile Include="PatchLoader.cpp" />
+    <ClCompile Include="Runtime\Game\Actions.cpp" />
     <ClCompile Include="SDK\Cards\CardBuilder.cpp" />
     <ClCompile Include="StockCards.cpp" />
     <ClCompile Include="Tags.cpp" />
@@ -185,6 +186,9 @@
     <ClInclude Include="SDK\Cards\CardBuilder.h" />
     <ClInclude Include="SDK\Cards\CardDefinition.h" />
     <ClInclude Include="SDK\Effects\EffectCallbacks.h" />
+    <ClInclude Include="SDK\Game\Actions.h" />
+    <ClInclude Include="SDK\Game\Card.h" />
+    <ClInclude Include="SDK\Game\Zone.h" />
     <ClInclude Include="SDK\YGO.h" />
     <ClInclude Include="Shared\Structures\EffectBlock.h" />
     <ClInclude Include="Shared\Types\Attribute.h" />

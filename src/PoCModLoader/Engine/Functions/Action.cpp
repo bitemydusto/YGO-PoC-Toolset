@@ -43,4 +43,8 @@ namespace Engine::Functions::Action
 	{
 		reinterpret_cast<void(__cdecl*)(uint32_t)>(Addresses::Functions::Action::PAY_CHAIN_ENERGY)(playerIdx);
 	}
+	void Draw(uint8_t playerIdx, uint8_t count)
+	{
+		reinterpret_cast<void(__cdecl*)(uint8_t, uint8_t)>(Addresses::Functions::Action::DRAW)(playerIdx, count);
+	}
 }

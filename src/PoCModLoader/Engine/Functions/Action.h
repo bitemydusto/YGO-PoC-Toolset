@@ -28,4 +28,5 @@ namespace Engine::Functions::Action
 	void TributeZone(uint32_t side, uint32_t zone);
 	// Pays the cost of chain energy for the specified player
 	void PayChainEnergy(uint32_t playerIdx);
+	void Draw(uint8_t playerIdx, uint8_t count);
 }

@@ -49,6 +49,15 @@
     <Filter Include="Engine\Structures">
       <UniqueIdentifier>{d5ec2721-2198-4cef-ac7c-f6e87469f3c4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SDK\Game">
+      <UniqueIdentifier>{894f4961-5270-436e-a3bc-4b55b7f1e1ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Runtime">
+      <UniqueIdentifier>{0a92dbef-b8fd-4340-b9d6-29e3f5765962}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Runtime\Game">
+      <UniqueIdentifier>{23aa3d29-3fa1-4724-b233-4c37559f4afb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DllMain.cpp">
@@ -83,6 +92,9 @@
     </ClCompile>
     <ClCompile Include="SDK\Cards\CardBuilder.cpp">
       <Filter>SDK\Cards</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Game\Actions.cpp">
+      <Filter>Runtime\Game</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -175,6 +187,15 @@
     </ClInclude>
     <ClInclude Include="SDK\Cards\CardBuilder.h">
       <Filter>SDK\Cards</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\Game\Actions.h">
+      <Filter>SDK\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\Game\Card.h">
+      <Filter>SDK\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\Game\Zone.h">
+      <Filter>SDK\Game</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

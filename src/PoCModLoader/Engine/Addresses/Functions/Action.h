@@ -14,4 +14,5 @@ namespace Engine::Addresses::Functions::Action
 	inline constexpr uintptr_t MARK_ZONE_FOR_TRIBUTE = 0x00486bb0;
 	inline constexpr uintptr_t TRIBUTE_ZONE = 0x00577a80;
 	inline constexpr uintptr_t PAY_CHAIN_ENERGY = 0x0059cfe0;
+	inline constexpr uintptr_t DRAW = 0x00578ab0;
 }

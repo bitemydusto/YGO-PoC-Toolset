@@ -96,6 +96,9 @@
     <ClCompile Include="Runtime\Game\Actions.cpp">
       <Filter>Runtime\Game</Filter>
     </ClCompile>
+    <ClCompile Include="Runtime\Game\Duel.cpp">
+      <Filter>Runtime\Game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ModLoader.h">
@@ -195,6 +198,12 @@
       <Filter>SDK\Game</Filter>
     </ClInclude>
     <ClInclude Include="SDK\Game\Zone.h">
+      <Filter>SDK\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\Game\Player.h">
+      <Filter>SDK\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\Game\Duel.h">
       <Filter>SDK\Game</Filter>
     </ClInclude>
   </ItemGroup>

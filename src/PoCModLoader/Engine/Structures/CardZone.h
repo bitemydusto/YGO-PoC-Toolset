@@ -4,7 +4,7 @@
 #include "Card.h"
 #include "ZoneEffect.h"
 
-namespace Shared::Structures
+namespace Engine::Structures
 {
 	struct CardZone
 	{

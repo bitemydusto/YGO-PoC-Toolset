@@ -2,7 +2,7 @@
 
 #include "Player.h"
 
-namespace Shared::Structures
+namespace Engine::Structures
 {
     struct Duel
     {

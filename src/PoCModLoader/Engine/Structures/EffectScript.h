@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace Shared::Structures
+namespace Engine::Structures
 {
     struct EffectScript
     {

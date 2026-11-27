@@ -161,6 +161,7 @@
     <ClCompile Include="ModLoader.cpp" />
     <ClCompile Include="PatchLoader.cpp" />
     <ClCompile Include="Runtime\Game\Actions.cpp" />
+    <ClCompile Include="Runtime\Game\Duel.cpp" />
     <ClCompile Include="SDK\Cards\CardBuilder.cpp" />
     <ClCompile Include="StockCards.cpp" />
     <ClCompile Include="Tags.cpp" />
@@ -188,6 +189,8 @@
     <ClInclude Include="SDK\Effects\EffectCallbacks.h" />
     <ClInclude Include="SDK\Game\Actions.h" />
     <ClInclude Include="SDK\Game\Card.h" />
+    <ClInclude Include="SDK\Game\Duel.h" />
+    <ClInclude Include="SDK\Game\Player.h" />
     <ClInclude Include="SDK\Game\Zone.h" />
     <ClInclude Include="SDK\YGO.h" />
     <ClInclude Include="Shared\Structures\EffectBlock.h" />

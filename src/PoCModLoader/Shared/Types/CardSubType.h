@@ -2,9 +2,9 @@
 
 #include <cstdint>
 
-namespace Engine::Types
+namespace Shared::Types
 {
-	enum class SubType : uint8_t
+	enum class CardSubType : uint8_t
 	{
 		NORMAL = 0,
 		EFFECT = 1,

@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace Engine::Types
+namespace Shared::Types
 {
 	enum class Attribute : uint8_t
 	{

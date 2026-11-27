@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace Engine::Types
+namespace Shared::Types
 {
 	enum class ResponseWindow : uint8_t
 	{

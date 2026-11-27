@@ -4,7 +4,7 @@
 #include "CardZone.h"
 #include "Card.h"
 
-namespace Engine::Structures
+namespace Shared::Structures
 {
     struct Player
     {

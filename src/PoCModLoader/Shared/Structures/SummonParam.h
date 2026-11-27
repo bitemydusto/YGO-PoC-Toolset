@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace Engine::Structures
+namespace Shared::Structures
 {
 	struct SummonParam {
 		uint8_t  side;

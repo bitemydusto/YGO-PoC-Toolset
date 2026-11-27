@@ -25,14 +25,23 @@
     <Filter Include="Engine\Addresses\Functions">
       <UniqueIdentifier>{86bcf78d-976d-423a-969e-4d9e2062d55f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Structures">
-      <UniqueIdentifier>{4032c514-098d-41ca-a2ad-dac96507f318}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine\Functions">
       <UniqueIdentifier>{353d7cae-3af4-46eb-b0ef-b58b239af431}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Types">
+    <Filter Include="SDK">
+      <UniqueIdentifier>{8054e3ed-0e84-4fb3-9f38-c7ca96da0676}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SDK\Cards">
+      <UniqueIdentifier>{3b176840-2967-4de2-8a31-4a685274b24c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shared">
+      <UniqueIdentifier>{03e7fd14-97e9-41e0-a3be-de73f273a750}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shared\Types">
       <UniqueIdentifier>{a3aa5fc4-3fe4-438a-9585-b84006b5fc0c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shared\Structures">
+      <UniqueIdentifier>{fd4127cf-2045-40e9-8c76-d4faf230e673}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -86,30 +95,6 @@
     <ClInclude Include="Engine\Addresses\Data\GameState.h">
       <Filter>Engine\Addresses\Data</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Structures\Player.h">
-      <Filter>Engine\Structures</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Structures\CardZone.h">
-      <Filter>Engine\Structures</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Structures\Card.h">
-      <Filter>Engine\Structures</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Structures\ZoneEffect.h">
-      <Filter>Engine\Structures</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Structures\Duel.h">
-      <Filter>Engine\Structures</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Structures\EffectScript.h">
-      <Filter>Engine\Structures</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Structures\EffectBlock.h">
-      <Filter>Engine\Structures</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Structures\SummonParam.h">
-      <Filter>Engine\Structures</Filter>
-    </ClInclude>
     <ClInclude Include="Engine\Addresses\Functions\CardProperty.h">
       <Filter>Engine\Addresses\Functions</Filter>
     </ClInclude>
@@ -122,26 +107,62 @@
     <ClInclude Include="Engine\Functions\Action.h">
       <Filter>Engine\Functions</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Types\Location.h">
-      <Filter>Engine\Types</Filter>
+    <ClInclude Include="SDK\YGO.h">
+      <Filter>SDK</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Types\CardSubType.h">
-      <Filter>Engine\Types</Filter>
+    <ClInclude Include="SDK\Cards\CardDefinition.h">
+      <Filter>SDK\Cards</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Types\CardType.h">
-      <Filter>Engine\Types</Filter>
+    <ClInclude Include="Shared\Types\Attribute.h">
+      <Filter>Shared\Types</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Types\DialogMode.h">
-      <Filter>Engine\Types</Filter>
+    <ClInclude Include="Shared\Types\CardSubType.h">
+      <Filter>Shared\Types</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Types\ResponseWindow.h">
-      <Filter>Engine\Types</Filter>
+    <ClInclude Include="Shared\Types\CardTag.h">
+      <Filter>Shared\Types</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Types\CardTag.h">
-      <Filter>Engine\Types</Filter>
+    <ClInclude Include="Shared\Types\CardType.h">
+      <Filter>Shared\Types</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Types\Attribute.h">
-      <Filter>Engine\Types</Filter>
+    <ClInclude Include="Shared\Types\DialogMode.h">
+      <Filter>Shared\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Shared\Types\Location.h">
+      <Filter>Shared\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Shared\Types\ResponseWindow.h">
+      <Filter>Shared\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Shared\Types\Types.h">
+      <Filter>Shared\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Shared\Structures\Card.h">
+      <Filter>Shared\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Shared\Structures\CardZone.h">
+      <Filter>Shared\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Shared\Structures\Duel.h">
+      <Filter>Shared\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Shared\Structures\EffectBlock.h">
+      <Filter>Shared\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Shared\Structures\EffectScript.h">
+      <Filter>Shared\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Shared\Structures\Player.h">
+      <Filter>Shared\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Shared\Structures\SummonParam.h">
+      <Filter>Shared\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Shared\Structures\ZoneEffect.h">
+      <Filter>Shared\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Shared\Types\Callbacks.h">
+      <Filter>Shared\Types</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace Engine::Types
+namespace Shared::Types
 {
 	enum class CardType : uint8_t
 	{

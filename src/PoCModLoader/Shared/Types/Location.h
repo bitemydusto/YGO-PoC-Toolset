@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace Engine::Types
+namespace Shared::Types
 {
 	// 0-4: Monster Zones
 	// 5-9: Spell/Trap Zones

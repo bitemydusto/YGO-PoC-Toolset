@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstdint>
-#include "../Structures/EffectBlock.h"
-#include "../Types/Location.h"
+#include "../../Shared/Structures/EffectBlock.h"
+#include "../../Shared/Types/Location.h"
 
 namespace Engine::Functions::Action
 {
@@ -11,7 +11,7 @@ namespace Engine::Functions::Action
 	// Sends the card from the field to the destination based on the zone bit field (16 bit for each field, first 11 bits -> monster/st/fieldspell)
 	// destCode: 0xb = hand, 0xd = deck, 0xe = grave, 0xf = banish
 	// fxCode: bit field for effect, 0 = no effect, 2 = play destroy sound and visual effect
-	uint32_t SendCardFromField(Engine::Structures::EffectBlock* block, uint32_t zoneBitField, Engine::Types::Location destCode, uint32_t fxCode);
+	uint32_t SendCardFromField(Shared::Structures::EffectBlock* block, uint32_t zoneBitField, Shared::Types::Location destCode, uint32_t fxCode);
 	// Discards the card at the specified hand index for the specified player
 	uint32_t DiscardFromHand(uint32_t playerIdx, uint32_t handIdx, uint32_t flag);
 	// Deals the specified amount of effect damage to the player

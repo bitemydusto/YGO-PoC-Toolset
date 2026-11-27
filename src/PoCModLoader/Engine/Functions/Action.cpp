@@ -7,9 +7,9 @@ namespace Engine::Functions::Action
 	{
 		reinterpret_cast<void(__cdecl*)(uint32_t, uint32_t)>(Addresses::Functions::Action::PAY_LP)(playerIdx, amount);
 	}
-	uint32_t SendCardFromField(Engine::Structures::EffectBlock* block, uint32_t zoneBitField, Engine::Types::Location destCode, uint32_t fxCode)
+	uint32_t SendCardFromField(Shared::Structures::EffectBlock* block, uint32_t zoneBitField, Shared::Types::Location destCode, uint32_t fxCode)
 	{
-		return reinterpret_cast<uint32_t(__cdecl*)(Engine::Structures::EffectBlock*, uint32_t, Engine::Types::Location, uint32_t)>(Addresses::Functions::Action::SEND_CARD_FROM_FIELD)(block, zoneBitField, destCode, fxCode);
+		return reinterpret_cast<uint32_t(__cdecl*)(Shared::Structures::EffectBlock*, uint32_t, Shared::Types::Location, uint32_t)>(Addresses::Functions::Action::SEND_CARD_FROM_FIELD)(block, zoneBitField, destCode, fxCode);
 	}
 	uint32_t DiscardFromHand(uint32_t playerIdx, uint32_t handIdx, uint32_t flag)
 	{

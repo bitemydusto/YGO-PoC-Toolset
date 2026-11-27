@@ -7,7 +7,7 @@
 
 namespace YGO
 {
-	using namespace Shared::Types;
+	using CardTag = Shared::Types::CardTag;
 
 	struct CardDefinition
 	{

@@ -43,6 +43,12 @@
     <Filter Include="Shared\Structures">
       <UniqueIdentifier>{fd4127cf-2045-40e9-8c76-d4faf230e673}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SDK\Effects">
+      <UniqueIdentifier>{387fd60f-c957-4ec3-a9d5-c62af8fc4c1c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Structures">
+      <UniqueIdentifier>{d5ec2721-2198-4cef-ac7c-f6e87469f3c4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DllMain.cpp">
@@ -137,32 +143,32 @@
     <ClInclude Include="Shared\Types\Types.h">
       <Filter>Shared\Types</Filter>
     </ClInclude>
-    <ClInclude Include="Shared\Structures\Card.h">
-      <Filter>Shared\Structures</Filter>
-    </ClInclude>
-    <ClInclude Include="Shared\Structures\CardZone.h">
-      <Filter>Shared\Structures</Filter>
-    </ClInclude>
-    <ClInclude Include="Shared\Structures\Duel.h">
-      <Filter>Shared\Structures</Filter>
-    </ClInclude>
     <ClInclude Include="Shared\Structures\EffectBlock.h">
       <Filter>Shared\Structures</Filter>
     </ClInclude>
     <ClInclude Include="Shared\Structures\EffectScript.h">
       <Filter>Shared\Structures</Filter>
     </ClInclude>
-    <ClInclude Include="Shared\Structures\Player.h">
-      <Filter>Shared\Structures</Filter>
+    <ClInclude Include="SDK\Effects\Callbacks.h">
+      <Filter>SDK\Effects</Filter>
     </ClInclude>
-    <ClInclude Include="Shared\Structures\SummonParam.h">
-      <Filter>Shared\Structures</Filter>
+    <ClInclude Include="Engine\Structures\Card.h">
+      <Filter>Engine\Structures</Filter>
     </ClInclude>
-    <ClInclude Include="Shared\Structures\ZoneEffect.h">
-      <Filter>Shared\Structures</Filter>
+    <ClInclude Include="Engine\Structures\CardZone.h">
+      <Filter>Engine\Structures</Filter>
     </ClInclude>
-    <ClInclude Include="Shared\Types\Callbacks.h">
-      <Filter>Shared\Types</Filter>
+    <ClInclude Include="Engine\Structures\Duel.h">
+      <Filter>Engine\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Structures\Player.h">
+      <Filter>Engine\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Structures\SummonParam.h">
+      <Filter>Engine\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Structures\ZoneEffect.h">
+      <Filter>Engine\Structures</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

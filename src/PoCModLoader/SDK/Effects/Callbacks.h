@@ -3,7 +3,7 @@
 #include <cstdint>
 #include "../../Shared/Structures/EffectBlock.h"
 
-namespace Shared::Types
+namespace YGO
 {
 	using EffectBlock = Shared::Structures::EffectBlock;
 
@@ -12,4 +12,13 @@ namespace Shared::Types
 	using ConditionCallback = EffectCallback;
 	using CostCallback = EffectCallback;
 	using TargetCallback = EffectCallback;
+
+	struct EffectCallbacks
+	{
+		EffectCallback effect = nullptr;
+		FilterCallback filter = nullptr;
+		ConditionCallback condition = nullptr;
+		CostCallback cost = nullptr;
+		TargetCallback target = nullptr;
+	};
 }

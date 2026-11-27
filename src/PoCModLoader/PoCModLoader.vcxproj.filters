@@ -81,6 +81,9 @@
     <ClCompile Include="Engine\Functions\Action.cpp">
       <Filter>Engine\Functions</Filter>
     </ClCompile>
+    <ClCompile Include="SDK\Cards\CardBuilder.cpp">
+      <Filter>SDK\Cards</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ModLoader.h">
@@ -146,10 +149,7 @@
     <ClInclude Include="Shared\Structures\EffectBlock.h">
       <Filter>Shared\Structures</Filter>
     </ClInclude>
-    <ClInclude Include="Shared\Structures\EffectScript.h">
-      <Filter>Shared\Structures</Filter>
-    </ClInclude>
-    <ClInclude Include="SDK\Effects\Callbacks.h">
+    <ClInclude Include="SDK\Effects\EffectCallbacks.h">
       <Filter>SDK\Effects</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Structures\Card.h">
@@ -169,6 +169,12 @@
     </ClInclude>
     <ClInclude Include="Engine\Structures\ZoneEffect.h">
       <Filter>Engine\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Structures\EffectScript.h">
+      <Filter>Engine\Structures</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\Cards\CardBuilder.h">
+      <Filter>SDK\Cards</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

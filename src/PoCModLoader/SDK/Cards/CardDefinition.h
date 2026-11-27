@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <vector>
 #include "../../Shared/Types/Types.h"
-#include "../../Shared/Structures/EffectScript.h"
+#include "../Effects/EffectCallbacks.h"
 
 namespace YGO
 {
@@ -12,7 +12,7 @@ namespace YGO
 	struct CardDefinition
 	{
 		uint16_t cardID;
-		Shared::Structures::EffectScript effectScript;
+		EffectCallbacks effect = {};
 		std::vector<CardTag> tags;
 	};
 }

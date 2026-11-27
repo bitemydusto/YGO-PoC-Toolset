@@ -13,7 +13,9 @@ class ModLoader
 	public:
 		void LoadMods();
 		static void Log(const std::string& message, bool clearLog = false);
+		static bool WaitForGameReady();
 
 	private:
 		void LoadDLLs();
+		static bool IsGameReady();
 };

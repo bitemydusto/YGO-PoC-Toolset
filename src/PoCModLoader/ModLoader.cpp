@@ -4,7 +4,7 @@ const std::string ModLoader::modFolder = ".\\mods";
 
 void ModLoader::LoadMods()
 {
-	Log("ModLoader initialized!", true);
+	Log("ModLoader initialized!");
 	LoadDLLs();
 }
 
@@ -40,4 +40,33 @@ void ModLoader::Log(const std::string& message, bool clearLog)
 	{
 		logFile << message << '\n';
 	}
+}
+bool ModLoader::WaitForGameReady()
+{
+	Log("Waiting for the game to be ready...", true);
+
+	const int maxWaitTime = 5000; // Maximum wait time in milliseconds
+	const int startTime = GetTickCount();
+
+	while (!IsGameReady())
+	{
+		if (GetTickCount() - startTime > maxWaitTime)
+		{
+			Log("Error: Mod loader timed out waiting for game to be ready.");
+			return false;
+		}
+		Sleep(100);
+	}
+	Log("Game was ready after " + std::to_string(GetTickCount() - startTime) + " ms.");
+	Sleep(500); // Additional wait to ensure the game is fully initialized
+
+	return true;
+}
+bool ModLoader::IsGameReady()
+{
+	const uintptr_t DLG_TEXT_LIST_ADDRESS = 0x05f24c0;
+
+	if (*(uint32_t*)DLG_TEXT_LIST_ADDRESS == 0) return false;
+
+	return true;
 }

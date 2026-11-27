@@ -639,7 +639,7 @@ void HookManager::Register_Fusion3(Fusion3 fusion)
 }
 void HookManager::SetLimitStatus(uint16_t cardID, uint16_t limit)
 {
-	uint32_t cardIntID = FUN::GetCardIntID(cardID);
+	uint16_t cardIntID = FUN::GetCardIntID(cardID);
 	cardLimits[cardIntID] = limit;
 }
 uint16_t __stdcall HookManager::Dispatch_LimitStatus(uint16_t cardIntID)
@@ -1042,11 +1042,11 @@ void HookManager::Register_CanMonsterAttack(Condition1 condition)
 }
 bool __stdcall HookManager::Dispatch_CanMonsterAttack(uint8_t side, uint8_t zone)
 {
-	if (side > 1) ModLoader::Log("Invalid side in Dispatch_CanMonsterAttack: %d", side);
-	if (zone > 5) ModLoader::Log("Invalid zone in Dispatch_CanMonsterAttack: %d", zone);
+	if (side > 1) ModLoader::Log("Invalid side in Dispatch_CanMonsterAttack: " + std::to_string(side));
+	if (zone > 5) ModLoader::Log("Invalid zone in Dispatch_CanMonsterAttack: " + std::to_string(zone));
 	for (const auto& item : canMonsterAttackHooks)
 	{
-		return item(side, zone);
+		if (!item(side, zone)) return false;
 	}
 	return true; // Default to true if no hooks are registered
 }
@@ -1055,17 +1055,19 @@ __declspec(naked) void PatchCanMonsterAttack()
 	__asm
 	{
 	hook:
-		PUSH EAX
+		PUSHAD
 		PUSH EBX
 		PUSH EDI
 		CALL HookManager::Dispatch_CanMonsterAttack
 		TEST AL, AL
-		POP EAX
+		POPAD
 		JNZ hook_end
 		PUSH 0x0056b768 // If the hook returns false, jump to this address to prevent the monster from attacking
 		RET
 	hook_end :
-		JMP[gCanMonsterAttackTrampoline]
+		MOV CX, WORD PTR DS:[ECX + 0xa55d7a]
+		PUSH 0x0056b775
+		RET
 	}
 }
 void HookManager::Register_ActivatableEffect(uint16_t cardID)

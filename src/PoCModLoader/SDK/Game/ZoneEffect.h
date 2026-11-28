@@ -7,22 +7,34 @@ namespace YGO
 {
 	enum class ZoneEffectType : uint8_t
 	{
-		Equip = 1,
-		Absorb = 5,
+		Equip = 0x1,
+		Absorb = 0x5,
 		Permanent = 0xb,
 		Temporary = 0xc,
+		WithCounter = 0xd,
 	};
+
 	class ZoneEffect
 	{
 	public:
-		ZoneEffect(uint8_t side, uint8_t zone, uint8_t index);
+		static void addToZone(uint8_t side, uint8_t zone);
 
-		Card source();
-		ZoneEffectType type();
-		uint8_t param();
+		virtual ~ZoneEffect() = default;
 	private:
-		uint8_t side;
-		uint8_t zone;
-		uint8_t index;
+		ZoneEffectType type;
+	};
+
+	class EquipEffect : public ZoneEffect
+	{
+	public:
+		EquipEffect(Card source);
+		Card equipCard();
+	};
+
+	class PermanentEffect : public ZoneEffect
+	{
+	public:
+		PermanentEffect(Card* source);
+		Card* source;
 	};
 }

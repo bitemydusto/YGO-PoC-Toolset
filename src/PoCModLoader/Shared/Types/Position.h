@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace Shared::Types
 {
 	enum class Position : uint8_t

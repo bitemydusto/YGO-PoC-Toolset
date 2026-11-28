@@ -47,4 +47,8 @@ namespace Engine::Functions::Action
 	{
 		reinterpret_cast<void(__cdecl*)(uint8_t, uint8_t)>(Addresses::Functions::Action::DRAW)(playerIdx, count);
 	}
+	void AddEffectEntityToZone(uint32_t sideZonePack, uint32_t effectIntID, uint16_t effectPack)
+	{
+		reinterpret_cast<void(__cdecl*)(uint32_t, uint32_t, uint16_t)>(Addresses::Functions::Action::ADD_EFFECT_ENTITY_TO_ZONE)(sideZonePack, effectIntID, effectPack);
+	}
 }

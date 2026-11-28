@@ -29,4 +29,5 @@ namespace Engine::Functions::Action
 	// Pays the cost of chain energy for the specified player
 	void PayChainEnergy(uint32_t playerIdx);
 	void Draw(uint8_t playerIdx, uint8_t count);
+	void AddEffectEntityToZone(uint32_t sideZonePack, uint32_t effectIntID, uint16_t effectPack);
 }

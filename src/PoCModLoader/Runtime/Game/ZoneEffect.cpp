@@ -1,11 +1,10 @@
 #include "../../SDK/Game/ZoneEffect.h"
+#include "../../SDK/Game/Card.h"
 
 namespace YGO
 {
-	ZoneEffect::ZoneEffect(uint8_t side, uint8_t zone, uint8_t index)
+	PermanentEffect::PermanentEffect(Card* source)
 	{
-		this->side = side;
-		this->zone = zone;
-		this->index = index;
+		this->source = source;
 	}
 }

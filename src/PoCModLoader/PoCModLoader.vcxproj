@@ -167,6 +167,7 @@
     <ClCompile Include="Runtime\Game\Player.cpp" />
     <ClCompile Include="Runtime\Game\Zone.cpp" />
     <ClCompile Include="Runtime\Game\ZoneEffect.cpp" />
+    <ClCompile Include="Runtime\Operations\Actions.cpp" />
     <ClCompile Include="SDK\Cards\CardBuilder.cpp" />
     <ClCompile Include="StockCards.cpp" />
     <ClCompile Include="Tags.cpp" />
@@ -191,6 +192,7 @@
     <ClInclude Include="HookManager.h" />
     <ClInclude Include="ModLoader.h" />
     <ClInclude Include="PatchLoader.h" />
+    <ClInclude Include="Runtime\Operations\Actions.h" />
     <ClInclude Include="SDK\Cards\CardBuilder.h" />
     <ClInclude Include="SDK\Cards\CardDefinition.h" />
     <ClInclude Include="SDK\Effects\EffectCallbacks.h" />

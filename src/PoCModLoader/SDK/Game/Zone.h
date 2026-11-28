@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include "Card.h"
 #include "ZoneEffect.h"
 #include "../../Shared/Types/Types.h"
@@ -22,7 +23,8 @@ namespace YGO
 		uint8_t deathCounters();
 
 		uint16_t effectCount();
-		ZoneEffect effect(uint8_t index);
+		std::vector<ZoneEffect> effects();
+		void addEffect(ZoneEffect* effect);
 	private:
 		uint8_t side;
 		uint8_t index;

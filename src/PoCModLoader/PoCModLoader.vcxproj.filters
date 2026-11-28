@@ -58,6 +58,9 @@
     <Filter Include="Runtime\Game">
       <UniqueIdentifier>{23aa3d29-3fa1-4724-b233-4c37559f4afb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Runtime\Operations">
+      <UniqueIdentifier>{e8d672f8-fda1-49fe-b5de-33bf412d0f62}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DllMain.cpp">
@@ -113,6 +116,9 @@
     </ClCompile>
     <ClCompile Include="Runtime\Game\ZoneEffect.cpp">
       <Filter>Runtime\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Operations\Actions.cpp">
+      <Filter>Runtime\Operations</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -232,6 +238,9 @@
     </ClInclude>
     <ClInclude Include="SDK\Game\ZoneEffect.h">
       <Filter>SDK\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\Operations\Actions.h">
+      <Filter>Runtime\Operations</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

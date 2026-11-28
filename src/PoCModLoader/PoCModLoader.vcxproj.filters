@@ -99,6 +99,21 @@
     <ClCompile Include="Runtime\Game\Duel.cpp">
       <Filter>Runtime\Game</Filter>
     </ClCompile>
+    <ClCompile Include="Runtime\Game\Player.cpp">
+      <Filter>Runtime\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Game\Card.cpp">
+      <Filter>Runtime\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Game\Zone.cpp">
+      <Filter>Runtime\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Functions\GameState.cpp">
+      <Filter>Engine\Functions</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\Game\ZoneEffect.cpp">
+      <Filter>Runtime\Game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ModLoader.h">
@@ -204,6 +219,18 @@
       <Filter>SDK\Game</Filter>
     </ClInclude>
     <ClInclude Include="SDK\Game\Duel.h">
+      <Filter>SDK\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Addresses\Functions\GameState.h">
+      <Filter>Engine\Addresses\Functions</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Functions\GameState.h">
+      <Filter>Engine\Functions</Filter>
+    </ClInclude>
+    <ClInclude Include="Shared\Types\Position.h">
+      <Filter>Shared\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\Game\ZoneEffect.h">
       <Filter>SDK\Game</Filter>
     </ClInclude>
   </ItemGroup>

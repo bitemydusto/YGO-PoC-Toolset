@@ -13,7 +13,11 @@ namespace YGO
 		using CardTag = Shared::Types::CardTag;
 
 	public:
+		Card(uint32_t cardDWORD);
+
 		uint16_t id();
+		const char* name();
+		const char* description();
 		uint8_t level();
 		Attribute attribute();
 		CardSubType subType();
@@ -24,8 +28,6 @@ namespace YGO
 
 		std::vector<CardTag> tags();
 	private:
-		Shared::Types::Location location;
-		uint8_t side;
-		uint8_t zone;
+		uint32_t intId;
 	};
 }

@@ -7,3 +7,4 @@
 #include "Location.h"
 #include "ResponseWindow.h"
 #include "DialogMode.h"
+#include "Position.h"
